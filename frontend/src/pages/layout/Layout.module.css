@@ -1,0 +1,156 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  background-color: #f2f2f2;
+}
+
+.headerContainer {
+  display: flex;
+  justify-content: left;
+  align-items: center;
+}
+
+.headerTitleContainer {
+  display: flex;
+  align-items: center;
+  margin-left: 14px;
+  text-decoration: none;
+}
+
+.headerTitle {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 28px;
+  display: flex;
+  align-items: flex-end;
+  color: #242424;
+}
+
+.headerIcon {
+  height: 32px;
+  width: auto;
+  margin-left: 36px;
+}
+
+.shareButtonContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin-right: 20px;
+}
+
+.shareButton {
+  color: #ffffff;
+}
+
+.shareButtonText {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  color: #ffffff;
+}
+
+.urlTextBox {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  color: #707070;
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+}
+
+.copyButtonContainer {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 5px 12px;
+  gap: 4px;
+  background: #ffffff;
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+}
+
+.copyButtonContainer:hover {
+  cursor: pointer;
+  background: #d1d1d1;
+}
+
+.copyButton {
+  color: #424242;
+}
+
+.copyButtonText {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  color: #242424;
+}
+
+@media (max-width: 480px) {
+  .headerTitleContainer {
+    margin-left: 4px;
+  }
+
+  .headerIcon {
+    margin-left: 26px;
+  }
+}
+
+.layoutContainer {
+  display: flex;
+  height: 100%;
+}
+
+.mainContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.outletRoot {
+  flex: 1;
+  display: flex;
+  margin-top: 0px;
+  margin-bottom: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
+  gap: 5px;
+}
+
+.outletContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: radial-gradient(108.78% 108.78% at 50.02% 19.78%, #ffffff 57.29%, #eef6fe 100%);
+  box-shadow:
+    0px 2px 4px rgba(0, 0, 0, 0.14),
+    0px 0px 2px rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  overflow-y: auto;
+  
+  max-height: calc(100vh - 100px);
+}
+
+.childContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}

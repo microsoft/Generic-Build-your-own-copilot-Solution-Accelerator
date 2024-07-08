@@ -43,14 +43,6 @@ const useStyles = makeStyles({
         // margin top and bottom
         margin: '0.5rem 0',
         padding: '0.5rem',
-
-        // make text selectable
-        userSelect: 'text',
-
-        // highlight color
-        '&::selection': {
-            backgroundColor: '#FFD6A5',
-        }
     },
 
     popoverGenerateButton: {
@@ -80,10 +72,9 @@ const useStyles = makeStyles({
     sectionContentTextarea: {
         width: '100%', 
         height: '100%',
+        padding: '0.5rem',
 
-        // make text selectable
-        userSelect: 'text',
-
+        // selection
         '&::selection': {
             backgroundColor: '#FFD6A5',
         }
@@ -109,10 +100,10 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
     async function fetchSectionContent(sectionTitle: string, sectionDescription: string) {
         setIsLoading(true)
         const sectionGenerateRequest: SectionGenerateRequest = { sectionTitle, sectionDescription }
-        const response = await sectionGenerate(sectionGenerateRequest)
-
         
+        const response = await sectionGenerate(sectionGenerateRequest)
         const responseBody = await response.json()
+
         const updatedSection: Section = { title: sectionTitle, description: sectionDescription, content: responseBody.section_content }
         appStateContext?.dispatch({ type: 'UPDATE_SECTION', payload: { sectionIdx: sectionIdx, section: updatedSection } })
 
@@ -184,12 +175,14 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
                         appearance="outline"
                         size="large"
                         defaultValue={sectionContent}
+                        
                         onChange={(e, data) => {
                             const updatedSection: Section = { title: sectionTitle, description: sectionDescription, content: data.value || '' }
                             appStateContext?.dispatch({ type: 'UPDATE_SECTION', payload: { sectionIdx: sectionIdx, section: updatedSection } })
                         }}
 
-                        className={classes.sectionContentTextarea}
+                        textarea={{ className: classes.sectionContentTextarea }}
+                        style={{ width: '100%', height: '100%' }}
                     />
                 )
             }

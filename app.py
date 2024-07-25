@@ -208,7 +208,6 @@ def prepare_model_args(request_body, request_headers):
     
     # template chat should only respond to messages for template modification
     system_message = app_settings.azure_openai.system_message if not ("chat_type" in request_body and request_body["chat_type"] == "template") else template_chat_system_prompt
-    print(system_message)
 
     messages = []
     if not app_settings.datasource:

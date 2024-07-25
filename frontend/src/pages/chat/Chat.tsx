@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useContext, useLayoutEffect } from 'react'
+import { useLocation } from 'react-router-dom';
 import { CommandBarButton, IconButton, Dialog, DialogType, Stack } from '@fluentui/react'
 import { SquareRegular, ShieldLockRegular, ErrorCircleRegular } from '@fluentui/react-icons'
 
@@ -51,6 +52,8 @@ interface Props {
 }
 
 const Chat = ({ type = ChatType.Browse }: Props) => {
+  const location = useLocation();
+  
   const appStateContext = useContext(AppStateContext)
   const ui = appStateContext?.state.frontendSettings?.ui
   const AUTH_ENABLED = appStateContext?.state.frontendSettings?.auth_enabled
@@ -85,6 +88,26 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
 
   const [ASSISTANT, TOOL, ERROR] = ['assistant', 'tool', 'error']
   const NO_CONTENT_ERROR = 'No content in messages object.'
+
+  const refreshContent = () => {
+    console.log("Refreshing content...");
+    setIsLoading(false);
+    setShowLoadingMessage(false);
+    setActiveCitation(undefined);
+    setIsCitationPanelOpen(false);
+    setIsIntentsPanelOpen(false);
+    setShowAuthMessage(undefined);
+    setMessages([]);
+    setExecResults([]);
+    setProcessMessages(messageStatus.NotRunning);
+    setClearingChat(false);
+    setErrorMsg(null);
+  }
+
+  useEffect(() => {
+    console.log('Route changed, refresh the contents');
+    refreshContent();
+  }, [location]);
 
   useEffect(() => {
     if (

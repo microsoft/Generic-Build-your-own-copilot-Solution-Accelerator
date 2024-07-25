@@ -149,6 +149,13 @@
   margin-top: 8px;
 }
 
+.chatInputContainer {
+  display: flex;
+  align-items: center; /* Align items vertically in the center */
+  justify-content: space-between; /* Optional: Adjust based on layout needs */
+  gap: 10px; /* Space between QuestionInput and Button */
+}
+
 .clearChatBroom {
   box-sizing: border-box;
   display: flex;
@@ -192,6 +199,22 @@
   height: 40px;
   left: 7px;
   top: 66px;
+  color: #ffffff;
+  border-radius: 4px;
+  z-index: 1;
+}
+
+.generateDocumentIcon {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  width: 100px;
+  height: 40px;
+  right: -120px;
+  top: 40px;
   color: #ffffff;
   border-radius: 4px;
   z-index: 1;

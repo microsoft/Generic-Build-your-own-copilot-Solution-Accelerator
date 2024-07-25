@@ -177,3 +177,8 @@ export enum Feedback {
   Manipulative = 'manipulative',
   OtherHarmful = 'other_harmlful'
 }
+
+export enum ChatType {
+  Browse = 'browse',
+  Generate = 'generate'
+}

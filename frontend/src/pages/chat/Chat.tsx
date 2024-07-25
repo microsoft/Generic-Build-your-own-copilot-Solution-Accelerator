@@ -16,6 +16,7 @@ import { XSSAllowTags } from '../../constants/xssAllowTags'
 
 import {
   ChatMessage,
+  ChatType,
   ConversationRequest,
   conversationApi,
   Citation,
@@ -45,7 +46,11 @@ const enum messageStatus {
   Done = 'Done'
 }
 
-const Chat = () => {
+interface Props {
+  type?: ChatType
+}
+
+const Chat = ({ type = ChatType.Browse }: Props) => {
   const appStateContext = useContext(AppStateContext)
   const ui = appStateContext?.state.frontendSettings?.ui
   const AUTH_ENABLED = appStateContext?.state.frontendSettings?.auth_enabled
@@ -590,6 +595,10 @@ const Chat = () => {
     return tryGetRaiPrettyError(errorMessage)
   }
 
+  const generateDocument = () => {
+
+  }
+
   const newChat = () => {
     setProcessMessages(messageStatus.Processing)
     setMessages([])
@@ -893,19 +902,50 @@ const Chat = () => {
                   dialogContentProps={errorDialogContentProps}
                   modalProps={modalProps}></Dialog>
               </Stack>
-              <QuestionInput
-                clearOnSend
-                placeholder="Type a new question..."
-                disabled={isLoading}
-                onSend={(question, id) => {
-                  appStateContext?.state.isCosmosDBAvailable?.cosmosDB
-                    ? makeApiRequestWithCosmosDB(question, id)
-                    : makeApiRequestWithoutCosmosDB(question, id)
-                }}
-                conversationId={
-                  appStateContext?.state.currentChat?.id ? appStateContext?.state.currentChat?.id : undefined
+              <Stack horizontal className={styles.chatInputContainer}>
+                <QuestionInput
+                  clearOnSend
+                  placeholder="Type a new question..."
+                  disabled={isLoading}
+                  onSend={(question, id) => {
+                    appStateContext?.state.isCosmosDBAvailable?.cosmosDB
+                      ? makeApiRequestWithCosmosDB(question, id)
+                      : makeApiRequestWithoutCosmosDB(question, id)
+                  }}
+                  conversationId={
+                    appStateContext?.state.currentChat?.id ? appStateContext?.state.currentChat?.id : undefined
+                  }
+                />
+                {
+                  type == ChatType.Generate && (
+                    <CommandBarButton
+                    role="button"
+                    styles={{
+                      icon: {
+                        color: '#FFFFFF'
+                      },
+                      iconDisabled: {
+                        color: '#BDBDBD !important'
+                      }, 
+                      root: {
+                        color: '#FFFFFF',
+                        background: '#1367CF'
+                      },
+                      rootDisabled: {
+                        background: '#F0F0F0'
+                      }
+                    }}
+                    className={styles.generateDocumentIcon
+                    }
+                    iconProps={{ iconName: 'Edit' }}
+                    onClick={generateDocument} //Update for Document Generation
+                    disabled={disabledButton()}
+                    aria-label="generate template"
+                    text='Generate'
+                  />  
+                  ) 
                 }
-              />
+              </Stack>
             </Stack>
           {/* Citation Panel */}
           {messages && messages.length > 0 && isCitationPanelOpen && activeCitation && (

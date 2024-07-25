@@ -15,6 +15,8 @@ from quart import (
 )
 
 from openai import AsyncAzureOpenAI
+from azure.search.documents import SearchClient
+from azure.core.credentials import AzureKeyCredential
 from azure.identity.aio import (
     DefaultAzureCredential,
     get_bearer_token_provider
@@ -153,6 +155,19 @@ def init_openai_client():
         azure_openai_client = None
         raise e
 
+def init_ai_search_client():
+    client = None
+    
+    try:
+        endpoint = app_settings.datasource.endpoint
+        key_credential = app_settings.datasource.key
+        index_name = app_settings.datasource.index
+
+        client = SearchClient(endpoint=endpoint, index_name=index_name, credential=AzureKeyCredential(key_credential))
+        return client
+    except Exception as e:
+        logging.exception("Exception in Azure AI Client initialization", e)
+        raise e
 
 def init_cosmosdb_client():
     cosmos_conversation_client = None
@@ -876,6 +891,15 @@ async def generate_section_content():
         logging.exception("Exception in /history/clear_messages")
         return jsonify({"error": str(e)}), 500
 
+@bp.route("/document/<documentId>")
+async def get_document(documentId):
+    try:
+        document = retrieve_document(documentId)
+        return jsonify(document), 200
+    except Exception as e:
+        logging.exception("Exception in /history/clear_messages")
+        return jsonify({"error": str(e)}), 500
+
 async def generate_title(conversation_messages):
     ## make sure the messages are sorted by _ts descending
     title_prompt = 'Summarize the conversation so far into a 4-word or less title. Do not use any quotation marks or punctuation. Respond with a json object in the format {{"title": string}}. Do not include any other commentary or description.'
@@ -972,8 +996,6 @@ async def extract_template_from_image(image_url):
             model=app_settings.azure_openai.model, messages=messages, temperature=0
         )
 
-        print(response.choices[0].message.content)
-
         template = json.loads(response.choices[0].message.content)
         return template
     except Exception as e:
@@ -1006,6 +1028,15 @@ async def generate_section_content(request_json):
         template = json.loads(response.choices[0].message.content)
         return template
     except Exception as e:
+        raise e
+    
+def retrieve_document(id):
+    try:
+        search_client = init_ai_search_client()
+        document = search_client.get_document(id)
+        return document
+    except Exception as e:
+        logging.exception("Exception in retrieve_document")
         raise e
 
 app = create_app()

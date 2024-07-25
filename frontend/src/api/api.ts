@@ -327,6 +327,7 @@ export const frontendSettings = async (): Promise<Response | null> => {
 
   return response
 }
+
 export const historyMessageFeedback = async (messageId: string, feedback: string): Promise<Response> => {
   const response = await fetch('/history/message_feedback', {
     method: 'POST',
@@ -387,5 +388,16 @@ export const sectionGenerate = async (
       return new Response()
     })
   
+  return response
+}
+
+export const documentRead = async (docId: string): Promise<Response> => {
+  const response = await fetch('/document/' + docId, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' }
+  })
+    .then(res => { return res })
+    .catch(_err => { throw new Error('There was an issue fetching your data.') })
+
   return response
 }

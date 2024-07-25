@@ -8,6 +8,7 @@ import Draft from './pages/draft/Draft'
 import Landing from './pages/landing/Landing'
 import Layout from './pages/layout/Layout'
 import NoPage from './pages/NoPage'
+import Document from './pages/document/Document'
 import { AppStateProvider } from './state/AppProvider'
 
 import './index.css'
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/draft" element={<Draft />} />
             <Route path="*" element={<NoPage />} />
           </Route>
+          <Route path="/document/:id" element={<Document />} />
         </Routes>
       </HashRouter>
     </AppStateProvider>

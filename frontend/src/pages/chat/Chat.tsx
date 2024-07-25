@@ -710,8 +710,15 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }, [showLoadingMessage, processMessages])
 
   const onShowCitation = (citation: Citation) => {
-    setActiveCitation(citation)
-    setIsCitationPanelOpen(true)
+    console.log(citation)
+    const path = `/#/document/${citation.id}`;
+
+    // Instead of navigating within the app, use window.open to open in a new tab
+    const url = window.location.origin + path;
+    window.open(url, '_blank');
+
+    // setActiveCitation(citation)
+    // setIsCitationPanelOpen(true)
   }
 
   const onShowExecResult = () => {
@@ -794,57 +801,61 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
           </h2>
         </Stack>
       ) : (
-              <div className={styles.chatMessageStream} style={{ marginBottom: isLoading ? '40px' : '0px' }} role="log">
-                {messages.map((answer, index) => (
-                  <>
-                    {answer.role === 'user' ? (
-                      <div className={styles.chatMessageUser} tabIndex={0}>
-                        <div className={styles.chatMessageUserMessage}>{answer.content}</div>
-                      </div>
-                    ) : answer.role === 'assistant' ? (
-                      <div className={styles.chatMessageGpt}>
-                        <Answer
-                          answer={{
-                            answer: answer.content,
-                            citations: parseCitationFromMessage(messages[index - 1]),
-                            plotly_data: parsePlotFromMessage(messages[index - 1]),
-                            message_id: answer.id,
-                            feedback: answer.feedback,
-                            exec_results: execResults
-                          }}
-                          onCitationClicked={c => onShowCitation(c)}
-                          onExectResultClicked={() => onShowExecResult()}
-                        />
-                      </div>
-                    ) : answer.role === ERROR ? (
-                      <div className={styles.chatMessageError}>
-                        <Stack horizontal className={styles.chatMessageErrorContent}>
-                          <ErrorCircleRegular className={styles.errorIcon} style={{ color: 'rgba(182, 52, 67, 1)' }} />
-                          <span>Error</span>
-                        </Stack>
-                        <span className={styles.chatMessageErrorContent}>{answer.content}</span>
-                      </div>
-                    ) : null}
-                  </>
-                ))}
-                {showLoadingMessage && (
-                  <>
-                    <div className={styles.chatMessageGpt}>
-                      <Answer
-                        answer={{
-                          answer: "Generating answer...",
-                          citations: [],
-                          plotly_data: null
-                        }}
-                        onCitationClicked={() => null}
-                        onExectResultClicked={() => null}
-                      />
-                    </div>
-                  </>
-                )}
-                <div ref={chatMessageStreamEnd} />
+        <div className={styles.chatMessageStream} style={{ marginBottom: isLoading ? '40px' : '0px' }} role="log">
+          {messages.map((answer, index) => (
+            <>
+              {answer.role === 'user' ? (
+                <div className={styles.chatMessageUser} tabIndex={0}>
+                  <div className={styles.chatMessageUserMessage}>{answer.content}</div>
+                </div>
+              ) : answer.role === 'assistant' ? (
+                <div className={styles.chatMessageGpt}>
+                  <Answer
+                    answer={{
+                      answer: answer.content,
+                      citations: parseCitationFromMessage(messages[index - 1]),
+                      plotly_data: parsePlotFromMessage(messages[index - 1]),
+                      message_id: answer.id,
+                      feedback: answer.feedback,
+                      exec_results: execResults
+                    }}
+                    onCitationClicked={c => onShowCitation(c)}
+                    onExectResultClicked={() => onShowExecResult()}
+                  />
+                </div>
+              ) : answer.role === ERROR ? (
+                <div className={styles.chatMessageError}>
+                  <Stack horizontal className={styles.chatMessageErrorContent}>
+                    <ErrorCircleRegular className={styles.errorIcon} style={{ color: 'rgba(182, 52, 67, 1)' }} />
+                    <span>Error</span>
+                  </Stack>
+                  <span className={styles.chatMessageErrorContent}>{answer.content}</span>
+                </div>
+              ) : null}
+            </>
+          ))}
+
+          {showLoadingMessage && (
+            <>
+              <div className={styles.chatMessageGpt}>
+                <Answer
+                  answer={{
+                    answer: "Generating answer...",
+                    citations: [],
+                    plotly_data: null
+                  }}
+
+                  onCitationClicked={() => null}
+                  onExectResultClicked={() => null}
+                />
               </div>
-            )}
+            </>
+          )}
+
+          <div ref={chatMessageStreamEnd} />
+        </div>
+      )
+      }
 
             <Stack horizontal className={styles.chatInput}>
               {isLoading && messages.length > 0 && (
@@ -925,50 +936,19 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                   dialogContentProps={errorDialogContentProps}
                   modalProps={modalProps}></Dialog>
               </Stack>
-              <Stack horizontal className={styles.chatInputContainer}>
-                <QuestionInput
-                  clearOnSend
-                  placeholder="Type a new question..."
-                  disabled={isLoading}
-                  onSend={(question, id) => {
-                    appStateContext?.state.isCosmosDBAvailable?.cosmosDB
-                      ? makeApiRequestWithCosmosDB(question, id)
-                      : makeApiRequestWithoutCosmosDB(question, id)
-                  }}
-                  conversationId={
-                    appStateContext?.state.currentChat?.id ? appStateContext?.state.currentChat?.id : undefined
-                  }
-                />
-                {
-                  type == ChatType.Generate && (
-                    <CommandBarButton
-                    role="button"
-                    styles={{
-                      icon: {
-                        color: '#FFFFFF'
-                      },
-                      iconDisabled: {
-                        color: '#BDBDBD !important'
-                      }, 
-                      root: {
-                        color: '#FFFFFF',
-                        background: '#1367CF'
-                      },
-                      rootDisabled: {
-                        background: '#F0F0F0'
-                      }
-                    }}
-                    className={styles.generateDocumentIcon
-                    }
-                    iconProps={{ iconName: 'Edit' }}
-                    onClick={generateDocument} //Update for Document Generation
-                    disabled={disabledButton()}
-                    aria-label="generate template"
-                    text='Generate'
-                  />  
-                  ) 
+              <QuestionInput
+                clearOnSend
+                placeholder="Type a new question..."
+                disabled={isLoading}
+                onSend={(question, id) => {
+                  appStateContext?.state.isCosmosDBAvailable?.cosmosDB
+                    ? makeApiRequestWithCosmosDB(question, id)
+                    : makeApiRequestWithoutCosmosDB(question, id)
+                }}
+                conversationId={
+                  appStateContext?.state.currentChat?.id ? appStateContext?.state.currentChat?.id : undefined
                 }
-              </Stack>
+              />
             </Stack>
           {/* Citation Panel */}
           {messages && messages.length > 0 && isCitationPanelOpen && activeCitation && (

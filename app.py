@@ -15,6 +15,8 @@ from quart import (
 )
 
 from openai import AsyncAzureOpenAI
+from azure.search.documents import SearchClient
+from azure.core.credentials import AzureKeyCredential
 from azure.identity.aio import (
     DefaultAzureCredential,
     get_bearer_token_provider
@@ -153,6 +155,19 @@ def init_openai_client():
         azure_openai_client = None
         raise e
 
+def init_ai_search_client():
+    client = None
+    
+    try:
+        endpoint = app_settings.datasource.endpoint
+        key_credential = app_settings.datasource.key
+        index_name = app_settings.datasource.index
+
+        client = SearchClient(endpoint=endpoint, index_name=index_name, credential=AzureKeyCredential(key_credential))
+        return client
+    except Exception as e:
+        logging.exception("Exception in Azure AI Client initialization", e)
+        raise e
 
 def init_cosmosdb_client():
     cosmos_conversation_client = None
@@ -185,13 +200,21 @@ def init_cosmosdb_client():
 
 
 def prepare_model_args(request_body, request_headers):
+    template_chat_system_prompt = ('Generate a template for a document given a user description of the template. Do not include any other commentary or description.' +
+    'Respond with a json object in the format containing a list of section information {{"template": [{"section_title": string, "section_description": string}]}}.' +
+    'Example: {"template": [{"section_title": "Introduction", "section_description": "This section introduces the document."}, {"section_title": "Section 2", "section_description": "This is section 2."}]}.' +
+    'If the user provides a message that is not related to modifying the template, respond asking the user to go to the Browse tab to chat with documents.')
     request_messages = request_body.get("messages", [])
+    
+    # template chat should only respond to messages for template modification
+    system_message = app_settings.azure_openai.system_message if not ("chat_type" in request_body and request_body["chat_type"] == "template") else template_chat_system_prompt
+
     messages = []
     if not app_settings.datasource:
         messages = [
             {
                 "role": "system",
-                "content": app_settings.azure_openai.system_message
+                "content": system_message
             }
         ]
 
@@ -833,17 +856,6 @@ async def ensure_cosmos():
             )
         else:
             return jsonify({"error": "CosmosDB is not working"}), 500
-
-@bp.route("/generate_template", methods=["POST"])
-async def generate_template():
-    ## check request for conversation_id
-    request_json = await request.get_json()
-    try:
-        template = await generate_template(request_json["messages"])
-        return jsonify(template), 200
-    except Exception as e:
-        logging.exception("Exception in /history/clear_messages")
-        return jsonify({"error": str(e)}), 500
     
 @bp.route("/extract_template_from_image", methods=["POST"])
 async def extract_template_from_image():
@@ -876,6 +888,15 @@ async def generate_section_content():
         logging.exception("Exception in /history/clear_messages")
         return jsonify({"error": str(e)}), 500
 
+@bp.route("/document/<documentId>")
+async def get_document(documentId):
+    try:
+        document = retrieve_document(documentId)
+        return jsonify(document), 200
+    except Exception as e:
+        logging.exception("Exception in /history/clear_messages")
+        return jsonify({"error": str(e)}), 500
+
 async def generate_title(conversation_messages):
     ## make sure the messages are sorted by _ts descending
     title_prompt = 'Summarize the conversation so far into a 4-word or less title. Do not use any quotation marks or punctuation. Respond with a json object in the format {{"title": string}}. Do not include any other commentary or description.'
@@ -896,28 +917,6 @@ async def generate_title(conversation_messages):
         return title
     except Exception as e:
         return messages[-2]["content"]
-    
-async def generate_template(conversation_messages):
-    template_prompt = ('Generate a template for a document given a user description of the template. Do not include any other commentary or description.' +
-    'Respond with a json object in the format containing a list of section information {{"template": [{"section_title": string, "section_description": string}]}}.' +
-    'Example: {"template": [{"section_title": "Introduction", "section_description": "This section introduces the document."}, {"section_title": "Section 2", "section_description": "This is section 2."}]}.')
-
-    messages = [
-        {"role": msg["role"], "content": msg["content"]}
-        for msg in conversation_messages
-    ]
-    messages.append({"role": "user", "content": template_prompt})
-
-    try:
-        azure_openai_client = init_openai_client()
-        response = await azure_openai_client.chat.completions.create(
-            model=app_settings.azure_openai.model, messages=messages, temperature=1
-        )
-
-        template = json.loads(response.choices[0].message.content)
-        return template
-    except Exception as e:
-        raise e
     
 async def extract_template_from_image(image_url):
     template_prompt = """You are an assistant that can look at an image of a document
@@ -972,8 +971,6 @@ async def extract_template_from_image(image_url):
             model=app_settings.azure_openai.model, messages=messages, temperature=0
         )
 
-        print(response.choices[0].message.content)
-
         template = json.loads(response.choices[0].message.content)
         return template
     except Exception as e:
@@ -1006,6 +1003,15 @@ async def generate_section_content(request_json):
         template = json.loads(response.choices[0].message.content)
         return template
     except Exception as e:
+        raise e
+    
+def retrieve_document(id):
+    try:
+        search_client = init_ai_search_client()
+        document = search_client.get_document(id)
+        return document
+    except Exception as e:
+        logging.exception("Exception in retrieve_document")
         raise e
 
 app = create_app()

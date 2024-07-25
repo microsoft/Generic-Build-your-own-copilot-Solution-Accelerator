@@ -1,0 +1,80 @@
+.container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.landingRoot {
+    flex: 1;
+    display: flex;
+    margin-top: 0px;
+    margin-bottom: 20px;
+    margin-left: 20px;
+    margin-right: 20px;
+    gap: 5px;
+}
+
+.landingContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: radial-gradient(108.78% 108.78% at 50.02% 19.78%, #ffffff 57.29%, #eef6fe 100%);
+    box-shadow:
+        0px 2px 4px rgba(0, 0, 0, 0.14),
+        0px 0px 2px rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    overflow-y: auto;
+    max-height: calc(100vh - 100px);
+}
+
+.chatEmptyState {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.chatEmptyStateTitle {
+    font-style: normal;
+    font-weight: 700;
+    font-size: 36px;
+    display: flex;
+    align-items: flex-end;
+    text-align: center;
+    line-height: 24px;
+    margin-top: 36px;
+    margin-bottom: 0px;
+}
+
+.chatEmptyStateSubtitle {
+    margin-top: 20px;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 150%;
+    align-items: flex-end;
+    text-align: center;
+    letter-spacing: -0.01em;
+    color: #616161;
+}
+
+.chatIcon {
+    height: 62px;
+    width: auto;
+}
+
+.featureCardContainer {
+    gap: 20px;
+    display: flex;
+}
+
+@media (max-width: 600px) {
+    .featureCardContainer {
+      flex-direction: column; /* Stack cards vertically */
+      align-items: center;
+      gap: 10px; /* Smaller gap for small screens */
+    }
+}

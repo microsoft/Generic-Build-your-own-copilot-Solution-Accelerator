@@ -1,0 +1,37 @@
+.sidebarContainer {
+    height: 100%;
+    border-left: 2px #EDEBE9 solid;
+}
+
+.avatarContainer {
+    border-bottom: 2px #EDEBE9 solid;
+    justify-content: center;
+    align-items: 'center';
+    padding: 4px;
+}
+
+.navigationContainer {
+    width: '4rem';
+    flex-direction: 'column';
+    justify-content: 'flex-start';
+    align-items: 'center';
+    padding-top: '1rem';
+}
+
+.navigationButton {
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    margin: 8px;
+}
+
+.navigationButton:hover {
+    background-color: #EDEBE9;
+    cursor: pointer;
+}
+
+.navigationButton > p {
+    color: #0078D4;
+    font-size: 12px;
+    margin: 0;
+}

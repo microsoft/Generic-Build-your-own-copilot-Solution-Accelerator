@@ -200,13 +200,22 @@ def init_cosmosdb_client():
 
 
 def prepare_model_args(request_body, request_headers):
+    template_chat_system_prompt = ('Generate a template for a document given a user description of the template. Do not include any other commentary or description.' +
+    'Respond with a json object in the format containing a list of section information {{"template": [{"section_title": string, "section_description": string}]}}.' +
+    'Example: {"template": [{"section_title": "Introduction", "section_description": "This section introduces the document."}, {"section_title": "Section 2", "section_description": "This is section 2."}]}.' +
+    'If the user provides a message that is not related to modifying the template, respond asking the user to go to the Browse tab to chat with documents.')
     request_messages = request_body.get("messages", [])
+    
+    # template chat should only respond to messages for template modification
+    system_message = app_settings.azure_openai.system_message if not ("chat_type" in request_body and request_body["chat_type"] == "template") else template_chat_system_prompt
+    print(system_message)
+
     messages = []
     if not app_settings.datasource:
         messages = [
             {
                 "role": "system",
-                "content": app_settings.azure_openai.system_message
+                "content": system_message
             }
         ]
 

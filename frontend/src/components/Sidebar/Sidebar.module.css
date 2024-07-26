@@ -23,6 +23,20 @@
     align-items: center;
     border-radius: 8px;
     margin: 8px;
+
+    padding: 8px, 8px, 8px, 8px;
+    box-shadow: 0px 0.6px 1.8px 0px #0000001C;
+    box-shadow: 0px 3.2px 7.2px 0px #00000021;
+    background-color: #F3F2F1;
+}
+
+.navigationButtonActive {
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    margin: 8px;
+
+    padding: 8px, 8px, 8px, 8px;
 }
 
 .navigationButton:hover {
@@ -31,7 +45,17 @@
 }
 
 .navigationButton > p {
-    color: #0078D4;
     font-size: 12px;
     margin: 0;
+    font-weight: 400;
+    line-height: 16px;
+    text-align: center;
+}
+
+.navigationButtonActive > p {
+    font-size: 12px;
+    margin: 0;
+    font-weight: 400;
+    line-height: 16px;
+    text-align: center;
 }

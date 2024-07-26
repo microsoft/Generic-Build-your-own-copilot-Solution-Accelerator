@@ -57,7 +57,6 @@ const Sidebar = (): JSX.Element => {
   // determine url from react-router-dom  
   const determineView = () => {
     const url = location.pathname
-    console.log('url: ', url)
 
     const urlArr = url.split('/')
     const currentUrl = urlArr[urlArr.length - 1]
@@ -65,7 +64,6 @@ const Sidebar = (): JSX.Element => {
   }
 
   const currentView = determineView()
-  console.log('currentView: ', currentView)
 
   return (
     <Stack className={styles.sidebarContainer}>

@@ -1,15 +1,16 @@
 import { chatHistorySampleData } from '../constants/chatHistory'
 
-import { ChatMessage, Conversation, ConversationRequest, SectionGenerateRequest, CosmosDBHealth, CosmosDBStatus, UserInfo } from './models'
+import { ChatMessage, Conversation, ConversationRequest, SectionGenerateRequest, CosmosDBHealth, CosmosDBStatus, UserInfo, ChatType } from './models'
 
-export async function conversationApi(options: ConversationRequest, abortSignal: AbortSignal): Promise<Response> {
+export async function conversationApi(options: ConversationRequest, abortSignal: AbortSignal, chatType: ChatType = ChatType.Browse): Promise<Response> {
   const response = await fetch('/conversation', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      messages: options.messages
+      messages: options.messages,
+      chat_type: chatType
     }),
     signal: abortSignal
   })

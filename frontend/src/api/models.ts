@@ -180,5 +180,5 @@ export enum Feedback {
 
 export enum ChatType {
   Browse = 'browse',
-  Generate = 'generate'
+  Template = 'template'
 }

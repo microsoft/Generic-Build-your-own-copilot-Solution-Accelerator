@@ -24,7 +24,7 @@ export default function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Landing />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/generate" element={<Chat type={ChatType.Generate} />} />
+            <Route path="/generate" element={<Chat type={ChatType.Template} />} />
             <Route path="/draft" element={<Draft />} />
             <Route path="*" element={<NoPage />} />
           </Route>

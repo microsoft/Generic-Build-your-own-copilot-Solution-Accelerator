@@ -74,25 +74,6 @@ export const appStateReducer = (state: AppState, action: Action): AppState => {
           [action.payload.answerId]: action.payload.feedback
         }
       }
-    case 'UPDATE_SECTION':
-      const sectionIdx = action.payload.sectionIdx
-
-      if (!state.draftedDocument.sections || sectionIdx >= state.draftedDocument.sections.length) {
-        console.error('Section not found')
-        return state
-      }
-
-      // create new sections list
-      const updatedSections = [...state.draftedDocument.sections]
-      updatedSections[sectionIdx] = action.payload.section
-
-      return {
-        ...state,
-        draftedDocument: {
-          ...state.draftedDocument,
-          sections: updatedSections
-        }
-      }
     default:
       return state
   }

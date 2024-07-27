@@ -6,7 +6,6 @@ import {
   Conversation,
   CosmosDBHealth,
   CosmosDBStatus,
-  DraftedDocument,
   Section,
   Feedback,
   FrontendSettings,
@@ -26,7 +25,6 @@ export interface AppState {
   currentChat: Conversation | null
   frontendSettings: FrontendSettings | null
   feedbackState: { [answerId: string]: Feedback.Neutral | Feedback.Positive | Feedback.Negative }
-  draftedDocument: DraftedDocument
 }
 
 export type Action =
@@ -60,18 +58,7 @@ const initialState: AppState = {
     status: CosmosDBStatus.NotConfigured
   },
   frontendSettings: null,
-  feedbackState: {},
-  draftedDocument: {
-    title: "Financial Analysis Report",
-    sections: [
-      { title: 'Executive Summary', content: '', description: "Provides a brief overview of the stock recommendation, summarizing key points and main reasons for the recommendation." },
-      { title: 'Company Overview', content: '', description: "Details information about the company's business model, products or services, market position, and recent developments." },
-      { title: 'Industry Analysis', content: '', description: "Analyzes the industry in which the company operates, including market trends, competition, and regulatory environment." },
-      { title: 'Financial Analysis', content: '', description: "Presents a thorough analysis of the company's financial health, including income statements, balance sheets, cash flow statements, and key financial ratios." },
-      { title: 'Valuation', content: '', description: "Provides a valuation of the company's stock using various methods such as discounted cash flow (DCF), price-to-earnings (P/E) ratio, and other relevant valuation models." },
-      { title: 'Risk Analysis', content: '', description: "Identifies and evaluates potential risks that could impact the company's performance and stock price, such as market risks, operational risks, and financial risks." },
-    ]
-  }
+  feedbackState: {}
 }
 
 export const AppStateContext = createContext<

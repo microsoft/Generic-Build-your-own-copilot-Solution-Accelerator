@@ -7,7 +7,7 @@ const TitleCard = () => {
     const appStateContext = React.useContext(AppStateContext)
 
     if (!appStateContext) { throw new Error('useAppState must be used within a AppStateProvider') }
-    const title = appStateContext?.state.draftedDocument.title
+    const title = "Replace with your own template name"
 
     return (
         <Stack style={{ marginBottom: '1rem' }} >

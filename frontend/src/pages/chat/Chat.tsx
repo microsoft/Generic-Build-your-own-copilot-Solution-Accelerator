@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useContext, useLayoutEffect } from 'react'
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { CommandBarButton, IconButton, Dialog, DialogType, Stack } from '@fluentui/react'
 import { SquareRegular, ShieldLockRegular, ErrorCircleRegular } from '@fluentui/react-icons'
 
@@ -33,7 +33,11 @@ import {
   CosmosDBStatus,
   ErrorMessage,
   ExecResults,
-  AzureSqlServerCodeExecResult
+  AzureSqlServerCodeExecResult,
+  Section,
+  DraftedDocument,
+  SectionGenerateRequest,
+  sectionGenerate
 } from "../../api";
 import { Answer } from "../../components/Answer";
 import { QuestionInput } from "../../components/QuestionInput";
@@ -60,12 +64,14 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [showLoadingMessage, setShowLoadingMessage] = useState<boolean>(false)
+  const [isProcessingTemplate, setIsProcessingTemplate] = useState<boolean>(false)
   const [activeCitation, setActiveCitation] = useState<Citation>()
   const [isCitationPanelOpen, setIsCitationPanelOpen] = useState<boolean>(false)
   const [isIntentsPanelOpen, setIsIntentsPanelOpen] = useState<boolean>(false)
   const abortFuncs = useRef([] as AbortController[])
   const [showAuthMessage, setShowAuthMessage] = useState<boolean | undefined>()
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [draftDocument, setDraftDocument] = useState<DraftedDocument>()
   const [execResults, setExecResults] = useState<ExecResults[]>([])
   const [processMessages, setProcessMessages] = useState<messageStatus>(messageStatus.NotRunning)
   const [clearingChat, setClearingChat] = useState<boolean>(false)
@@ -90,18 +96,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   const NO_CONTENT_ERROR = 'No content in messages object.'
 
   const refreshContent = () => {
-    console.log("Refreshing content...");
-    setIsLoading(false);
-    setShowLoadingMessage(false);
-    setActiveCitation(undefined);
-    setIsCitationPanelOpen(false);
-    setIsIntentsPanelOpen(false);
-    setShowAuthMessage(undefined);
-    setMessages([]);
-    setExecResults([]);
-    setProcessMessages(messageStatus.NotRunning);
-    setClearingChat(false);
-    setErrorMsg(null);
+    newChat();
   }
 
   useEffect(() => {
@@ -149,9 +144,46 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     }
   }
 
+  const navigate = useNavigate();
+
+  const navigateToDraftPage = (parameter: DraftedDocument) => {
+    navigate('/draft', { state: { parameter } });
+  };
+  
   let assistantMessage = {} as ChatMessage
   let toolMessage = {} as ChatMessage
   let assistantContent = ''
+
+  const processTemplateResponse = () => {
+    if (assistantMessage.role === ASSISTANT) {
+      const lines = assistantContent.split('\n');
+      let jsonString = '';
+
+      lines.forEach(line => {
+        if (!line.includes('json') && !line.includes('```')) {
+          jsonString += line.trim();
+        }
+      });
+      try {
+        const jsonObject = JSON.parse(jsonString);
+  
+        const sections: Section[] = jsonObject.template.map((item: any) => ({
+          title: item.section_title,
+          content: "", // Generated when user selects 'Generate' button
+          description: item.section_description
+        }));
+  
+        const draftedTemplate: DraftedDocument = {
+          title: "Enter a draft document title",
+          sections: sections
+        };
+  
+        setDraftDocument(draftedTemplate);
+      } catch (e) {
+        console.error('Failed to parse JSON:', e);
+      }
+    }    
+  }
 
   const processResultMessage = (resultMessage: ChatMessage, userMessage: ChatMessage, conversationId?: string) => {
     if (resultMessage.content.includes('all_exec_results')) {
@@ -230,7 +262,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
 
     let result = {} as ChatResponse
     try {
-      const response = await conversationApi(request, abortController.signal)
+      const response = await conversationApi(request, abortController.signal, type)
       if (response?.body) {
         const reader = response.body.getReader()
 
@@ -276,6 +308,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
         conversation.messages.push(toolMessage, assistantMessage)
         appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: conversation })
         setMessages([...messages, toolMessage, assistantMessage])
+        if (type === ChatType.Template) processTemplateResponse()
       }
     } catch (e) {
       if (!abortController.signal.aborted) {
@@ -312,6 +345,8 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }
 
   const makeApiRequestWithCosmosDB = async (question: string, conversationId?: string) => {
+    // TODO - Currently works with Chat with your data. Need to update to work with the
+    // ChatType.Template. 
     setIsLoading(true)
     setShowLoadingMessage(true)
     const abortController = new AbortController()
@@ -618,8 +653,26 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     return tryGetRaiPrettyError(errorMessage)
   }
 
-  const generateDocument = () => {
-
+  const getTemplateContent = async () => {
+    if (draftDocument !== undefined) {
+      for (const s of draftDocument.sections) {
+        const sectionTitle = s.title
+        const sectionDescription = s.description
+        const sectionGenerateRequest: SectionGenerateRequest = { sectionTitle, sectionDescription }
+        const response = await sectionGenerate(sectionGenerateRequest)
+        const responseBody = await response.json()
+        s.content = responseBody.section_content
+      }
+      setDraftDocument(draftDocument)
+    }
+  }
+  const generateDocument = async () => {
+    if (draftDocument !== undefined) {
+      setIsProcessingTemplate(true)
+      await getTemplateContent()
+      setIsProcessingTemplate(false)
+      navigateToDraftPage(draftDocument);
+    }
   }
 
   const newChat = () => {
@@ -773,6 +826,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
 
   return (
     <>
+      {isProcessingTemplate && <div className={styles.loadingOverlay}><div className={styles.spinner}>Generating template...</div></div>}
       {showAuthMessage ? (
         <Stack className={styles.chatEmptyState}>
           <ShieldLockRegular
@@ -951,7 +1005,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                   }
                 />
                 {
-                  type == ChatType.Generate && (
+                  type == ChatType.Template && (
                     <CommandBarButton
                     role="button"
                     styles={{

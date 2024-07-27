@@ -383,6 +383,24 @@ a {
   cursor: pointer;
 }
 
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.459); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Ensure it is above other content */
+}
+
+.spinner {
+  font-size: 24px;
+  color: #ccc;
+}
+
 @media (max-width: 480px) {
   .chatInput {
     width: 90%;

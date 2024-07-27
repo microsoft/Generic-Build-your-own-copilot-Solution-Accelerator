@@ -1,13 +1,14 @@
 import styles from './Draft.module.css'
-import { useContext } from 'react'
-import { AppStateContext } from '../../state/AppProvider'
+import { useLocation } from 'react-router-dom';
 import TitleCard from '../../components/DraftCards/TitleCard'
 import SectionCard from '../../components/DraftCards/SectionCard'
-
+import { DraftedDocument } from '../../api'
 
 const Draft = (): JSX.Element => {
-  const appStateContext = useContext(AppStateContext)
 
+  const location = useLocation();
+  const { parameter } = location.state as { parameter: DraftedDocument };
+  
   return (
     <div className={styles.container}>
       <div style={{ display: 'flex', justifyContent: 'start', alignItems: 'center' }}>
@@ -16,8 +17,8 @@ const Draft = (): JSX.Element => {
 
       <TitleCard />
       
-      {(appStateContext?.state.draftedDocument.sections ?? []).map((_, index) => (
-          <SectionCard key={index} sectionIdx={index} />
+      {(parameter?.sections ?? []).map((_, index) => (
+          <SectionCard key={index} section={_} />
       ))}
     </div>
   )

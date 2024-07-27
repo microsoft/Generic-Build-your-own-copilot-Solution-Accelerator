@@ -15,16 +15,16 @@
       "args": [
           "run",
           "--no-reload",
-          "-p 50505"
+          "-p 5000"
       ],
       "console": "integratedTerminal",
       "justMyCode": false
     },
     {
-      "type": "chrome",
+      "type": "msedge",
       "request": "launch",
-      "name": "Frontend: Launch Chrome debugger",
-      "url": "http://127.0.0.1:50505",
+      "name": "Frontend: Launch Edge debugger",
+      "url": "http://127.0.0.1:5000",
       "webRoot": "${workspaceFolder}/frontend",
       "smartStep": true
     }

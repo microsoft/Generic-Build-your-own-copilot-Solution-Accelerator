@@ -1,17 +1,18 @@
 import { TextField, Stack } from "@fluentui/react"
 import React from "react"
-import { AppStateContext } from "../../state/AppProvider"
 
+interface TitleCardProps {
+    onTitleChange: (value: string) => void;
+}
 
-const TitleCard = () => {
-    const appStateContext = React.useContext(AppStateContext)
-
-    if (!appStateContext) { throw new Error('useAppState must be used within a AppStateProvider') }
-    const title = "Replace with your own template name"
+const TitleCard: React.FC<TitleCardProps> = ({ onTitleChange }) => {
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        onTitleChange(event.target.value);
+    };
 
     return (
         <Stack style={{ marginBottom: '1rem' }} >
-            <TextField label="Title" value={title} />
+            <input type="text" onChange={handleChange} placeholder="Enter title here" />
         </Stack>
     )
 }

@@ -10,7 +10,9 @@ import { Textarea, makeStyles, Text, Popover, PopoverSurface, PopoverTrigger, Bu
 
 
 interface SectionCardProps {
-    section: Section
+    section: Section;
+    onValueChange: (key: number, value: string) => void;
+    index: number;
 }
 
 const useStyles = makeStyles({
@@ -81,7 +83,7 @@ const useStyles = makeStyles({
     
 });
 
-const SectionCard = ({ section }: SectionCardProps) => {
+const SectionCard: React.FC<SectionCardProps> = ({ section, onValueChange, index }) => {
     const classes = useStyles()
     const [isLoading, setIsLoading] = React.useState(false)
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false)
@@ -91,11 +93,12 @@ const SectionCard = ({ section }: SectionCardProps) => {
     const sectionDescription = section.description
     const sectionContent = section.content
 
-    const handleOpenChange: PopoverProps["onOpenChange"] = (e, data) => setIsPopoverOpen(data.open || false);
-
-    const handleTextareaChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        onValueChange(index, event.target.value);
         setTextareaValue(event.target.value);
-      };
+    };
+
+    const handleOpenChange: PopoverProps["onOpenChange"] = (e, data) => setIsPopoverOpen(data.open || false);
 
     async function fetchSectionContent(sectionTitle: string, sectionDescription: string) {
         setIsLoading(true)
@@ -169,7 +172,7 @@ const SectionCard = ({ section }: SectionCardProps) => {
                         size="large"
                         defaultValue={sectionContent}
                         value={textareaValue}
-                        onChange={handleTextareaChange}                        
+                        onChange={handleChange}
                         textarea={{ className: classes.sectionContentTextarea }}
                         style={{ width: '100%', height: '100%' }}
                     />

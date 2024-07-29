@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export NODE_OPTIONS=--max_old_space_size=16384
+export NODE_OPTIONS=--max_old_space_size=8192
 
 echo ""
 echo "Restoring frontend npm packages"
@@ -27,7 +27,7 @@ cd ..
 echo ""
 echo "Starting backend"
 echo ""
-./.venv/bin/python -m quart run --port=5000 --host=127.0.0.1 --reload
+./.venv/bin/python -m quart run --port=50505 --host=127.0.0.1 --reload
 if [ $? -ne 0 ]; then
     echo "Failed to start backend"
     exit $?

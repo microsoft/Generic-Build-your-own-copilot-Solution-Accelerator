@@ -1,30 +1,51 @@
 {
-  "name": "Azure Developer CLI",
-  "image": "mcr.microsoft.com/devcontainers/python:3.10",
-  "features": {
-      "ghcr.io/devcontainers/features/node:1": {
-          "version": "16",
-          "nodeGypDependencies": false
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Sample App Backend",
+      "type": "python",
+      "request": "launch",
+      "module": "quart",
+      "cwd": "${workspaceFolder}",
+      "env": {
+          "QUART_APP": "app:app",
+          "QUART_ENV": "development",
+          "QUART_DEBUG": "0"
       },
+<<<<<<< HEAD
 <<<<<<< HEAD
       "args": [
           "run",
           "--no-reload",
           "-p 5000"
+=======
+      "args": [
+          "run",
+          "--no-reload",
+          "-p 50505"
+>>>>>>> c2d8a3a (update json)
       ],
       "console": "integratedTerminal",
       "justMyCode": false
     },
     {
+<<<<<<< HEAD
       "type": "msedge",
       "request": "launch",
       "name": "Frontend: Launch Edge debugger",
       "url": "http://127.0.0.1:5000",
+=======
+      "type": "chrome",
+      "request": "launch",
+      "name": "Frontend: Launch Chrome debugger",
+      "url": "http://127.0.0.1:50505",
+>>>>>>> c2d8a3a (update json)
       "webRoot": "${workspaceFolder}/frontend",
       "smartStep": true
     }
   ]
 }
+<<<<<<< HEAD
 =======
       "ghcr.io/devcontainers/features/azure-cli:1.0.8": {},
       "ghcr.io/azure/azure-dev/azd:latest": {}
@@ -52,3 +73,5 @@
   }
 }
 >>>>>>> 7815b80 (reset launch.json)
+=======
+>>>>>>> c2d8a3a (update json)

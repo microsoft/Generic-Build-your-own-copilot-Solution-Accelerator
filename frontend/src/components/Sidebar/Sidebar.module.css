@@ -39,6 +39,19 @@
     padding: 8px, 8px, 8px, 8px;
 }
 
+.navigationButtonDisabled {
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    margin: 8px;
+
+    padding: 8px, 8px, 8px, 8px;
+    background: var(--Colors-Alpha-Black-5, #0000000D);
+
+    box-shadow: 0px 0px 2px 0px #0000003D;
+    box-shadow: 0px 2px 4px 0px #00000047;
+}
+
 .navigationButton:hover {
     background-color: #EDEBE9;
     cursor: pointer;

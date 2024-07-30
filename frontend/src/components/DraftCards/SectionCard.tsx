@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react'
 import { Stack } from "@fluentui/react"
+import { AppStateContext } from '../../state/AppProvider'
 import { sectionGenerate, SectionGenerateRequest } from '../../api';
 import { Section } from '../../api/models'
 import { Spinner } from "@fluentui/react";
@@ -10,9 +11,7 @@ import { Textarea, makeStyles, Text, Popover, PopoverSurface, PopoverTrigger, Bu
 
 
 interface SectionCardProps {
-    section: Section;
-    onValueChange: (key: number, value: string) => void;
-    index: number;
+    sectionIdx: number
 }
 
 const useStyles = makeStyles({
@@ -83,34 +82,41 @@ const useStyles = makeStyles({
     
 });
 
-const SectionCard: React.FC<SectionCardProps> = ({ section, onValueChange, index }) => {
+const SectionCard = ({ sectionIdx }: SectionCardProps) => {
     const classes = useStyles()
     const [isLoading, setIsLoading] = React.useState(false)
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false)
-    const [textareaValue, setTextareaValue] = useState(section.content);
+    const appStateContext = React.useContext(AppStateContext)
+
+    if (!appStateContext) { throw new Error('useAppState must be used within a AppStateProvider') }
+    
+    const section = appStateContext.state.draftedDocument?.sections[sectionIdx]
+    if (!section) { throw new Error('Section not found') }
 
     const sectionTitle = section.title
     const sectionDescription = section.description
     const sectionContent = section.content
-
-    const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-        onValueChange(index, event.target.value);
-        setTextareaValue(event.target.value);
-    };
 
     const handleOpenChange: PopoverProps["onOpenChange"] = (e, data) => setIsPopoverOpen(data.open || false);
 
     async function fetchSectionContent(sectionTitle: string, sectionDescription: string) {
         setIsLoading(true)
         const sectionGenerateRequest: SectionGenerateRequest = { sectionTitle, sectionDescription }
+        
         const response = await sectionGenerate(sectionGenerateRequest)
         const responseBody = await response.json()
-        setTextareaValue(responseBody.section_content)
+
+        const updatedSection: Section = { title: sectionTitle, description: sectionDescription, content: responseBody.section_content }
+        appStateContext?.dispatch({ type: 'UPDATE_SECTION', payload: { sectionIdx: sectionIdx, section: updatedSection } })
+
         setIsLoading(false)
     }
 
+    if (sectionContent === '' && !isLoading) { fetchSectionContent(sectionTitle, sectionDescription) }
+
     return (
         <Stack
+            // add margin bottom unless it's the last section
             style={{ marginBottom: '1rem' }}
         >
             <Stack horizontal horizontalAlign="space-between" verticalAlign="center" style={{ marginBottom: '1rem' }} >
@@ -171,8 +177,12 @@ const SectionCard: React.FC<SectionCardProps> = ({ section, onValueChange, index
                         appearance="outline"
                         size="large"
                         defaultValue={sectionContent}
-                        value={textareaValue}
-                        onChange={handleChange}
+                        
+                        onChange={(e, data) => {
+                            const updatedSection: Section = { title: sectionTitle, description: sectionDescription, content: data.value || '' }
+                            appStateContext?.dispatch({ type: 'UPDATE_SECTION', payload: { sectionIdx: sectionIdx, section: updatedSection } })
+                        }}
+
                         textarea={{ className: classes.sectionContentTextarea }}
                         style={{ width: '100%', height: '100%' }}
                     />

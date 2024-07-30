@@ -147,7 +147,9 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   const navigate = useNavigate();
 
   const navigateToDraftPage = (parameter: DraftedDocument) => {
-    navigate('/draft', { state: { parameter } });
+    // update DraftedDocument in the state
+    appStateContext?.dispatch({ type: 'UPDATE_DRAFTED_DOCUMENT', payload: parameter });
+    navigate('/draft');
   };
   
   let assistantMessage = {} as ChatMessage
@@ -666,11 +668,9 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
       setDraftDocument(draftDocument)
     }
   }
+
   const generateDocument = async () => {
     if (draftDocument !== undefined) {
-      setIsProcessingTemplate(true)
-      await getTemplateContent()
-      setIsProcessingTemplate(false)
       navigateToDraftPage(draftDocument);
     }
   }
@@ -1023,8 +1023,8 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                         background: '#F0F0F0'
                       }
                     }}
-                    className={styles.generateDocumentIcon
-                    }
+
+                    className={styles.generateDocumentIcon}
                     iconProps={{ iconName: 'Edit' }}
                     onClick={generateDocument} //Update for Document Generation
                     disabled={disabledButton()}

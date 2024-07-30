@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import styles from './Draft.module.css'
 import { useLocation } from 'react-router-dom';
 import TitleCard from '../../components/DraftCards/TitleCard'
@@ -6,13 +6,18 @@ import SectionCard from '../../components/DraftCards/SectionCard'
 import { DraftedDocument } from '../../api'
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
+import { AppStateContext } from "../../state/AppProvider";
+
 
 const Draft = (): JSX.Element => {
-
+  const appStateContext = useContext(AppStateContext)
   const location = useLocation();
-  const { parameter } = location.state as { parameter: DraftedDocument };
-  const [sections, setSections] = useState(parameter.sections);
+  const { generateContentOnLoad } = location.state as { generateContentOnLoad: Boolean };
   const [title, setTitle] = useState('');
+
+  // get draftedDocument from context
+  const draftedDocument = appStateContext?.state.draftedDocument;
+  const sections = draftedDocument?.sections ?? [];
 
   const exportToWord = () => {
     const doc = new Document({
@@ -64,13 +69,6 @@ const Draft = (): JSX.Element => {
     });
   };
 
-  const handleValueChange = (key: number, value: string) => {
-    const updatedSections = sections.map((section, index) =>
-      index === key ? { ...section, content: value } : section
-    );
-    setSections(updatedSections);
-  };
-
   const handleTitleChange = (newTitle: string) => {
     setTitle(newTitle);
   };
@@ -83,10 +81,7 @@ const Draft = (): JSX.Element => {
       </div>
 
       <TitleCard onTitleChange={handleTitleChange} />
-      
-      {sections.map((section, index) => (
-        <SectionCard key={index} section={section} onValueChange={handleValueChange} index={index} />
-      ))}
+      {(sections ?? []).map((_, index) => (<SectionCard key={index} sectionIdx={index} />))}
     </div>
   )
 }

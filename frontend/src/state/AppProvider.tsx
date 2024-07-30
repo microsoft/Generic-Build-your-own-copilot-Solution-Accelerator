@@ -6,6 +6,7 @@ import {
   Conversation,
   CosmosDBHealth,
   CosmosDBStatus,
+  DraftedDocument,
   Section,
   Feedback,
   FrontendSettings,
@@ -25,6 +26,7 @@ export interface AppState {
   currentChat: Conversation | null
   frontendSettings: FrontendSettings | null
   feedbackState: { [answerId: string]: Feedback.Neutral | Feedback.Positive | Feedback.Negative }
+  draftedDocument: DraftedDocument | null
 }
 
 export type Action =
@@ -46,6 +48,7 @@ export type Action =
     }
   | { type: 'GET_FEEDBACK_STATE'; payload: string }
   | { type: 'UPDATE_SECTION'; payload: { sectionIdx: number; section: Section } }
+  | { type: 'UPDATE_DRAFTED_DOCUMENT'; payload: DraftedDocument }
 
 const initialState: AppState = {
   isChatHistoryOpen: false,
@@ -58,7 +61,8 @@ const initialState: AppState = {
     status: CosmosDBStatus.NotConfigured
   },
   frontendSettings: null,
-  feedbackState: {}
+  feedbackState: {},
+  draftedDocument: null
 }
 
 export const AppStateContext = createContext<

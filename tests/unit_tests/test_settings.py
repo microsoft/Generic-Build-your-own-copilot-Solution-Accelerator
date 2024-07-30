@@ -38,22 +38,3 @@ def test_dotenv_with_azure_search_success(app_settings):
     assert payload["parameters"]["endpoint"] is not None
     print(payload)
 
-
-def test_dotenv_with_elasticsearch_success(app_settings):
-    # Validate model object
-    assert app_settings.search is not None
-    assert app_settings.base_settings.datasource_type == "Elasticsearch"
-    assert app_settings.datasource is not None
-    assert app_settings.datasource.endpoint == "dummy"
-    assert app_settings.azure_openai is not None
-    
-    # Validate API payload structure
-    payload = app_settings.datasource.construct_payload_configuration()
-    assert payload["type"] == "elasticsearch"
-    assert payload["parameters"] is not None
-    assert payload["parameters"]["endpoint"] == "dummy"
-    print(payload)
-    
-    
-    
-

@@ -7,24 +7,42 @@ import { AppStateContext } from '../../state/AppProvider'
 import { getUserInfo } from '../../api'
 import { useNavigate, useLocation } from 'react-router-dom'
 
+
+enum NavigationButtonStates {
+  Active = 'active',
+  Inactive = 'inactive',
+  Disabled = 'disabled'
+}
+
 interface NavigationButtonProps {
   text: string
-  isActive: boolean
+  buttonState: NavigationButtonStates
   onClick: () => void
 }
 
-const NavigationButton = ({ text, isActive, onClick }: NavigationButtonProps) => {
-  const fontColor = isActive ? '#367AF6' : '#BEBBB8'
+const NavigationButton = ({ text, buttonState, onClick }: NavigationButtonProps) => {
+  const fontColor = {
+    [NavigationButtonStates.Active]: '#367AF6',
+    [NavigationButtonStates.Inactive]: '#BEBBB8',
+    [NavigationButtonStates.Disabled]: '#797775'
+  }[buttonState]
+
   const iconElements: { [key: string]: JSX.Element } = {
     'Browse': <News28Regular color={fontColor}/>,
     'Generate': <Book28Regular color={fontColor}/>,
     'Draft': <Notepad28Regular color={fontColor}/>
   }
 
+  const buttonStyle = {
+    [NavigationButtonStates.Active]: styles.navigationButtonActive,
+    [NavigationButtonStates.Inactive]: styles.navigationButton,
+    [NavigationButtonStates.Disabled]: styles.navigationButtonDisabled
+  }[buttonState]
+
   const icon = iconElements[text]
 
   return (
-    <Stack onClick={onClick} className={isActive ? styles.navigationButtonActive : styles.navigationButton}>
+    <Stack onClick={buttonState === NavigationButtonStates.Inactive ? onClick : () => {}} className={buttonStyle}>
       <Button appearance="transparent"
         size="large"
         icon={icon}
@@ -65,15 +83,19 @@ const Sidebar = (): JSX.Element => {
 
   const currentView = determineView()
 
+  // inactive, disabled, active
+  var draftButtonState = NavigationButtonStates.Disabled
+  if (appStateContext?.state.draftedDocument) { draftButtonState = currentView === 'draft' ? NavigationButtonStates.Active : NavigationButtonStates.Inactive }
+
   return (
     <Stack className={styles.sidebarContainer}>
       <Stack horizontal className={styles.avatarContainer}>
         <Avatar color="colorful" name={name} />
       </Stack>
       <Stack className={styles.sidebarNavigationContainer}>
-        <NavigationButton text={"Browse"} isActive={currentView === 'chat'} onClick={() => { navigate("/chat") }} />
-        <NavigationButton text={"Generate"} isActive={currentView === 'generate'} onClick={() => { navigate("/generate") }} />
-        <NavigationButton text={"Draft"} isActive={currentView === 'draft'} onClick={() => { navigate("/draft") }} />
+        <NavigationButton text={"Browse"} buttonState={currentView === 'chat' ? NavigationButtonStates.Active : NavigationButtonStates.Inactive} onClick={() => { navigate("/chat") }} />
+        <NavigationButton text={"Generate"} buttonState={currentView === 'generate' ? NavigationButtonStates.Active : NavigationButtonStates.Inactive} onClick={() => { navigate("/generate") }} />
+        <NavigationButton text={"Draft"} buttonState={draftButtonState} onClick={() => { navigate("/draft") }} />
       </Stack>
     </Stack>
   )

@@ -51,6 +51,8 @@ export type Action =
   | { type: 'GET_FEEDBACK_STATE'; payload: string }
   | { type: 'UPDATE_SECTION'; payload: { sectionIdx: number; section: Section } }
   | { type: 'UPDATE_DRAFTED_DOCUMENT'; payload: DraftedDocument }
+  | { type: 'UPDATE_BROWSE_CHAT'; payload: Conversation | null }
+  | { type: 'UPDATE_GENERATE_CHAT'; payload: Conversation | null }
 
 const initialState: AppState = {
   isChatHistoryOpen: false,

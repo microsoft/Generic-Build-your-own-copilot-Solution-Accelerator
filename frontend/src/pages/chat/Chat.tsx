@@ -101,8 +101,14 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
 
   useEffect(() => {
     console.log('Route changed, refresh the contents');
-    refreshContent();
+
+    if (type === ChatType.Browse) {
+      appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: appStateContext?.state.browseChat });
+    } else {
+      appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: appStateContext?.state.generateChat });
+    }
   }, [location]);
+
 
   useEffect(() => {
     if (
@@ -697,6 +703,13 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     } else {
       setMessages([])
     }
+
+    if (type === ChatType.Browse) {
+      appStateContext?.dispatch({ type: 'UPDATE_BROWSE_CHAT', payload: appStateContext?.state.currentChat });
+    } else {
+      appStateContext?.dispatch({ type: 'UPDATE_GENERATE_CHAT', payload: appStateContext?.state.currentChat })
+    }
+
   }, [appStateContext?.state.currentChat])
 
   useLayoutEffect(() => {

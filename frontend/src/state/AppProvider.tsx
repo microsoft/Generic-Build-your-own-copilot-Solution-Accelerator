@@ -24,6 +24,8 @@ export interface AppState {
   chatHistory: Conversation[] | null
   filteredChatHistory: Conversation[] | null
   currentChat: Conversation | null
+  browseChat: Conversation | null
+  generateChat: Conversation | null
   frontendSettings: FrontendSettings | null
   feedbackState: { [answerId: string]: Feedback.Neutral | Feedback.Positive | Feedback.Negative }
   draftedDocument: DraftedDocument | null
@@ -56,6 +58,8 @@ const initialState: AppState = {
   chatHistory: null,
   filteredChatHistory: null,
   currentChat: null,
+  browseChat: null,
+  generateChat: null,
   isCosmosDBAvailable: {
     cosmosDB: false,
     status: CosmosDBStatus.NotConfigured

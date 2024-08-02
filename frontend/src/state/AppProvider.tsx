@@ -24,6 +24,8 @@ export interface AppState {
   chatHistory: Conversation[] | null
   filteredChatHistory: Conversation[] | null
   currentChat: Conversation | null
+  browseChat: Conversation | null
+  generateChat: Conversation | null
   frontendSettings: FrontendSettings | null
   feedbackState: { [answerId: string]: Feedback.Neutral | Feedback.Positive | Feedback.Negative }
   draftedDocument: DraftedDocument | null
@@ -49,6 +51,8 @@ export type Action =
   | { type: 'GET_FEEDBACK_STATE'; payload: string }
   | { type: 'UPDATE_SECTION'; payload: { sectionIdx: number; section: Section } }
   | { type: 'UPDATE_DRAFTED_DOCUMENT'; payload: DraftedDocument }
+  | { type: 'UPDATE_BROWSE_CHAT'; payload: Conversation | null }
+  | { type: 'UPDATE_GENERATE_CHAT'; payload: Conversation | null }
 
 const initialState: AppState = {
   isChatHistoryOpen: false,
@@ -56,6 +60,8 @@ const initialState: AppState = {
   chatHistory: null,
   filteredChatHistory: null,
   currentChat: null,
+  browseChat: null,
+  generateChat: null,
   isCosmosDBAvailable: {
     cosmosDB: false,
     status: CosmosDBStatus.NotConfigured

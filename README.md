@@ -1,205 +1,69 @@
-# [Preview] Sample Chat App with AOAI
+>Legal Notice: This is a pre-release and preview solution and therefore may not work correctly. Certain features may be missing or disabled. Microsoft may change or update this pre-release and preview solution at any time.
 
-This repo contains sample code for a simple chat webapp that integrates with Azure OpenAI. Note: some portions of the app use preview APIs.
+# Generic Build your own copilot Solution Accelerator
 
-## Prerequisites
-- An existing Azure OpenAI resource and model deployment of a chat model (e.g. `gpt-35-turbo-16k`, `gpt-4`)
-- To use Azure OpenAI on your data: one of the following data sources:
-  - Azure AI Search Index
-  - Azure CosmosDB Mongo vCore vector index
-  - Elasticsearch index (preview)
-  - Pinecone index (preview)
-  - AzureML index (preview)
-
-## Deploy the app
-
-### Deploy with Azure Developer CLI
-Please see [README_azd.md](./README_azd.md) for detailed instructions.
-
-### One click Azure deployment
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2Fsample-app-aoai-chatGPT%2Fmain%2Finfrastructure%2Fdeployment.json)
-
-Click on the Deploy to Azure button and configure your settings in the Azure Portal as described in the [Environment variables](#environment-variables) section.
-
-Please see the [section below](#add-an-identity-provider) for important information about adding authentication to your app.
-
-### Deploy from your local machine
-
-#### Local Setup: Basic Chat Experience
-1. Copy `.env.sample` to a new file called `.env` and configure the settings as described in the [Environment variables](#environment-variables) section.
-    
-    These variables are required:
-    - `AZURE_OPENAI_RESOURCE`
-    - `AZURE_OPENAI_MODEL`
-    - `AZURE_OPENAI_KEY`
-
-    These variables are optional:
-    - `AZURE_OPENAI_TEMPERATURE`
-    - `AZURE_OPENAI_TOP_P`
-    - `AZURE_OPENAI_MAX_TOKENS`
-    - `AZURE_OPENAI_STOP_SEQUENCE`
-    - `AZURE_OPENAI_SYSTEM_MESSAGE`
-
-    See the [documentation](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/reference#example-response-2) for more information on these parameters.
-
-2. Start the app with `start.cmd`. This will build the frontend, install backend dependencies, and then start the app. Or, just run the backend in debug mode using the VSCode debug configuration in `.vscode/launch.json`.
-
-3. You can see the local running app at http://127.0.0.1:50505.
-
-NOTE: You may find you need to set: MacOS: `export NODE_OPTIONS="--max-old-space-size=8192"` or Windows: `set NODE_OPTIONS=--max-old-space-size=8192` to avoid running out of memory when building the frontend.
-
-#### Local Setup: Chat with your data using Azure Cognitive Search
-[More information about Azure OpenAI on your data](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/use-your-data)
-
-1. Update the `AZURE_OPENAI_*` environment variables as described above. 
-2. To connect to your data, you need to specify an Azure Cognitive Search index to use. You can [create this index yourself](https://learn.microsoft.com/en-us/azure/search/search-get-started-portal) or use the [Azure AI Studio](https://oai.azure.com/portal/chat) to create the index for you.
-
-    These variables are required when adding your data with Azure AI Search:
-    - `DATASOURCE_TYPE` (should be set to `AzureCognitiveSearch`)
-    - `AZURE_SEARCH_SERVICE`
-    - `AZURE_SEARCH_INDEX`
-    - `AZURE_SEARCH_KEY`
-
-    These variables are optional:
-    - `AZURE_SEARCH_USE_SEMANTIC_SEARCH`
-    - `AZURE_SEARCH_SEMANTIC_SEARCH_CONFIG`
-    - `AZURE_SEARCH_INDEX_TOP_K`
-    - `AZURE_SEARCH_ENABLE_IN_DOMAIN`
-    - `AZURE_SEARCH_CONTENT_COLUMNS`
-    - `AZURE_SEARCH_FILENAME_COLUMN`
-    - `AZURE_SEARCH_TITLE_COLUMN`
-    - `AZURE_SEARCH_URL_COLUMN`
-    - `AZURE_SEARCH_VECTOR_COLUMNS`
-    - `AZURE_SEARCH_QUERY_TYPE`
-    - `AZURE_SEARCH_PERMITTED_GROUPS_COLUMN`
-    - `AZURE_SEARCH_STRICTNESS`
-    - `AZURE_OPENAI_EMBEDDING_NAME`
-
-3. Start the app with `start.cmd`. This will build the frontend, install backend dependencies, and then start the app. Or, just run the backend in debug mode using the VSCode debug configuration in `.vscode/launch.json`.
-4. You can see the local running app at http://127.0.0.1:50505.
-
-NOTE: You may find you need to set: MacOS: `export NODE_OPTIONS="--max-old-space-size=8192"` or Windows: `set NODE_OPTIONS=--max-old-space-size=8192` to avoid running out of memory when building the frontend.
-
-#### Local Setup: Enable Chat History
-To enable chat history, you will need to set up CosmosDB resources. The ARM template in the `infrastructure` folder can be used to deploy an app service and a CosmosDB with the database and container configured. Then specify these additional environment variables: 
-- `AZURE_COSMOSDB_ACCOUNT`
-- `AZURE_COSMOSDB_DATABASE`
-- `AZURE_COSMOSDB_CONVERSATIONS_CONTAINER`
-- `AZURE_COSMOSDB_ACCOUNT_KEY`
-
-As above, start the app with `start.cmd`, then visit the local running app at http://127.0.0.1:50505. Or, just run the backend in debug mode using the VSCode debug configuration in `.vscode/launch.json`.
-
-#### Local Setup: Enable Message Feedback
-To enable message feedback, you will need to set up CosmosDB resources. Then specify these additional environment variable:
-
-/.env
-- `AZURE_COSMOSDB_ENABLE_FEEDBACK=True`
-
-#### Local Setup: Enable SQL Server
-To enable SQL Server, you will need to set up SQL Server resources. Then specify these additional environment variables:
-- `DATASOURCE_TYPE` (Should be set to `AzureSqlServer`)
-- `AZURE_SQL_SERVER_CONNECTION_STRING`
-- `AZURE_SQL_SERVER_TABLE_SCHEMA`
-
-#### Deploy with the Azure CLI
-**NOTE**: If you've made code changes, be sure to **build the app code** with `start.cmd` or `start.sh` before you deploy, otherwise your changes will not be picked up. If you've updated any files in the `frontend` folder, make sure you see updates to the files in the `static` folder before you deploy.
-
-You can use the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) to deploy the app from your local machine. Make sure you have version 2.48.1 or later.
-
-If this is your first time deploying the app, you can use [az webapp up](https://learn.microsoft.com/en-us/cli/azure/webapp?view=azure-cli-latest#az-webapp-up). Run the following two commands from the root folder of the repo, updating the placeholder values to your desired app name, resource group, location, and subscription. You can also change the SKU if desired.
-
-1. `az webapp up --runtime PYTHON:3.11 --sku B1 --name <new-app-name> --resource-group <resource-group-name> --location <azure-region> --subscription <subscription-name>`
-1. `az webapp config set --startup-file "python3 -m gunicorn app:app" --name <new-app-name>`
-
-If you've deployed the app previously, first run this command to update the appsettings to allow local code deployment:
-
-`az webapp config appsettings set -g <resource-group-name> -n <existing-app-name> --settings WEBSITE_WEBDEPLOY_USE_SCM=false`
-
-Check the runtime stack for your app by viewing the app service resource in the Azure Portal. If it shows "Python - 3.10", use `PYTHON:3.10` in the runtime argument below. If it shows "Python - 3.11", use `PYTHON:3.11` in the runtime argument below. 
-
-Check the SKU in the same way. Use the abbreviated SKU name in the argument below, e.g. for "Basic (B1)" the SKU is `B1`. 
-
-Then, use these commands to deploy your local code to the existing app:
-
-1. `az webapp up --runtime <runtime-stack> --sku <sku> --name <existing-app-name> --resource-group <resource-group-name>`
-1. `az webapp config set --startup-file "python3 -m gunicorn app:app" --name <existing-app-name>`
-
-Make sure that the app name and resource group match exactly for the app that was previously deployed.
-
-Deployment will take several minutes. When it completes, you should be able to navigate to your app at {app-name}.azurewebsites.net.
-
-### Add an identity provider
-After deployment, you will need to add an identity provider to provide authentication support in your app. See [this tutorial](https://learn.microsoft.com/en-us/azure/app-service/scenario-secure-app-authentication-app-service) for more information.
-
-If you don't add an identity provider, the chat functionality of your app will be blocked to prevent unauthorized access to your resources and data. 
-
-To remove this restriction, you can add `AUTH_ENABLED=False` to the environment variables. This will disable authentication and allow anyone to access the chat functionality of your app. **This is not recommended for production apps.**
-
-To add further access controls, update the logic in `getUserInfoList` in `frontend/src/pages/chat/Chat.tsx`. 
-
-### Common Customization Scenarios (e.g. updating the default chat logo and headers)
-
-The interface allows for easy adaptation of the UI by modifying certain elements, such as the title and logo, through the use of [environment variables](#environment-variables).
-
-- `UI_TITLE`
-- `UI_LOGO`
-- `UI_CHAT_TITLE`
-- `UI_CHAT_LOGO`
-- `UI_CHAT_DESCRIPTION`
-- `UI_FAVICON`
-- `UI_SHOW_SHARE_BUTTON`
-
-Feel free to fork this repository and make your own modifications to the UX or backend logic. You can modify the source (`frontend/src`). For example, you may want to change aspects of the chat display, or expose some of the settings in `app.py` in the UI for users to try out different behaviors. After your code changes, you will need to rebuild the front-end via `start.sh` or `start.cmd`.
-
-### Scalability
-You can configure the number of threads and workers in `gunicorn.conf.py`. After making a change, redeploy your app using the commands listed above.
-
-See the [Oryx documentation](https://github.com/microsoft/Oryx/blob/main/doc/configuration.md) for more details on these settings.
-
-### Debugging your deployed app
-First, add an environment variable on the app service resource called "DEBUG". Set this to "true".
-
-Next, enable logging on the app service. Go to "App Service logs" under Monitoring, and change Application logging to File System. Save the change.
-
-Now, you should be able to see logs from your app by viewing "Log stream" under Monitoring.
-
-### Configuring vector search
-When using your own data with a vector index, ensure these settings are configured on your app:
-- `AZURE_SEARCH_QUERY_TYPE`: can be `vector`, `vectorSimpleHybrid`, or `vectorSemanticHybrid`,
-- `AZURE_OPENAI_EMBEDDING_NAME`: the name of your Ada (text-embedding-ada-002) model deployment on your Azure OpenAI resource.
-- `AZURE_SEARCH_VECTOR_COLUMNS`: the vector columns in your index to use when searching. Join them with `|` like `contentVector|titleVector`.
-
-### Changing Citation Display
-The Citation panel is defined at the end of `frontend/src/pages/chat/Chat.tsx`. The citations returned from Azure OpenAI On Your Data will include `content`, `title`, `filepath`, and in some cases `url`. You can customize the Citation section to use and display these as you like. For example, the title element is a clickable hyperlink if `url` is not a blob URL.
-
-```
-    <h5 
-        className={styles.citationPanelTitle} 
-        tabIndex={0} 
-        title={activeCitation.url && !activeCitation.url.includes("blob.core") ? activeCitation.url : activeCitation.title ?? ""} 
-        onClick={() => onViewSource(activeCitation)}
-    >{activeCitation.title}</h5>
-
-    const onViewSource = (citation: Citation) => {
-        if (citation.url && !citation.url.includes("blob.core")) {
-            window.open(citation.url, "_blank");
-        }
-    };
-
-```
+MENU: [**USER STORY**](#user-story) \| [**ONE-CLICK DEPLOY**](#one-click-deploy)  \| [**SUPPORTING DOCUMENTS**](#supporting-documents) \|
+[**CUSTOMER TRUTH**](#customer-truth)
 
 
-### Best Practices
-We recommend keeping these best practices in mind:
+<h2><img src="./docs/images/userStory.png" width="64">
+<br/>
+User story
+</h2>
 
-- Reset the chat session (clear chat) if the user changes any settings. Notify the user that their chat history will be lost.
-- Clearly communicate to the user what impact each setting will have on their experience.
-- When you rotate API keys for your AOAI or ACS resource, be sure to update the app settings for each of your deployed apps to use the new key.
-- Pull in changes from `main` frequently to ensure you have the latest bug fixes and improvements, especially when using Azure OpenAI on your data.
+**Solution accelerator overview**
 
-**A note on Azure OpenAI API versions**: The application code in this repo will implement the request and response contracts for the most recent preview API version supported for Azure OpenAI.  To keep your application up-to-date as the Azure OpenAI API evolves with time, be sure to merge the latest API version update into your own application code and redeploy using the methods described in this document.
+This solution accelerator is a powerful tool that helps you create your own AI assistant(s). The accelerator can be used by any customer looking for reusable architecture and code snippets to build an AI assistant(s) with their own enterprise data. 
 
-## Environment variables
+It leverages Azure Open AI Service and Azure AI Search, to identify relevant documents, summarize unstructured information, and generate Word document templates using your own data. 
+
+**Scenario**
+
+This example focuses on a generic use case - chat with your own data, generate a document template using your own data, and exporting the document in a docx format.
+
+The sample data is sourced from 1) generic AI-generated promissory notes and 2) a select set of research and grants published on PubMed and NIH.
+The documents are intended for use as sample data only.
+
+<br/>
+
+**Key features**
+
+![Key Features](/docs/images/keyfeatures.png)
+
+<br/>
+
+**Below is an image of the solution accelerator.**
+
+![Landing Page](/docs/images/landing_page.png)
+
+
+<h2><img src="/docs/images//oneClickDeploy.png" width="64">
+<br/>
+One-click deploy
+</h2>
+
+### Prerequisites
+
+To use this solution accelerator, you will need access to an [Azure subscription](https://azure.microsoft.com/free/) with permission to create resource groups and resources. While not required, a prior understanding of Azure Open AI and Azure AI Search will be helpful.
+
+For additional training and support, please see:
+
+1. [Azure Open AI](https://learn.microsoft.com/en-us/azure/ai-services/openai/) 
+2. [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/) 
+3. [Azure AI Studio](https://learn.microsoft.com/en-us/azure/ai-studio/) 
+
+### Solution accelerator architecture
+![image](/docs/images/architecture.png)
+
+
+ > Note: Some features contained in this repository are in private preview. Certain features might not be supported or might have constrained capabilities. For more information, see [Supplemental Terms of Use for Microsoft Azure Previews](https://azure.microsoft.com/en-us/support/legal/preview-supplemental-terms).
+
+
+### **How to install/deploy**
+
+1. TODO
+
+### Environment variables
 
 Note: settings starting with `AZURE_SEARCH` are only needed when using Azure OpenAI on your data with Azure AI Search. If not connecting to your data, you only need to specify `AZURE_OPENAI` settings.
 
@@ -249,40 +113,49 @@ Note: settings starting with `AZURE_SEARCH` are only needed when using Azure Ope
 |PROMPTFLOW_RESPONSE_FIELD_NAME|reply|Default field name to process the response from Promptflow request.|
 |PROMPTFLOW_CITATIONS_FIELD_NAME|documents|Default field name to process the citations output from Promptflow request.|
 
-## Contributing
+### Local deployment
+Review the local deployment [README](./docs/README_LOCAL.md).
+<br/>
+<br>
+<h2><img src="./docs/images/supportingDocuments.png" width="64">
+<br/>
+Supporting documents
+</h2>
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+Supporting documents coming soon.
 
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+<br>
+<h2><img src="./docs/images/customerTruth.png" width="64">
+</br>
+Customer truth
+</h2>
+Customer stories coming soon.
 
-When contributing to this repository, please help keep the codebase clean and maintainable by running 
-the formatter and linter with `npm run format` this will run `npx eslint --fix` and `npx prettier --write` 
-on the frontebnd codebase. 
+<br/>
 
-If you are using VSCode, you can add the following settings to your `settings.json` to format and lint on save:
 
-```json
-{
-    "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": "explicit"
-    },
-    "editor.formatOnSave": true,
-    "prettier.requireConfig": true,
-}
-```
+<h2>
+</br>
+Responsible AI Transparency FAQ 
+</h2>
 
-## Trademarks
+Please refer to [Transparency FAQ](./docs/TRANSPARENCY_FAQ.md) for responsible AI transparency details of this solution accelerator.
 
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
-trademarks or logos is subject to and must follow 
-[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
-Any use of third-party trademarks or logos are subject to those third-party's policies.
+<br/>
+<br/>
+---
+
+## Disclaimers
+
+This Software requires the use of third-party components which are governed by separate proprietary or open-source licenses as identified below, and you must comply with the terms of each applicable license in order to use the Software. You acknowledge and agree that this license does not grant you a license or other right to use any such third-party proprietary or open-source components.  
+
+To the extent that the Software includes components or code used in or derived from Microsoft products or services, including without limitation Microsoft Azure Services (collectively, “Microsoft Products and Services”), you must also comply with the Product Terms applicable to such Microsoft Products and Services. You acknowledge and agree that the license governing the Software does not grant you a license or other right to use Microsoft Products and Services. Nothing in the license or this ReadMe file will serve to supersede, amend, terminate or modify any terms in the Product Terms for any Microsoft Products and Services. 
+
+You must also comply with all domestic and international export laws and regulations that apply to the Software, which include restrictions on destinations, end users, and end use. For further information on export restrictions, visit https://aka.ms/exporting. 
+
+You acknowledge that the Software and Microsoft Products and Services (1) are not designed, intended or made available as a medical device(s), and (2) are not designed or intended to be a substitute for professional medical advice, diagnosis, treatment, or judgment and should not be used to replace or as a substitute for professional medical advice, diagnosis, treatment, or judgment. Customer is solely responsible for displaying and/or obtaining appropriate consents, warnings, disclaimers, and acknowledgements to end users of Customer’s implementation of the Online Services. 
+
+You acknowledge the Software is not subject to SOC 1 and SOC 2 compliance audits. No Microsoft technology, nor any of its component technologies, including the Software, is intended or made available as a substitute for the professional advice, opinion, or judgement of a certified financial services professional. Do not use the Software to replace, substitute, or provide professional financial advice or judgment.  
+
+BY ACCESSING OR USING THE SOFTWARE, YOU ACKNOWLEDGE THAT THE SOFTWARE IS NOT DESIGNED OR INTENDED TO SUPPORT ANY USE IN WHICH A SERVICE INTERRUPTION, DEFECT, ERROR, OR OTHER FAILURE OF THE SOFTWARE COULD RESULT IN THE DEATH OR SERIOUS BODILY INJURY OF ANY PERSON OR IN PHYSICAL OR ENVIRONMENTAL DAMAGE (COLLECTIVELY, “HIGH-RISK USE”), AND THAT YOU WILL ENSURE THAT, IN THE EVENT OF ANY INTERRUPTION, DEFECT, ERROR, OR OTHER FAILURE OF THE SOFTWARE, THE SAFETY OF PEOPLE, PROPERTY, AND THE ENVIRONMENT ARE NOT REDUCED BELOW A LEVEL THAT IS REASONABLY, APPROPRIATE, AND LEGAL, WHETHER IN GENERAL OR IN A SPECIFIC INDUSTRY. BY ACCESSING THE SOFTWARE, YOU FURTHER ACKNOWLEDGE THAT YOUR HIGH-RISK USE OF THE SOFTWARE IS AT YOUR OWN RISK.  

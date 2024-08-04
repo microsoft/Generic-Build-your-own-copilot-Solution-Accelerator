@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useContext, useLayoutEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom'
 import { CommandBarButton, IconButton, Dialog, DialogType, Stack } from '@fluentui/react'
 import { SquareRegular, ShieldLockRegular, ErrorCircleRegular } from '@fluentui/react-icons'
 
@@ -33,17 +33,14 @@ import {
   CosmosDBStatus,
   ErrorMessage,
   ExecResults,
-  AzureSqlServerCodeExecResult,
   Section,
-  DraftedDocument,
-  SectionGenerateRequest,
-  sectionGenerate
-} from "../../api";
-import { Answer } from "../../components/Answer";
-import { QuestionInput } from "../../components/QuestionInput";
-import { ChatHistoryPanel } from "../../components/ChatHistory/ChatHistoryPanel";
-import { AppStateContext } from "../../state/AppProvider";
-import { useBoolean } from "@fluentui/react-hooks";
+  DraftedDocument
+} from '../../api'
+import { Answer } from '../../components/Answer'
+import { QuestionInput } from '../../components/QuestionInput'
+import { ChatHistoryPanel } from '../../components/ChatHistory/ChatHistoryPanel'
+import { AppStateContext } from '../../state/AppProvider'
+import { useBoolean } from '@fluentui/react-hooks'
 
 const enum messageStatus {
   NotRunning = 'Not Running',
@@ -51,26 +48,39 @@ const enum messageStatus {
   Done = 'Done'
 }
 
+const enum chatTypeResponse {
+  Browse = 'Generating answer...',
+  Generate = 'Generating template...this may take up to 30 seconds.'
+}
+
+const enum contentTemplateSections {
+  NewLine = '\n\n',
+  Intro = 'The proposal will include the following sections:',
+  Closing = 'Does this look good? If so, you can **generate the document** now. You can also ask me to **add an item** or **change the order of the sections**.',
+  JSONParseError = 'Unable to parse the template response into a valid structure. Please try again.',
+  JSONStructureError = 'Unable to render the sections within the template. Please try again.'
+}
+
 interface Props {
   type?: ChatType
 }
 
 const Chat = ({ type = ChatType.Browse }: Props) => {
-  const location = useLocation();
-  
+  const location = useLocation()
+
   const appStateContext = useContext(AppStateContext)
   const ui = appStateContext?.state.frontendSettings?.ui
   const AUTH_ENABLED = appStateContext?.state.frontendSettings?.auth_enabled
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [showLoadingMessage, setShowLoadingMessage] = useState<boolean>(false)
-  const [isProcessingTemplate, setIsProcessingTemplate] = useState<boolean>(false)
   const [activeCitation, setActiveCitation] = useState<Citation>()
   const [isCitationPanelOpen, setIsCitationPanelOpen] = useState<boolean>(false)
   const [isIntentsPanelOpen, setIsIntentsPanelOpen] = useState<boolean>(false)
   const abortFuncs = useRef([] as AbortController[])
   const [showAuthMessage, setShowAuthMessage] = useState<boolean | undefined>()
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [jsonDraftDocument, setJSONDraftDocument] = useState<string>('')
   const [draftDocument, setDraftDocument] = useState<DraftedDocument>()
   const [execResults, setExecResults] = useState<ExecResults[]>([])
   const [processMessages, setProcessMessages] = useState<messageStatus>(messageStatus.NotRunning)
@@ -95,20 +105,14 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   const [ASSISTANT, TOOL, ERROR] = ['assistant', 'tool', 'error']
   const NO_CONTENT_ERROR = 'No content in messages object.'
 
-  const refreshContent = () => {
-    newChat();
-  }
-
   useEffect(() => {
-    console.log('Route changed, refresh the contents');
-
     if (type === ChatType.Browse) {
-      appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: appStateContext?.state.browseChat });
+      appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: appStateContext?.state.browseChat })
     } else {
-      appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: appStateContext?.state.generateChat });
+      appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: appStateContext?.state.generateChat })
     }
-  }, [location]);
-
+    processTemplateResponse()
+  }, [location])
 
   useEffect(() => {
     if (
@@ -150,47 +154,65 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     }
   }
 
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const navigateToDraftPage = (parameter: DraftedDocument) => {
     // update DraftedDocument in the state
-    appStateContext?.dispatch({ type: 'UPDATE_DRAFTED_DOCUMENT', payload: parameter });
-    navigate('/draft');
-  };
-  
+    appStateContext?.dispatch({ type: 'UPDATE_DRAFTED_DOCUMENT', payload: parameter })
+    navigate('/draft')
+  }
+
   let assistantMessage = {} as ChatMessage
   let toolMessage = {} as ChatMessage
   let assistantContent = ''
 
   const processTemplateResponse = () => {
-    if (assistantMessage.role === ASSISTANT) {
-      const lines = assistantContent.split('\n');
-      let jsonString = '';
+    if (type === ChatType.Template) {
+      let lines: string[]
+      if (assistantMessage.role === ASSISTANT) {
+        lines = assistantContent.split('\n')
+      } else {
+        let latestChat = appStateContext?.state.generateChat
+        if (!latestChat) return
 
-      lines.forEach(line => {
+        // Filter messages where the role is ASSISTANT
+        const assistantMessages = latestChat.messages.filter(answer => answer.role === ASSISTANT)
+
+        // Get the most recent assistant message
+        const mostRecentAssistantMessage =
+          assistantMessages.length > 0 ? assistantMessages[assistantMessages.length - 1] : undefined
+        if (mostRecentAssistantMessage) {
+          lines = mostRecentAssistantMessage.content.split('\n')
+        } else return
+      }
+      if (!lines) return
+
+      let jsonString = ''
+      lines?.forEach((line: string) => {
         if (!line.includes('json') && !line.includes('```')) {
-          jsonString += line.trim();
+          jsonString += line.trim()
         }
-      });
+      })
+      setJSONDraftDocument(jsonString) // use in the Answer response
       try {
-        const jsonObject = JSON.parse(jsonString);
-  
+        const jsonObject = JSON.parse(jsonString)
+
         const sections: Section[] = jsonObject.template.map((item: any) => ({
           title: item.section_title,
-          content: "", // Generated when user selects 'Generate' button
+          content: '', // Generated when user selects 'Generate' button
           description: item.section_description
-        }));
-  
+        }))
+
         const draftedTemplate: DraftedDocument = {
-          title: "Enter a draft document title",
+          title: 'Enter a draft document title',
           sections: sections
-        };
-  
-        setDraftDocument(draftedTemplate);
+        }
+
+        setDraftDocument(draftedTemplate)
       } catch (e) {
-        console.error('Failed to parse JSON:', e);
+        console.error('Failed to parse JSON:', e)
       }
-    }    
+    }
   }
 
   const processResultMessage = (resultMessage: ChatMessage, userMessage: ChatMessage, conversationId?: string) => {
@@ -316,7 +338,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
         conversation.messages.push(toolMessage, assistantMessage)
         appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: conversation })
         setMessages([...messages, toolMessage, assistantMessage])
-        if (type === ChatType.Template) processTemplateResponse()
+        processTemplateResponse()
       }
     } catch (e) {
       if (!abortController.signal.aborted) {
@@ -353,8 +375,6 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }
 
   const makeApiRequestWithCosmosDB = async (question: string, conversationId?: string) => {
-    // TODO - Currently works with Chat with your data. Need to update to work with the
-    // ChatType.Template. 
     setIsLoading(true)
     setShowLoadingMessage(true)
     const abortController = new AbortController()
@@ -426,6 +446,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
         }
         appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: resultConversation })
         setMessages([...resultConversation.messages])
+        processTemplateResponse()
         return
       }
       if (response?.body) {
@@ -509,6 +530,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
         isEmpty(toolMessage)
           ? setMessages([...messages, assistantMessage])
           : setMessages([...messages, toolMessage, assistantMessage])
+        processTemplateResponse()
       }
     } catch (e) {
       if (!abortController.signal.aborted) {
@@ -661,23 +683,9 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     return tryGetRaiPrettyError(errorMessage)
   }
 
-  const getTemplateContent = async () => {
-    if (draftDocument !== undefined) {
-      for (const s of draftDocument.sections) {
-        const sectionTitle = s.title
-        const sectionDescription = s.description
-        const sectionGenerateRequest: SectionGenerateRequest = { sectionTitle, sectionDescription }
-        const response = await sectionGenerate(sectionGenerateRequest)
-        const responseBody = await response.json()
-        s.content = responseBody.section_content
-      }
-      setDraftDocument(draftDocument)
-    }
-  }
-
   const generateDocument = async () => {
     if (draftDocument !== undefined) {
-      navigateToDraftPage(draftDocument);
+      navigateToDraftPage(draftDocument)
     }
   }
 
@@ -710,6 +718,12 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
       appStateContext?.dispatch({ type: 'UPDATE_GENERATE_CHAT', payload: appStateContext?.state.currentChat })
     }
 
+
+    if (type === ChatType.Browse) {
+      appStateContext?.dispatch({ type: 'UPDATE_BROWSE_CHAT', payload: appStateContext?.state.currentChat })
+    } else {
+      appStateContext?.dispatch({ type: 'UPDATE_GENERATE_CHAT', payload: appStateContext?.state.currentChat })
+    }
   }, [appStateContext?.state.currentChat])
 
   useLayoutEffect(() => {
@@ -777,11 +791,11 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
 
   const onShowCitation = (citation: Citation) => {
     console.log(citation)
-    const path = `/#/document/${citation.id}`;
+    const path = `/#/document/${citation.id}`
 
     // Instead of navigating within the app, use window.open to open in a new tab
-    const url = window.location.origin + path;
-    window.open(url, '_blank');
+    const url = window.location.origin + path
+    window.open(url, '_blank')
 
     // setActiveCitation(citation)
     // setIsCitationPanelOpen(true)
@@ -810,22 +824,21 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }
 
   const parsePlotFromMessage = (message: ChatMessage) => {
-    if (message?.role && message?.role === "tool") {
+    if (message?.role && message?.role === 'tool') {
       try {
-        const execResults = JSON.parse(message.content) as AzureSqlServerExecResults;
-        const codeExecResult = execResults.all_exec_results.at(-1)?.code_exec_result;
+        const execResults = JSON.parse(message.content) as AzureSqlServerExecResults
+        const codeExecResult = execResults.all_exec_results.at(-1)?.code_exec_result
         if (codeExecResult === undefined) {
-          return null;
+          return null
         }
-        return codeExecResult;
-      }
-      catch {
-        return null;
+        return codeExecResult
+      } catch {
+        return null
       }
       // const execResults = JSON.parse(message.content) as AzureSqlServerExecResults;
       // return execResults.all_exec_results.at(-1)?.code_exec_result;
     }
-    return null;
+    return null
   }
 
   const disabledButton = () => {
@@ -837,9 +850,28 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     )
   }
 
+  const generateTemplateSections = (jsonString: string) => {
+    let jsonResponse
+    try {
+      jsonResponse = JSON.parse(jsonString)
+    } catch (e) {
+      return contentTemplateSections.JSONParseError
+    }
+
+    if (!Array.isArray(jsonResponse.template)) {
+      return contentTemplateSections.JSONStructureError
+    }
+
+    let sections = `${contentTemplateSections.Intro}${contentTemplateSections.NewLine}`
+    jsonResponse.template.forEach((row: { section_title: string }) => {
+      sections += `${row.section_title}${contentTemplateSections.NewLine}`
+    })
+    sections += `${contentTemplateSections.Closing}`
+    return sections.trim() // Remove any trailing newline
+  }
+
   return (
     <>
-      {isProcessingTemplate && <div className={styles.loadingOverlay}><div className={styles.spinner}>Generating template...</div></div>}
       {showAuthMessage ? (
         <Stack className={styles.chatEmptyState}>
           <ShieldLockRegular
@@ -879,7 +911,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                 <div className={styles.chatMessageGpt}>
                   <Answer
                     answer={{
-                      answer: answer.content,
+                      answer: type === ChatType.Browse ? answer.content : generateTemplateSections(jsonDraftDocument),
                       citations: parseCitationFromMessage(messages[index - 1]),
                       plotly_data: parsePlotFromMessage(messages[index - 1]),
                       message_id: answer.id,
@@ -907,11 +939,10 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
               <div className={styles.chatMessageGpt}>
                 <Answer
                   answer={{
-                    answer: "Generating answer...",
+                    answer: type === ChatType.Browse ? chatTypeResponse.Browse : chatTypeResponse.Generate,
                     citations: [],
                     plotly_data: null
                   }}
-
                   onCitationClicked={() => null}
                   onExectResultClicked={() => null}
                 />
@@ -921,223 +952,228 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
 
           <div ref={chatMessageStreamEnd} />
         </div>
-      )
-      }
+      )}
 
-            <Stack horizontal className={styles.chatInput}>
-              {isLoading && messages.length > 0 && (
-                <Stack
-                  horizontal
-                  className={styles.stopGeneratingContainer}
-                  role="button"
-                  aria-label="Stop generating"
-                  tabIndex={0}
-                  onClick={stopGenerating}
-                  onKeyDown={e => (e.key === 'Enter' || e.key === ' ' ? stopGenerating() : null)}>
-                  <SquareRegular className={styles.stopGeneratingIcon} aria-hidden="true" />
-                  <span className={styles.stopGeneratingText} aria-hidden="true">
-                    Stop generating
-                  </span>
+      <Stack horizontal className={styles.chatInput}>
+        {isLoading && messages.length > 0 && (
+          <Stack
+            horizontal
+            className={styles.stopGeneratingContainer}
+            role="button"
+            aria-label="Stop generating"
+            tabIndex={0}
+            onClick={stopGenerating}
+            onKeyDown={e => (e.key === 'Enter' || e.key === ' ' ? stopGenerating() : null)}>
+            <SquareRegular className={styles.stopGeneratingIcon} aria-hidden="true" />
+            <span className={styles.stopGeneratingText} aria-hidden="true">
+              Stop generating
+            </span>
+          </Stack>
+        )}
+        <Stack>
+          {appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && (
+            <CommandBarButton
+              role="button"
+              styles={{
+                icon: {
+                  color: '#FFFFFF'
+                },
+                iconDisabled: {
+                  color: '#BDBDBD !important'
+                },
+                root: {
+                  color: '#FFFFFF',
+                  background: '#1367CF'
+                },
+                rootDisabled: {
+                  background: '#F0F0F0'
+                }
+              }}
+              className={styles.newChatIcon}
+              iconProps={{ iconName: 'Add' }}
+              onClick={newChat}
+              disabled={disabledButton()}
+              aria-label="start a new chat button"
+            />
+          )}
+          <CommandBarButton
+            role="button"
+            styles={{
+              icon: {
+                color: '#FFFFFF'
+              },
+              iconDisabled: {
+                color: '#BDBDBD !important'
+              },
+              root: {
+                color: '#FFFFFF',
+                background: '#1367CF'
+              },
+              rootDisabled: {
+                background: '#F0F0F0'
+              }
+            }}
+            className={
+              appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured
+                ? styles.clearChatBroom
+                : styles.clearChatBroomNoCosmos
+            }
+            iconProps={{ iconName: 'Broom' }}
+            onClick={
+              appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured ? clearChat : newChat
+            }
+            disabled={disabledButton()}
+            aria-label="clear chat button"
+          />
+          <Dialog
+            hidden={hideErrorDialog}
+            onDismiss={handleErrorDialogClose}
+            dialogContentProps={errorDialogContentProps}
+            modalProps={modalProps}></Dialog>
+        </Stack>
+        <Stack horizontal className={styles.chatInputContainer}>
+          <QuestionInput
+            clearOnSend
+            placeholder="Type a new question..."
+            disabled={isLoading}
+            onSend={(question, id) => {
+              appStateContext?.state.isCosmosDBAvailable?.cosmosDB
+                ? makeApiRequestWithCosmosDB(question, id)
+                : makeApiRequestWithoutCosmosDB(question, id)
+            }}
+            conversationId={appStateContext?.state.currentChat?.id ? appStateContext?.state.currentChat?.id : undefined}
+          />
+          {type == ChatType.Template && (
+            <CommandBarButton
+              role="button"
+              styles={{
+                icon: {
+                  color: '#FFFFFF'
+                },
+                iconDisabled: {
+                  color: '#BDBDBD !important'
+                },
+                root: {
+                  color: '#FFFFFF',
+                  background: '#1367CF'
+                },
+                rootDisabled: {
+                  background: '#F0F0F0'
+                }
+              }}
+              className={styles.generateDocumentIcon}
+              iconProps={{ iconName: 'WordDocument' }}
+              onClick={generateDocument} //Update for Document Generation
+              disabled={draftDocument === undefined && disabledButton()}
+              aria-label="generate document"
+              text="Generate Document"
+            />
+          )}
+        </Stack>
+      </Stack>
+      {/* Citation Panel */}
+      {messages && messages.length > 0 && isCitationPanelOpen && activeCitation && (
+        <Stack.Item className={styles.citationPanel} tabIndex={0} role="tabpanel" aria-label="Citations Panel">
+          <Stack
+            aria-label="Citations Panel Header Container"
+            horizontal
+            className={styles.citationPanelHeaderContainer}
+            horizontalAlign="space-between"
+            verticalAlign="center">
+            <span aria-label="Citations" className={styles.citationPanelHeader}>
+              Citations
+            </span>
+            <IconButton
+              iconProps={{ iconName: 'Cancel' }}
+              aria-label="Close citations panel"
+              onClick={() => setIsCitationPanelOpen(false)}
+            />
+          </Stack>
+          <h5
+            className={styles.citationPanelTitle}
+            tabIndex={0}
+            title={
+              activeCitation.url && !activeCitation.url.includes('blob.core')
+                ? activeCitation.url
+                : activeCitation.title ?? ''
+            }
+            onClick={() => onViewSource(activeCitation)}>
+            {activeCitation.title}
+          </h5>
+          <div tabIndex={0}>
+            <ReactMarkdown
+              linkTarget="_blank"
+              className={styles.citationPanelContent}
+              children={DOMPurify.sanitize(activeCitation.content, { ALLOWED_TAGS: XSSAllowTags })}
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+            />
+          </div>
+        </Stack.Item>
+      )}
+      {messages && messages.length > 0 && isIntentsPanelOpen && (
+        <Stack.Item className={styles.citationPanel} tabIndex={0} role="tabpanel" aria-label="Intents Panel">
+          <Stack
+            aria-label="Intents Panel Header Container"
+            horizontal
+            className={styles.citationPanelHeaderContainer}
+            horizontalAlign="space-between"
+            verticalAlign="center">
+            <span aria-label="Intents" className={styles.citationPanelHeader}>
+              Intents
+            </span>
+            <IconButton
+              iconProps={{ iconName: 'Cancel' }}
+              aria-label="Close intents panel"
+              onClick={() => setIsIntentsPanelOpen(false)}
+            />
+          </Stack>
+          <Stack horizontalAlign="space-between">
+            {execResults.map(execResult => {
+              return (
+                <Stack className={styles.exectResultList} verticalAlign="space-between">
+                  <>
+                    <span>Intent:</span> <p>{execResult.intent}</p>
+                  </>
+                  {execResult.search_query && (
+                    <>
+                      <span>Search Query:</span>
+                      <SyntaxHighlighter
+                        style={nord}
+                        wrapLines={true}
+                        lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
+                        language="sql"
+                        PreTag="p">
+                        {execResult.search_query}
+                      </SyntaxHighlighter>
+                    </>
+                  )}
+                  {execResult.search_result && (
+                    <>
+                      <span>Search Result:</span> <p>{execResult.search_result}</p>
+                    </>
+                  )}
+                  {execResult.code_generated && (
+                    <>
+                      <span>Code Generated:</span>
+                      <SyntaxHighlighter
+                        style={nord}
+                        wrapLines={true}
+                        lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
+                        language="python"
+                        PreTag="p">
+                        {execResult.code_generated}
+                      </SyntaxHighlighter>
+                    </>
+                  )}
                 </Stack>
-              )}
-              <Stack>
-                {appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && (
-                  <CommandBarButton
-                    role="button"
-                    styles={{
-                      icon: {
-                        color: '#FFFFFF'
-                      },
-                      iconDisabled: {
-                        color: '#BDBDBD !important'
-                      },
-                      root: {
-                        color: '#FFFFFF',
-                        background: '#1367CF'
-                      },
-                      rootDisabled: {
-                        background: '#F0F0F0'
-                      }
-                    }}
-                    className={styles.newChatIcon}
-                    iconProps={{ iconName: 'Add' }}
-                    onClick={newChat}
-                    disabled={disabledButton()}
-                    aria-label="start a new chat button"
-                  />
-                )}
-                <CommandBarButton
-                  role="button"
-                  styles={{
-                    icon: {
-                      color: '#FFFFFF'
-                    },
-                    iconDisabled: {
-                      color: '#BDBDBD !important'
-                    },
-                    root: {
-                      color: '#FFFFFF',
-                      background: '#1367CF'
-                    },
-                    rootDisabled: {
-                      background: '#F0F0F0'
-                    },
-                  }}
-                  className={
-                    appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured
-                      ? styles.clearChatBroom
-                      : styles.clearChatBroomNoCosmos
-                  }
-                  iconProps={{ iconName: 'Broom' }}
-                  onClick={
-                    appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured
-                      ? clearChat
-                      : newChat
-                  }
-                  disabled={disabledButton()}
-                  aria-label="clear chat button"
-                />
-                <Dialog
-                  hidden={hideErrorDialog}
-                  onDismiss={handleErrorDialogClose}
-                  dialogContentProps={errorDialogContentProps}
-                  modalProps={modalProps}></Dialog>
-              </Stack>
-              <Stack horizontal className={styles.chatInputContainer}>
-                <QuestionInput
-                  clearOnSend
-                  placeholder="Type a new question..."
-                  disabled={isLoading}
-                  onSend={(question, id) => {
-                    appStateContext?.state.isCosmosDBAvailable?.cosmosDB
-                      ? makeApiRequestWithCosmosDB(question, id)
-                      : makeApiRequestWithoutCosmosDB(question, id)
-                  }}
-                  conversationId={
-                    appStateContext?.state.currentChat?.id ? appStateContext?.state.currentChat?.id : undefined
-                  }
-                />
-                {
-                  type == ChatType.Template && (
-                    <CommandBarButton
-                    role="button"
-                    styles={{
-                      icon: {
-                        color: '#FFFFFF'
-                      },
-                      iconDisabled: {
-                        color: '#BDBDBD !important'
-                      }, 
-                      root: {
-                        color: '#FFFFFF',
-                        background: '#1367CF'
-                      },
-                      rootDisabled: {
-                        background: '#F0F0F0'
-                      }
-                    }}
-
-                    className={styles.generateDocumentIcon}
-                    iconProps={{ iconName: 'Edit' }}
-                    onClick={generateDocument} //Update for Document Generation
-                    disabled={disabledButton()}
-                    aria-label="generate template"
-                    text='Generate'
-                  />  
-                  ) 
-                }
-              </Stack>
-            </Stack>
-          {/* Citation Panel */}
-          {messages && messages.length > 0 && isCitationPanelOpen && activeCitation && (
-            <Stack.Item className={styles.citationPanel} tabIndex={0} role="tabpanel" aria-label="Citations Panel">
-              <Stack
-                aria-label="Citations Panel Header Container"
-                horizontal
-                className={styles.citationPanelHeaderContainer}
-                horizontalAlign="space-between"
-                verticalAlign="center">
-                <span aria-label="Citations" className={styles.citationPanelHeader}>
-                  Citations
-                </span>
-                <IconButton
-                  iconProps={{ iconName: 'Cancel' }}
-                  aria-label="Close citations panel"
-                  onClick={() => setIsCitationPanelOpen(false)}
-                />
-              </Stack>
-              <h5
-                className={styles.citationPanelTitle}
-                tabIndex={0}
-                title={
-                  activeCitation.url && !activeCitation.url.includes('blob.core')
-                    ? activeCitation.url
-                    : activeCitation.title ?? ''
-                }
-                onClick={() => onViewSource(activeCitation)}>
-                {activeCitation.title}
-              </h5>
-              <div tabIndex={0}>
-                <ReactMarkdown
-                  linkTarget="_blank"
-                  className={styles.citationPanelContent}
-                  children={DOMPurify.sanitize(activeCitation.content, { ALLOWED_TAGS: XSSAllowTags })}
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
-                />
-              </div>
-            </Stack.Item>
-          )}
-          {messages && messages.length > 0 && isIntentsPanelOpen && (
-            <Stack.Item className={styles.citationPanel} tabIndex={0} role="tabpanel" aria-label="Intents Panel">
-              <Stack
-                aria-label="Intents Panel Header Container"
-                horizontal
-                className={styles.citationPanelHeaderContainer}
-                horizontalAlign="space-between"
-                verticalAlign="center">
-                <span aria-label="Intents" className={styles.citationPanelHeader}>
-                  Intents
-                </span>
-                <IconButton
-                  iconProps={{ iconName: 'Cancel' }}
-                  aria-label="Close intents panel"
-                  onClick={() => setIsIntentsPanelOpen(false)}
-                />
-              </Stack>
-              <Stack horizontalAlign="space-between">
-                {execResults.map((execResult) => {
-                  return (
-                    <Stack className={styles.exectResultList} verticalAlign="space-between">
-                      <><span>Intent:</span> <p>{execResult.intent}</p></>
-                      {execResult.search_query && <><span>Search Query:</span>
-                        <SyntaxHighlighter
-                          style={nord}
-                          wrapLines={true}
-                          lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
-                          language="sql"
-                          PreTag="p">
-                          {execResult.search_query}
-                        </SyntaxHighlighter></>}
-                      {execResult.search_result && <><span>Search Result:</span> <p>{execResult.search_result}</p></>}
-                      {execResult.code_generated && <><span>Code Generated:</span>
-                        <SyntaxHighlighter
-                          style={nord}
-                          wrapLines={true}
-                          lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
-                          language="python"
-                          PreTag="p">
-                          {execResult.code_generated}
-                        </SyntaxHighlighter>
-                      </>}
-                    </Stack>
-                  )
-                })}
-              </Stack>
-            </Stack.Item>
-          )}
-          {appStateContext?.state.isChatHistoryOpen &&
-            appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && <ChatHistoryPanel />}
+              )
+            })}
+          </Stack>
+        </Stack.Item>
+      )}
+      {appStateContext?.state.isChatHistoryOpen &&
+        appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && <ChatHistoryPanel />}
     </>
   )
 }

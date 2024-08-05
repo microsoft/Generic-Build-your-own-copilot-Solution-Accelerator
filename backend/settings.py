@@ -122,6 +122,10 @@ class _AzureOpenAISettings(BaseSettings):
     embedding_endpoint: Optional[str] = None
     embedding_key: Optional[str] = None
     embedding_name: Optional[str] = None
+    template_system_message: str = ('Generate a template for a document given a user description of the template. Do not include any other commentary or description.' +
+    'Respond with a json object in the format containing a list of section information {{"template": [{"section_title": string, "section_description": string}]}}.' +
+    'Example: {"template": [{"section_title": "Introduction", "section_description": "This section introduces the document."}, {"section_title": "Section 2", "section_description": "This is section 2."}]}.' +
+    'If the user provides a message that is not related to modifying the template, respond asking the user to go to the Browse tab to chat with documents.')
     
     @field_validator('tools', mode='before')
     @classmethod

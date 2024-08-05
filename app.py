@@ -34,6 +34,7 @@ from backend.utils import (
     format_non_streaming_response,
     convert_to_pf_format,
     format_pf_non_streaming_response,
+    ChatType
 )
 
 bp = Blueprint("routes", __name__, static_folder="static", template_folder="static")
@@ -200,31 +201,17 @@ def init_cosmosdb_client():
 
 
 def prepare_model_args(request_body, request_headers):
-    template_chat_system_prompt = ('Generate a template for a document given a user description of the template. Do not include any other commentary or description.' +
-    'Respond with a json object in the format containing a list of section information {{"template": [{"section_title": string, "section_description": string}]}}.' +
-    'Example: {"template": [{"section_title": "Introduction", "section_description": "This section introduces the document."}, {"section_title": "Section 2", "section_description": "This is section 2."}]}.' +
-    'If the user provides a message that is not related to modifying the template, respond asking the user to go to the Browse tab to chat with documents.')
+    chat_type = ChatType.BROWSE if not (request_body["chat_type"] and request_body["chat_type"] == "template") else ChatType.TEMPLATE
     request_messages = request_body.get("messages", [])
-    
-    # template chat should only respond to messages for template modification
-    system_message = app_settings.azure_openai.system_message if not ("chat_type" in request_body and request_body["chat_type"] == "template") else template_chat_system_prompt
     
     messages = []
     if not app_settings.datasource:
         messages = [
             {
                 "role": "system",
-                "content": system_message
+                "content": app_settings.azure_openai.system_message if chat_type == ChatType.BROWSE else app_settings.azure_openai.template_system_message
             }
         ]
-    
-    if ("chat_type" in request_body and request_body["chat_type"] == "template"):
-        messages.append(
-            {
-                "role": "assistant",
-                "content": system_message
-            }
-        )
 
     for message in request_messages:
         if message:
@@ -246,7 +233,7 @@ def prepare_model_args(request_body, request_headers):
         "max_tokens": app_settings.azure_openai.max_tokens,
         "top_p": app_settings.azure_openai.top_p,
         "stop": app_settings.azure_openai.stop_sequence,
-        "stream": app_settings.azure_openai.stream,
+        "stream": app_settings.azure_openai.stream if chat_type == ChatType.BROWSE else False,
         "model": app_settings.azure_openai.model,
         "user": user_json
     }
@@ -259,6 +246,11 @@ def prepare_model_args(request_body, request_headers):
                 )
             ]
         }
+
+        # change role information if template chat
+        if chat_type == ChatType.TEMPLATE:
+            model_args["extra_body"]["data_sources"][0]["parameters"]["role_information"] = app_settings.azure_openai.template_system_message
+
 
     model_args_clean = copy.deepcopy(model_args)
     if model_args_clean.get("extra_body"):
@@ -383,7 +375,8 @@ async def stream_chat_request(request_body, request_headers):
 
 async def conversation_internal(request_body, request_headers):
     try:
-        if app_settings.azure_openai.stream:
+        chat_type = ChatType.BROWSE if not (request_body["chat_type"] and request_body["chat_type"] == "template") else ChatType.TEMPLATE
+        if app_settings.azure_openai.stream and chat_type == ChatType.BROWSE:
             result = await stream_chat_request(request_body, request_headers)
             response = await make_response(format_as_ndjson(result))
             response.timeout = None

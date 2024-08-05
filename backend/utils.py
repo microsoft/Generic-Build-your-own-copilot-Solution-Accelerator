@@ -3,6 +3,7 @@ import json
 import logging
 import requests
 import dataclasses
+from enum import Enum
 
 from typing import List
 
@@ -13,6 +14,11 @@ if DEBUG.lower() == "true":
 AZURE_SEARCH_PERMITTED_GROUPS_COLUMN = os.environ.get(
     "AZURE_SEARCH_PERMITTED_GROUPS_COLUMN"
 )
+
+
+class ChatType(Enum):
+    TEMPLATE = "template"
+    BROWSE = "browse"
 
 
 class JSONEncoder(json.JSONEncoder):

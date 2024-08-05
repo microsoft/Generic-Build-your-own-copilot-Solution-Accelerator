@@ -166,7 +166,18 @@ export function ChatHistoryPanel(_props: ChatHistoryPanelProps) {
           flexWrap: 'wrap',
           padding: '1px'
         }}>
-        <Stack className={styles.chatHistoryListContainer}>
+        <Stack style={{
+          display: 'flex',
+          flexGrow: 1,
+          flexDirection: 'column',
+          flexWrap: 'wrap',
+          padding: '1px',
+          bottom: 200,
+          top: 99,
+          right: 99, 
+          width: 300, 
+          height: 700
+        }}className={styles.chatHistoryListContainer}>
           {appStateContext?.state.chatHistoryLoadingState === ChatHistoryLoadingState.Success &&
             appStateContext?.state.isCosmosDBAvailable.cosmosDB && <ChatHistoryList />}
           {appStateContext?.state.chatHistoryLoadingState === ChatHistoryLoadingState.Fail &&

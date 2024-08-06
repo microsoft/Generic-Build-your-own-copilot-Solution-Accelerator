@@ -114,7 +114,12 @@ export function ChatHistoryPanel(_props: ChatHistoryPanelProps) {
               fontWeight: '600',
               fontSize: '18px',
               marginRight: 'auto',
-              paddingLeft: '20px'
+              paddingLeft: '20px',
+              bottom: 200,
+              top: 99,
+              right: 99, 
+              width: 300, 
+              height: 700
             }}>
             Chat history
           </Text>
@@ -176,8 +181,9 @@ export function ChatHistoryPanel(_props: ChatHistoryPanelProps) {
           top: 99,
           right: 99, 
           width: 300, 
-          height: 700
-        }}className={styles.chatHistoryListContainer}>
+           maxHeight: 'calc(100vh - 300px)',  // Ensuring it doesn't overflow the viewport
+        }}
+        className={styles.chatHistoryListContainer}>
           {appStateContext?.state.chatHistoryLoadingState === ChatHistoryLoadingState.Success &&
             appStateContext?.state.isCosmosDBAvailable.cosmosDB && <ChatHistoryList />}
           {appStateContext?.state.chatHistoryLoadingState === ChatHistoryLoadingState.Fail &&

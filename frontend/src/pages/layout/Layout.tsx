@@ -9,6 +9,7 @@ import { HistoryButton, ShareButton } from '../../components/common/Button'
 import { AppStateContext } from '../../state/AppProvider'
 import styles from './Layout.module.css'
 import Sidebar from '../../components/Sidebar/Sidebar'
+import { ChatHistoryPanel } from "../../components/ChatHistory/ChatHistoryPanel";
 
 
 const Layout = () => {
@@ -102,6 +103,9 @@ const Layout = () => {
             <div className={styles.outletContainer}>
               <div className={styles.childContainer}>
                 <Outlet />
+              </div>
+              <div className="gridContainer" style={{ position: 'relative', height: '100vh', top: 20, right: 15, width: 300, padding: 10}}>
+              <p>{appStateContext?.state.isChatHistoryOpen && appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && <ChatHistoryPanel />}</p>
               </div>
               <Sidebar />
             </div>

@@ -1123,10 +1123,6 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
               </Stack>
             </Stack.Item>
           )}
-          <div role="main" style={{ position: 'absolute', top: 40, right: 110, width: 300, padding: 10}}>
-          {appStateContext?.state.isChatHistoryOpen &&
-            appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && <ChatHistoryPanel />}
-          </div>
     </>
   )
 }

@@ -82,7 +82,7 @@ module appServicePlan 'core/host/appserviceplan.bicep' = {
     location: location
     tags: tags
     sku: {
-      name: 'P1v3'
+      name: 'P2v3'
       capacity: 1
     }
     kind: 'linux'

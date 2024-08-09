@@ -855,15 +855,8 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
           </h2>
         </Stack>
       ) : (
-        <Stack horizontal role="Stack Horizontal" style={{width: '100%', height: '100%'}}>
-        <Stack verticalFill role="Stack verticalFill" style={{display: 'flex',
-          flexGrow: 1,
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          padding: '10px',
-          width: '100%'}} >
+        <Stack horizontal role="Stack Horizontal" className={styles.chatHorizontalStyle}>
+        <Stack verticalFill role="Stack verticalFill"  className={styles.chatVerticalFill}>
             <div className={styles.chatMessageStream} style={{ marginBottom: isLoading ? '40px' : '0px' }} role="log">
             {messages.map((answer, index) => (
             <>

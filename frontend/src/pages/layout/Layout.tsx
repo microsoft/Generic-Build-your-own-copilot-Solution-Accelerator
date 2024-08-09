@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { Link, Outlet } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Dialog, Stack, TextField } from '@fluentui/react'
 import { CopyRegular } from '@fluentui/react-icons'
 
@@ -9,6 +9,7 @@ import { HistoryButton, ShareButton } from '../../components/common/Button'
 import { AppStateContext } from '../../state/AppProvider'
 import styles from './Layout.module.css'
 import Sidebar from '../../components/Sidebar/Sidebar'
+import { ChatHistoryPanel } from "../../components/ChatHistory/ChatHistoryPanel";
 
 
 const Layout = () => {
@@ -20,6 +21,7 @@ const Layout = () => {
   const [showHistoryLabel, setShowHistoryLabel] = useState<string>('Show chat history')
   const appStateContext = useContext(AppStateContext)
   const ui = appStateContext?.state.frontendSettings?.ui
+  const location = useLocation();
 
   const handleShareClick = () => {
     setIsSharePanelOpen(true)
@@ -77,15 +79,17 @@ const Layout = () => {
               <h1 className={styles.headerTitle}>{ui?.title}</h1>
             </Link>
           </Stack>
-          <Stack horizontal tokens={{ childrenGap: 4 }} className={styles.shareButtonContainer}>
-            {appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && (
-              <HistoryButton
-                onClick={handleHistoryClick}
-                text={appStateContext?.state?.isChatHistoryOpen ? hideHistoryLabel : showHistoryLabel}
-              />
-            )}
-            {ui?.show_share_button && <ShareButton onClick={handleShareClick} text={shareLabel} />}
-          </Stack>
+          {location.pathname === '/generate' && (
+            <Stack horizontal tokens={{ childrenGap: 4 }} className={styles.shareButtonContainer}>
+              {appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && (
+                <HistoryButton
+                  onClick={handleHistoryClick}
+                  text={appStateContext?.state?.isChatHistoryOpen ? hideHistoryLabel : showHistoryLabel}
+                />
+              )}
+              {ui?.show_share_button && <ShareButton onClick={handleShareClick} text={shareLabel} />}
+            </Stack>
+          )}
         </Stack>
       </header>
 
@@ -94,10 +98,14 @@ const Layout = () => {
         className={styles.layoutContainer}
       >
         <div className={styles.mainContainer} role="main">
+          
           <Stack horizontal className={styles.outletRoot}>
             <div className={styles.outletContainer}>
               <div className={styles.childContainer}>
                 <Outlet />
+              </div>
+              <div className="gridContainer" style={{ position: 'relative', height: '100vh', top: 20, right: 15, width: 300, padding: 10}}>
+              <p>{appStateContext?.state.isChatHistoryOpen && appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && <ChatHistoryPanel />}</p>
               </div>
               <Sidebar />
             </div>

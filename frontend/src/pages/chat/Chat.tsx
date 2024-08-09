@@ -825,7 +825,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }
 
   return (
-    <>
+    <div role="main" style = {{height:'100%', width:'100%'}}>
       {isProcessingTemplate && <div className={styles.loadingOverlay}><div className={styles.spinner}>Generating template...</div></div>}
       {showAuthMessage ? (
         <Stack className={styles.chatEmptyState}>
@@ -855,8 +855,17 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
           </h2>
         </Stack>
       ) : (
-        <div className={styles.chatMessageStream} style={{ marginBottom: isLoading ? '40px' : '0px' }} role="log">
-          {messages.map((answer, index) => (
+        <Stack horizontal role="Stack Horizontal" style={{width: '100%', height: '100%'}}>
+        <Stack verticalFill role="Stack verticalFill" style={{display: 'flex',
+          flexGrow: 1,
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          padding: '10px',
+          width: '100%'}} >
+            <div className={styles.chatMessageStream} style={{ marginBottom: isLoading ? '40px' : '0px' }} role="log">
+            {messages.map((answer, index) => (
             <>
               {answer.role === 'user' ? (
                 <div className={styles.chatMessageUser} tabIndex={0}>
@@ -887,9 +896,9 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                 </div>
               ) : null}
             </>
-          ))}
+            ))}
 
-          {showLoadingMessage && (
+            {showLoadingMessage && (
             <>
               <div className={styles.chatMessageGpt}>
                 <Answer
@@ -900,17 +909,13 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                   }}
 
                   onCitationClicked={() => null}
-                  onExectResultClicked={() => null}
-                />
-              </div>
-            </>
-          )}
-
-          <div ref={chatMessageStreamEnd} />
-        </div>
-      )
-      }
-
+                    onExectResultClicked={() => null}
+                  />
+                </div>
+              </>
+            )}
+            </div>
+            <div ref={chatMessageStreamEnd} />
             <Stack horizontal className={styles.chatInput}>
               {isLoading && messages.length > 0 && (
                 <Stack
@@ -1035,6 +1040,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                 }
               </Stack>
             </Stack>
+            </Stack>
           {/* Citation Panel */}
           {messages && messages.length > 0 && isCitationPanelOpen && activeCitation && (
             <Stack.Item className={styles.citationPanel} tabIndex={0} role="tabpanel" aria-label="Citations Panel">
@@ -1125,7 +1131,9 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
           )}
           {appStateContext?.state.isChatHistoryOpen &&
             appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && <ChatHistoryPanel />}
-    </>
+        </Stack>
+      )}
+    </div>
   )
 }
 

@@ -104,9 +104,6 @@ const Layout = () => {
               <div className={styles.childContainer}>
                 <Outlet />
               </div>
-              <div className="gridContainer" style={{ position: 'relative', height: '100vh', top: 20, right: 15, width: 300, padding: 10}}>
-              <p>{appStateContext?.state.isChatHistoryOpen && appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && <ChatHistoryPanel />}</p>
-              </div>
               <Sidebar />
             </div>
           </Stack>

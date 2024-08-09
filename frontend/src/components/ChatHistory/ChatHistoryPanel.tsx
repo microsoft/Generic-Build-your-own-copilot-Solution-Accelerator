@@ -166,7 +166,7 @@ export function ChatHistoryPanel(_props: ChatHistoryPanelProps) {
           flexWrap: 'wrap',
           padding: '1px'
         }}>
-        <Stack className={styles.chatHistoryListContainer}>
+        <Stack className={styles.chatHistoryListContainer} style={{maxHeight: 'calc(100vh - 300px)'}}>
           {appStateContext?.state.chatHistoryLoadingState === ChatHistoryLoadingState.Success &&
             appStateContext?.state.isCosmosDBAvailable.cosmosDB && <ChatHistoryList />}
           {appStateContext?.state.chatHistoryLoadingState === ChatHistoryLoadingState.Fail &&

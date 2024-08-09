@@ -8,3 +8,6 @@ __pycache__/
 
 data
 static
+
+scripts/config.json
+venv

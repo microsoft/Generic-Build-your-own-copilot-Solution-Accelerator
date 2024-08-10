@@ -211,9 +211,9 @@
   justify-content: center;
   align-items: center;
   position: absolute;
-  width: 100px;
+  width: 180px;
   height: 40px;
-  right: -120px;
+  right: -200px;
   top: 40px;
   color: #ffffff;
   border-radius: 4px;
@@ -381,24 +381,6 @@ a {
 .viewSourceButton:hover {
   text-decoration: underline;
   cursor: pointer;
-}
-
-.loadingOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.459); 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000; /* Ensure it is above other content */
-}
-
-.spinner {
-  font-size: 24px;
-  color: #ccc;
 }
 
 @media (max-width: 480px) {

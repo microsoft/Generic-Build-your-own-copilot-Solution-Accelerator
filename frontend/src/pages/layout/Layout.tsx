@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { Link, Outlet } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import { Dialog, Stack, TextField } from '@fluentui/react'
 import { CopyRegular } from '@fluentui/react-icons'
 
@@ -12,12 +12,13 @@ import Sidebar from '../../components/Sidebar/Sidebar'
 
 
 const Layout = () => {
+  const location = useLocation();
   const [isSharePanelOpen, setIsSharePanelOpen] = useState<boolean>(false)
   const [copyClicked, setCopyClicked] = useState<boolean>(false)
   const [copyText, setCopyText] = useState<string>('Copy URL')
   const [shareLabel, setShareLabel] = useState<string | undefined>('Share')
-  const [hideHistoryLabel, setHideHistoryLabel] = useState<string>('Hide chat history')
-  const [showHistoryLabel, setShowHistoryLabel] = useState<string>('Show chat history')
+  const [hideHistoryLabel, setHideHistoryLabel] = useState<string>('Hide template history')
+  const [showHistoryLabel, setShowHistoryLabel] = useState<string>('Show template history')
   const appStateContext = useContext(AppStateContext)
   const ui = appStateContext?.state.frontendSettings?.ui
 
@@ -56,8 +57,8 @@ const Layout = () => {
         setShowHistoryLabel('Show history')
       } else {
         setShareLabel('Share')
-        setHideHistoryLabel('Hide chat history')
-        setShowHistoryLabel('Show chat history')
+        setHideHistoryLabel('Hide template history')
+        setShowHistoryLabel('Show template history')
       }
     }
 
@@ -67,6 +68,7 @@ const Layout = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  const shouldShowHistoryButton = location.pathname === '/generate'
   return (
     <div className={styles.layout}>
       <header className={styles.header} role={'banner'}>
@@ -78,7 +80,7 @@ const Layout = () => {
             </Link>
           </Stack>
           <Stack horizontal tokens={{ childrenGap: 4 }} className={styles.shareButtonContainer}>
-            {appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && (
+            {shouldShowHistoryButton && appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && (
               <HistoryButton
                 onClick={handleHistoryClick}
                 text={appStateContext?.state?.isChatHistoryOpen ? hideHistoryLabel : showHistoryLabel}

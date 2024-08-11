@@ -116,7 +116,7 @@ export function ChatHistoryPanel(_props: ChatHistoryPanelProps) {
               marginRight: 'auto',
               paddingLeft: '20px'
             }}>
-            Chat history
+            Template history
           </Text>
         </StackItem>
         <Stack verticalAlign="start">
@@ -184,7 +184,7 @@ export function ChatHistoryPanel(_props: ChatHistoryPanelProps) {
                     </StackItem>
                     <StackItem>
                       <Text style={{ alignSelf: 'center', fontWeight: '400', fontSize: 14 }}>
-                        <span>Chat history can't be saved at this time</span>
+                        <span>Template history can't be saved at this time</span>
                       </Text>
                     </StackItem>
                   </Stack>

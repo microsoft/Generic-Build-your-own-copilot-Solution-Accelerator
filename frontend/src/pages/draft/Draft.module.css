@@ -7,3 +7,15 @@
     padding: 2rem 2rem;
     overflow-y: auto;
 }
+
+.exportDocumentIcon {
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    width: 180px;
+    height: 40px;
+    color: #ffffff;
+    border-radius: 4px;
+    z-index: 1;
+    align-self: center;
+  }

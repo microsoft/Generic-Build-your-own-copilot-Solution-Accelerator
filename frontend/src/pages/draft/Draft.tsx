@@ -3,16 +3,15 @@ import styles from './Draft.module.css'
 import { useLocation } from 'react-router-dom';
 import TitleCard from '../../components/DraftCards/TitleCard'
 import SectionCard from '../../components/DraftCards/SectionCard'
-import { DraftedDocument } from '../../api'
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import { AppStateContext } from "../../state/AppProvider";
+import { CommandBarButton, Stack } from '@fluentui/react';
 
 
 const Draft = (): JSX.Element => {
   const appStateContext = useContext(AppStateContext)
   const location = useLocation();
-  const { generateContentOnLoad } = location.state as { generateContentOnLoad: Boolean };
   const [title, setTitle] = useState('');
 
   // get draftedDocument from context
@@ -65,7 +64,7 @@ const Draft = (): JSX.Element => {
     });
 
     Packer.toBlob(doc).then(blob => {
-      saveAs(blob, `DraftTemplate-${title}.docx`);
+      saveAs(blob, `DraftTemplate-${sanitizeTitle(title)}.docx`);
     });
   };
 
@@ -73,15 +72,43 @@ const Draft = (): JSX.Element => {
     setTitle(newTitle);
   };
 
+  function sanitizeTitle(title: string): string {
+    return title.replace(/[^a-zA-Z0-9]/g, '');
+  }
+
   return (
     <div className={styles.container}>
       <div style={{ display: 'flex', justifyContent: 'start', alignItems: 'center' }}>
         <h4>Draft Document</h4>
-        <button onClick={exportToWord} style={{ marginLeft: 'auto' }}>Export to Word</button>
       </div>
 
       <TitleCard onTitleChange={handleTitleChange} />
       {(sections ?? []).map((_, index) => (<SectionCard key={index} sectionIdx={index} />))}
+      <Stack>
+        <CommandBarButton
+                  role="button"
+                  styles={{
+                    icon: {
+                      color: '#FFFFFF'
+                    },
+                    iconDisabled: {
+                      color: '#BDBDBD !important'
+                    },
+                    root: {
+                      color: '#FFFFFF',
+                      background: '#1367CF'
+                    },
+                    rootDisabled: {
+                      background: '#F0F0F0'
+                    }
+                  }}
+                  className={styles.exportDocumentIcon}
+                  iconProps={{ iconName: 'WordDocument' }}
+                  onClick={exportToWord} //Update for Document Generation
+                  aria-label="export document"
+                  text="Export Document"
+                />
+      </Stack>
     </div>
   )
 }

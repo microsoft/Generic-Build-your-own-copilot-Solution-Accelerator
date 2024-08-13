@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 // Define the interface for the document data
 interface DocumentData {
   content: string;
+  full_content: string;
 }
 
 const Document = (): JSX.Element => {
@@ -19,7 +20,6 @@ const Document = (): JSX.Element => {
       try {
         const response = await documentRead(id);
         const data = await response.json();
-
         setDocument(data);
       } catch (error) {
         console.error(error);
@@ -39,7 +39,7 @@ const Document = (): JSX.Element => {
       {isLoading ? ( // Step 4
         <p>Loading...</p>
       ) : document ? (
-        <p>{document.content}</p>
+        <p>{document.full_content}</p>
       ) : (
         <h1>Document not found. Please try again.</h1>
       )}

@@ -783,7 +783,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }, [showLoadingMessage, processMessages])
 
   const onShowCitation = (citation: Citation) => {
-    const path = `/#/document/${citation.id}`
+    const path = `/#/document/${citation.filepath}`;
 
     // Instead of navigating within the app, use window.open to open in a new tab
     const url = window.location.origin + path

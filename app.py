@@ -163,7 +163,6 @@ def init_ai_search_client():
         endpoint = app_settings.datasource.endpoint
         key_credential = app_settings.datasource.key
         index_name = app_settings.datasource.index
-
         client = SearchClient(endpoint=endpoint, index_name=index_name, credential=AzureKeyCredential(key_credential))
         return client
     except Exception as e:
@@ -889,10 +888,10 @@ async def generate_section_content():
         logging.exception("Exception in /history/clear_messages")
         return jsonify({"error": str(e)}), 500
 
-@bp.route("/document/<documentId>")
-async def get_document(documentId):
+@bp.route("/document/<filepath>")
+async def get_document(filepath):
     try:
-        document = retrieve_document(documentId)
+        document = retrieve_document(filepath)
         return jsonify(document), 200
     except Exception as e:
         logging.exception("Exception in /history/clear_messages")
@@ -1006,10 +1005,15 @@ async def generate_section_content(request_json):
     except Exception as e:
         raise e
     
-def retrieve_document(id):
+def retrieve_document(filepath):
     try:
         search_client = init_ai_search_client()
-        document = search_client.get_document(id)
+        search_query = f"filepath eq '{filepath}'"
+        # Execute the search query
+        results = search_client.search(search_query)
+
+        # Get the full_content of the first result
+        document = next(results)
         return document
     except Exception as e:
         logging.exception("Exception in retrieve_document")

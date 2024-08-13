@@ -116,17 +116,19 @@ export const historyRead = async (convId: string): Promise<ChatMessage[]> => {
 export const historyGenerate = async (
   options: ConversationRequest,
   abortSignal: AbortSignal,
-  convId?: string
+  convId?: string, chatType: ChatType = ChatType.Browse
 ): Promise<Response> => {
   let body
   if (convId) {
     body = JSON.stringify({
       conversation_id: convId,
-      messages: options.messages
+      messages: options.messages,
+      chat_type: chatType
     })
   } else {
     body = JSON.stringify({
-      messages: options.messages
+      messages: options.messages,
+      chat_type: chatType
     })
   }
   const response = await fetch('/history/generate', {

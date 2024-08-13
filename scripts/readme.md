@@ -146,7 +146,7 @@ This will use the Form Recognizer Read model by default.
 
 If your documents have a lot of tables and relevant layout information, you can use the Form Recognizer Layout model, which is more costly and slower to run but will preserve table information with better quality. The Layout model will also help preserve some of the formatting information in your document such as titles and sub-headings, which will make the citations more readable. To use the Layout model instead of the default Read model, pass in the argument `--form-rec-use-layout`.
 
-`python data_preparation.py --config config.json --njobs=4 --form-rec-resource andrew-desousa-formrecognizer --form-rec-key 8c77676f244349e6a4180c6c8d2e5192 --form-rec-use-layout --embedding-model-endpoint https://cog-generic-accelerator-dev.openai.azure.com/`
+`python data_preparation.py --config config.json --njobs=4 --form-rec-resource <form-rec-resource-name> --form-rec-key <form-rec-key> --form-rec-use-layout`
 
 # Use AML to Prepare Data
 ## Setup 

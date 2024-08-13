@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useContext, useLayoutEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom'
 import { CommandBarButton, IconButton, Dialog, DialogType, Stack } from '@fluentui/react'
 import { SquareRegular, ShieldLockRegular, ErrorCircleRegular } from '@fluentui/react-icons'
 
@@ -33,17 +33,14 @@ import {
   CosmosDBStatus,
   ErrorMessage,
   ExecResults,
-  AzureSqlServerCodeExecResult,
   Section,
-  DraftedDocument,
-  SectionGenerateRequest,
-  sectionGenerate
-} from "../../api";
-import { Answer } from "../../components/Answer";
-import { QuestionInput } from "../../components/QuestionInput";
-import { ChatHistoryPanel } from "../../components/ChatHistory/ChatHistoryPanel";
-import { AppStateContext } from "../../state/AppProvider";
-import { useBoolean } from "@fluentui/react-hooks";
+  DraftedDocument
+} from '../../api'
+import { Answer } from '../../components/Answer'
+import { QuestionInput } from '../../components/QuestionInput'
+import { ChatHistoryPanel } from '../../components/ChatHistory/ChatHistoryPanel'
+import { AppStateContext } from '../../state/AppProvider'
+import { useBoolean } from '@fluentui/react-hooks'
 
 const enum messageStatus {
   NotRunning = 'Not Running',
@@ -51,26 +48,39 @@ const enum messageStatus {
   Done = 'Done'
 }
 
+const enum chatTypeResponse {
+  Browse = 'Generating answer...',
+  Generate = 'Generating template...this may take up to 30 seconds.'
+}
+
+const enum contentTemplateSections {
+  NewLine = '\n\n',
+  Intro = 'The proposal will include the following sections:',
+  Closing = 'Does this look good? If so, you can **generate the document** now. You can also ask me to **add an item** or **change the order of the sections**.',
+  JSONParseError = 'Unable to parse the template response into a valid structure. Please try again.',
+  JSONStructureError = 'Unable to render the sections within the template. Please try again.'
+}
+
 interface Props {
   type?: ChatType
 }
 
 const Chat = ({ type = ChatType.Browse }: Props) => {
-  const location = useLocation();
-  
+  const location = useLocation()
+
   const appStateContext = useContext(AppStateContext)
   const ui = appStateContext?.state.frontendSettings?.ui
   const AUTH_ENABLED = appStateContext?.state.frontendSettings?.auth_enabled
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [showLoadingMessage, setShowLoadingMessage] = useState<boolean>(false)
-  const [isProcessingTemplate, setIsProcessingTemplate] = useState<boolean>(false)
   const [activeCitation, setActiveCitation] = useState<Citation>()
   const [isCitationPanelOpen, setIsCitationPanelOpen] = useState<boolean>(false)
   const [isIntentsPanelOpen, setIsIntentsPanelOpen] = useState<boolean>(false)
   const abortFuncs = useRef([] as AbortController[])
   const [showAuthMessage, setShowAuthMessage] = useState<boolean | undefined>()
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [jsonDraftDocument, setJSONDraftDocument] = useState<string>('')
   const [draftDocument, setDraftDocument] = useState<DraftedDocument>()
   const [execResults, setExecResults] = useState<ExecResults[]>([])
   const [processMessages, setProcessMessages] = useState<messageStatus>(messageStatus.NotRunning)
@@ -95,20 +105,14 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   const [ASSISTANT, TOOL, ERROR] = ['assistant', 'tool', 'error']
   const NO_CONTENT_ERROR = 'No content in messages object.'
 
-  const refreshContent = () => {
-    newChat();
-  }
-
   useEffect(() => {
-    console.log('Route changed, refresh the contents');
-
     if (type === ChatType.Browse) {
-      appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: appStateContext?.state.browseChat });
+      appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: appStateContext?.state.browseChat })
     } else {
-      appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: appStateContext?.state.generateChat });
+      appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: appStateContext?.state.generateChat })
     }
-  }, [location]);
-
+    processTemplateResponse()
+  }, [location])
 
   useEffect(() => {
     if (
@@ -119,7 +123,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     ) {
       let subtitle = `${appStateContext.state.isCosmosDBAvailable.status}. Please contact the site administrator.`
       setErrorMsg({
-        title: 'Chat history is not enabled',
+        title: 'Template history is not enabled',
         subtitle: subtitle
       })
       toggleErrorDialog()
@@ -150,47 +154,63 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     }
   }
 
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const navigateToDraftPage = (parameter: DraftedDocument) => {
     // update DraftedDocument in the state
-    appStateContext?.dispatch({ type: 'UPDATE_DRAFTED_DOCUMENT', payload: parameter });
-    navigate('/draft');
-  };
-  
+    appStateContext?.dispatch({ type: 'UPDATE_DRAFTED_DOCUMENT', payload: parameter })
+    navigate('/draft')
+  }
+
   let assistantMessage = {} as ChatMessage
   let toolMessage = {} as ChatMessage
   let assistantContent = ''
 
   const processTemplateResponse = () => {
-    if (assistantMessage.role === ASSISTANT) {
-      const lines = assistantContent.split('\n');
-      let jsonString = '';
+    if (type === ChatType.Template) {
+      let lines: string[]
+      if (assistantMessage.role === ASSISTANT) {
+        lines = assistantContent.split('\n')
+      } else {
+        let latestChat = appStateContext?.state.currentChat
+        if (!latestChat) return
 
-      lines.forEach(line => {
+        const assistantMessages = latestChat.messages.filter(answer => answer.role === ASSISTANT)
+
+        const mostRecentAssistantMessage =
+          assistantMessages.length > 0 ? assistantMessages[assistantMessages.length - 1] : undefined
+        if (mostRecentAssistantMessage) {
+          lines = mostRecentAssistantMessage.content.split('\n')
+        } else return
+      }
+      if (!lines) return
+
+      let jsonString = ''
+      lines?.forEach((line: string) => {
         if (!line.includes('json') && !line.includes('```')) {
-          jsonString += line.trim();
+          jsonString += line.trim()
         }
-      });
+      })
+      setJSONDraftDocument(jsonString) // use in the Answer response
       try {
-        const jsonObject = JSON.parse(jsonString);
-  
+        const jsonObject = JSON.parse(jsonString)
+
         const sections: Section[] = jsonObject.template.map((item: any) => ({
           title: item.section_title,
-          content: "", // Generated when user selects 'Generate' button
+          content: '', // Generated when user selects 'Generate' button
           description: item.section_description
-        }));
-  
+        }))
+
         const draftedTemplate: DraftedDocument = {
-          title: "Enter a draft document title",
+          title: 'Enter a draft document title',
           sections: sections
-        };
-  
-        setDraftDocument(draftedTemplate);
+        }
+
+        setDraftDocument(draftedTemplate)
       } catch (e) {
-        console.error('Failed to parse JSON:', e);
+        console.error('Failed to parse JSON:', e)
       }
-    }    
+    }
   }
 
   const processResultMessage = (resultMessage: ChatMessage, userMessage: ChatMessage, conversationId?: string) => {
@@ -316,7 +336,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
         conversation.messages.push(toolMessage, assistantMessage)
         appStateContext?.dispatch({ type: 'UPDATE_CURRENT_CHAT', payload: conversation })
         setMessages([...messages, toolMessage, assistantMessage])
-        if (type === ChatType.Template) processTemplateResponse()
+        processTemplateResponse()
       }
     } catch (e) {
       if (!abortController.signal.aborted) {
@@ -353,8 +373,6 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }
 
   const makeApiRequestWithCosmosDB = async (question: string, conversationId?: string) => {
-    // TODO - Currently works with Chat with your data. Need to update to work with the
-    // ChatType.Template. 
     setIsLoading(true)
     setShowLoadingMessage(true)
     const abortController = new AbortController()
@@ -394,8 +412,8 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     var errorResponseMessage = 'Please try again. If the problem persists, please contact the site administrator.'
     try {
       const response = conversationId
-        ? await historyGenerate(request, abortController.signal, conversationId)
-        : await historyGenerate(request, abortController.signal)
+        ? await historyGenerate(request, abortController.signal, conversationId, type)
+        : await historyGenerate(request, abortController.signal, undefined, type)
       if (!response?.ok) {
         const responseJson = await response.json()
         errorResponseMessage =
@@ -403,7 +421,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
         let errorChatMsg: ChatMessage = {
           id: uuid(),
           role: ERROR,
-          content: `There was an error generating a response. Chat history can't be saved at this time. ${errorResponseMessage}`,
+          content: `There was an error generating a response. Template history can't be saved at this time. ${errorResponseMessage}`,
           date: new Date().toISOString()
         }
         let resultConversation
@@ -509,6 +527,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
         isEmpty(toolMessage)
           ? setMessages([...messages, assistantMessage])
           : setMessages([...messages, toolMessage, assistantMessage])
+        processTemplateResponse()
       }
     } catch (e) {
       if (!abortController.signal.aborted) {
@@ -596,7 +615,8 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
           type: 'DELETE_CURRENT_CHAT_MESSAGES',
           payload: appStateContext?.state.currentChat.id
         })
-        appStateContext?.dispatch({ type: 'UPDATE_CHAT_HISTORY', payload: appStateContext?.state.currentChat })
+        if (type === ChatType.Template)
+          appStateContext?.dispatch({ type: 'UPDATE_CHAT_HISTORY', payload: appStateContext?.state.currentChat })
         setActiveCitation(undefined)
         setIsCitationPanelOpen(false)
         setIsIntentsPanelOpen(false)
@@ -661,23 +681,9 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     return tryGetRaiPrettyError(errorMessage)
   }
 
-  const getTemplateContent = async () => {
-    if (draftDocument !== undefined) {
-      for (const s of draftDocument.sections) {
-        const sectionTitle = s.title
-        const sectionDescription = s.description
-        const sectionGenerateRequest: SectionGenerateRequest = { sectionTitle, sectionDescription }
-        const response = await sectionGenerate(sectionGenerateRequest)
-        const responseBody = await response.json()
-        s.content = responseBody.section_content
-      }
-      setDraftDocument(draftDocument)
-    }
-  }
-
   const generateDocument = async () => {
     if (draftDocument !== undefined) {
-      navigateToDraftPage(draftDocument);
+      navigateToDraftPage(draftDocument)
     }
   }
 
@@ -705,11 +711,11 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     }
 
     if (type === ChatType.Browse) {
-      appStateContext?.dispatch({ type: 'UPDATE_BROWSE_CHAT', payload: appStateContext?.state.currentChat });
+      appStateContext?.dispatch({ type: 'UPDATE_BROWSE_CHAT', payload: appStateContext?.state.currentChat })
     } else {
       appStateContext?.dispatch({ type: 'UPDATE_GENERATE_CHAT', payload: appStateContext?.state.currentChat })
     }
-
+    processTemplateResponse()
   }, [appStateContext?.state.currentChat])
 
   useLayoutEffect(() => {
@@ -719,7 +725,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     }
 
     if (appStateContext && appStateContext.state.currentChat && processMessages === messageStatus.Done) {
-      if (appStateContext.state.isCosmosDBAvailable.cosmosDB) {
+      if (appStateContext.state.isCosmosDBAvailable.cosmosDB && type === ChatType.Template) {
         if (!appStateContext?.state.currentChat?.messages) {
           console.error('Failure fetching current chat state.')
           return
@@ -761,7 +767,8 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
         }
       } else {
       }
-      appStateContext?.dispatch({ type: 'UPDATE_CHAT_HISTORY', payload: appStateContext.state.currentChat })
+      if (type === ChatType.Template)
+        appStateContext?.dispatch({ type: 'UPDATE_CHAT_HISTORY', payload: appStateContext.state.currentChat })
       setMessages(appStateContext.state.currentChat.messages)
       setProcessMessages(messageStatus.NotRunning)
     }
@@ -776,12 +783,11 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }, [showLoadingMessage, processMessages])
 
   const onShowCitation = (citation: Citation) => {
-    console.log(citation)
     const path = `/#/document/${citation.filepath}`;
 
     // Instead of navigating within the app, use window.open to open in a new tab
-    const url = window.location.origin + path;
-    window.open(url, '_blank');
+    const url = window.location.origin + path
+    window.open(url, '_blank')
 
     // setActiveCitation(citation)
     // setIsCitationPanelOpen(true)
@@ -810,22 +816,21 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }
 
   const parsePlotFromMessage = (message: ChatMessage) => {
-    if (message?.role && message?.role === "tool") {
+    if (message?.role && message?.role === 'tool') {
       try {
-        const execResults = JSON.parse(message.content) as AzureSqlServerExecResults;
-        const codeExecResult = execResults.all_exec_results.at(-1)?.code_exec_result;
+        const execResults = JSON.parse(message.content) as AzureSqlServerExecResults
+        const codeExecResult = execResults.all_exec_results.at(-1)?.code_exec_result
         if (codeExecResult === undefined) {
-          return null;
+          return null
         }
-        return codeExecResult;
-      }
-      catch {
-        return null;
+        return codeExecResult
+      } catch {
+        return null
       }
       // const execResults = JSON.parse(message.content) as AzureSqlServerExecResults;
       // return execResults.all_exec_results.at(-1)?.code_exec_result;
     }
-    return null;
+    return null
   }
 
   const disabledButton = () => {
@@ -837,9 +842,28 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     )
   }
 
+  const generateTemplateSections = (jsonString: string) => {
+    let jsonResponse
+    try {
+      jsonResponse = JSON.parse(jsonString)
+    } catch (e) {
+      return contentTemplateSections.JSONParseError
+    }
+
+    if (!Array.isArray(jsonResponse.template)) {
+      return contentTemplateSections.JSONStructureError
+    }
+
+    let sections = `${contentTemplateSections.Intro}${contentTemplateSections.NewLine}`
+    jsonResponse.template.forEach((row: { section_title: string }) => {
+      sections += `${row.section_title}${contentTemplateSections.NewLine}`
+    })
+    sections += `${contentTemplateSections.Closing}`
+    return sections.trim() // Remove any trailing newline
+  }
+
   return (
-    <>
-      {isProcessingTemplate && <div className={styles.loadingOverlay}><div className={styles.spinner}>Generating template...</div></div>}
+    <div className={styles.container} role="main">
       {showAuthMessage ? (
         <Stack className={styles.chatEmptyState}>
           <ShieldLockRegular
@@ -868,61 +892,65 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
           </h2>
         </Stack>
       ) : (
-        <div className={styles.chatMessageStream} style={{ marginBottom: isLoading ? '40px' : '0px' }} role="log">
-          {messages.map((answer, index) => (
-            <>
-              {answer.role === 'user' ? (
-                <div className={styles.chatMessageUser} tabIndex={0}>
-                  <div className={styles.chatMessageUserMessage}>{answer.content}</div>
-                </div>
-              ) : answer.role === 'assistant' ? (
-                <div className={styles.chatMessageGpt}>
-                  <Answer
-                    answer={{
-                      answer: answer.content,
-                      citations: parseCitationFromMessage(messages[index - 1]),
-                      plotly_data: parsePlotFromMessage(messages[index - 1]),
-                      message_id: answer.id,
-                      feedback: answer.feedback,
-                      exec_results: execResults
-                    }}
-                    onCitationClicked={c => onShowCitation(c)}
-                    onExectResultClicked={() => onShowExecResult()}
-                  />
-                </div>
-              ) : answer.role === ERROR ? (
-                <div className={styles.chatMessageError}>
-                  <Stack horizontal className={styles.chatMessageErrorContent}>
-                    <ErrorCircleRegular className={styles.errorIcon} style={{ color: 'rgba(182, 52, 67, 1)' }} />
-                    <span>Error</span>
-                  </Stack>
-                  <span className={styles.chatMessageErrorContent}>{answer.content}</span>
-                </div>
-              ) : null}
-            </>
-          ))}
-
-          {showLoadingMessage && (
-            <>
-              <div className={styles.chatMessageGpt}>
-                <Answer
-                  answer={{
-                    answer: "Generating answer...",
-                    citations: [],
-                    plotly_data: null
-                  }}
-
-                  onCitationClicked={() => null}
-                  onExectResultClicked={() => null}
-                />
+        <Stack horizontal className={styles.chatRoot}>
+          <div className={styles.chatContainer}>
+            {!messages || messages.length < 1 ? (
+              <Stack className={styles.chatEmptyState}>
+                <h1 className={styles.chatEmptyStateTitle}>{ui?.chat_title}</h1>
+              </Stack>
+            ) : (
+              <div className={styles.chatMessageStream} style={{ marginBottom: isLoading ? '40px' : '0px' }} role="log">
+                {messages.map((answer, index) => (
+                  <>
+                    {answer.role === 'user' ? (
+                      <div className={styles.chatMessageUser} tabIndex={0}>
+                        <div className={styles.chatMessageUserMessage}>{answer.content}</div>
+                      </div>
+                    ) : answer.role === 'assistant' ? (
+                      <div className={styles.chatMessageGpt}>
+                        <Answer
+                          answer={{
+                            answer:
+                              type === ChatType.Browse ? answer.content : generateTemplateSections(jsonDraftDocument),
+                            citations: parseCitationFromMessage(messages[index - 1]),
+                            plotly_data: parsePlotFromMessage(messages[index - 1]),
+                            message_id: answer.id,
+                            feedback: answer.feedback,
+                            exec_results: execResults
+                          }}
+                          onCitationClicked={c => onShowCitation(c)}
+                          onExectResultClicked={() => onShowExecResult()}
+                        />
+                      </div>
+                    ) : answer.role === ERROR ? (
+                      <div className={styles.chatMessageError}>
+                        <Stack horizontal className={styles.chatMessageErrorContent}>
+                          <ErrorCircleRegular className={styles.errorIcon} style={{ color: 'rgba(182, 52, 67, 1)' }} />
+                          <span>Error</span>
+                        </Stack>
+                        <span className={styles.chatMessageErrorContent}>{answer.content}</span>
+                      </div>
+                    ) : null}
+                  </>
+                ))}
+                {showLoadingMessage && (
+                  <>
+                    <div className={styles.chatMessageGpt}>
+                      <Answer
+                        answer={{
+                          answer: type === ChatType.Browse ? chatTypeResponse.Browse : chatTypeResponse.Generate,
+                          citations: [],
+                          plotly_data: null
+                        }}
+                        onCitationClicked={() => null}
+                        onExectResultClicked={() => null}
+                      />
+                    </div>
+                  </>
+                )}
+                <div ref={chatMessageStreamEnd} />
               </div>
-            </>
-          )}
-
-          <div ref={chatMessageStreamEnd} />
-        </div>
-      )
-      }
+            )}
 
             <Stack horizontal className={styles.chatInput}>
               {isLoading && messages.length > 0 && (
@@ -953,7 +981,8 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                       },
                       root: {
                         color: '#FFFFFF',
-                        background: '#1367CF'
+                        background:
+                          'radial-gradient(109.81% 107.82% at 100.1% 90.19%, #0F6CBD 33.63%, #2D87C3 70.31%, #8DDDD8 100%)'
                       },
                       rootDisabled: {
                         background: '#F0F0F0'
@@ -977,20 +1006,23 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                     },
                     root: {
                       color: '#FFFFFF',
-                      background: '#1367CF'
+                      background:
+                        'radial-gradient(109.81% 107.82% at 100.1% 90.19%, #0F6CBD 33.63%, #2D87C3 70.31%, #8DDDD8 100%)'
                     },
                     rootDisabled: {
                       background: '#F0F0F0'
-                    },
+                    }
                   }}
                   className={
-                    appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured
+                    appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured &&
+                    type !== ChatType.Template
                       ? styles.clearChatBroom
                       : styles.clearChatBroomNoCosmos
                   }
                   iconProps={{ iconName: 'Broom' }}
                   onClick={
-                    appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured
+                    appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured &&
+                    type !== ChatType.Template
                       ? clearChat
                       : newChat
                   }
@@ -1003,51 +1035,47 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                   dialogContentProps={errorDialogContentProps}
                   modalProps={modalProps}></Dialog>
               </Stack>
-              <Stack horizontal className={styles.chatInputContainer}>
-                <QuestionInput
-                  clearOnSend
-                  placeholder="Type a new question..."
-                  disabled={isLoading}
-                  onSend={(question, id) => {
-                    appStateContext?.state.isCosmosDBAvailable?.cosmosDB
-                      ? makeApiRequestWithCosmosDB(question, id)
-                      : makeApiRequestWithoutCosmosDB(question, id)
-                  }}
-                  conversationId={
-                    appStateContext?.state.currentChat?.id ? appStateContext?.state.currentChat?.id : undefined
-                  }
-                />
-                {
-                  type == ChatType.Template && (
-                    <CommandBarButton
-                    role="button"
-                    styles={{
-                      icon: {
-                        color: '#FFFFFF'
-                      },
-                      iconDisabled: {
-                        color: '#BDBDBD !important'
-                      }, 
-                      root: {
-                        color: '#FFFFFF',
-                        background: '#1367CF'
-                      },
-                      rootDisabled: {
-                        background: '#F0F0F0'
-                      }
-                    }}
-
-                    className={styles.generateDocumentIcon}
-                    iconProps={{ iconName: 'Edit' }}
-                    onClick={generateDocument} //Update for Document Generation
-                    disabled={disabledButton()}
-                    aria-label="generate template"
-                    text='Generate'
-                  />  
-                  ) 
+              <QuestionInput
+                clearOnSend
+                placeholder="Type a new question..."
+                disabled={isLoading}
+                onSend={(question, id) => {
+                  appStateContext?.state.isCosmosDBAvailable?.cosmosDB && type === ChatType.Template
+                    ? makeApiRequestWithCosmosDB(question, id)
+                    : makeApiRequestWithoutCosmosDB(question, id)
+                }}
+                conversationId={
+                  appStateContext?.state.currentChat?.id ? appStateContext?.state.currentChat?.id : undefined
                 }
-              </Stack>
+              />
+              {type == ChatType.Template && (
+                <CommandBarButton
+                  role="button"
+                  styles={{
+                    icon: {
+                      color: '#FFFFFF'
+                    },
+                    iconDisabled: {
+                      color: '#BDBDBD !important'
+                    },
+                    root: {
+                      color: '#FFFFFF',
+                      background: '#1367CF'
+                    },
+                    rootDisabled: {
+                      background: '#F0F0F0'
+                    }
+                  }}
+                  className={styles.generateDocumentIcon}
+                  iconProps={{ iconName: 'WordDocument' }}
+                  onClick={generateDocument} //Update for Document Generation
+                  disabled={draftDocument === undefined && disabledButton()}
+                  aria-label="generate document"
+                  text="Generate Document"
+                />
+              )}
             </Stack>
+          </div>
           {/* Citation Panel */}
           {messages && messages.length > 0 && isCitationPanelOpen && activeCitation && (
             <Stack.Item className={styles.citationPanel} tabIndex={0} role="tabpanel" aria-label="Citations Panel">
@@ -1106,30 +1134,43 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                 />
               </Stack>
               <Stack horizontalAlign="space-between">
-                {execResults.map((execResult) => {
+                {execResults.map(execResult => {
                   return (
                     <Stack className={styles.exectResultList} verticalAlign="space-between">
-                      <><span>Intent:</span> <p>{execResult.intent}</p></>
-                      {execResult.search_query && <><span>Search Query:</span>
-                        <SyntaxHighlighter
-                          style={nord}
-                          wrapLines={true}
-                          lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
-                          language="sql"
-                          PreTag="p">
-                          {execResult.search_query}
-                        </SyntaxHighlighter></>}
-                      {execResult.search_result && <><span>Search Result:</span> <p>{execResult.search_result}</p></>}
-                      {execResult.code_generated && <><span>Code Generated:</span>
-                        <SyntaxHighlighter
-                          style={nord}
-                          wrapLines={true}
-                          lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
-                          language="python"
-                          PreTag="p">
-                          {execResult.code_generated}
-                        </SyntaxHighlighter>
-                      </>}
+                      <>
+                        <span>Intent:</span> <p>{execResult.intent}</p>
+                      </>
+                      {execResult.search_query && (
+                        <>
+                          <span>Search Query:</span>
+                          <SyntaxHighlighter
+                            style={nord}
+                            wrapLines={true}
+                            lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
+                            language="sql"
+                            PreTag="p">
+                            {execResult.search_query}
+                          </SyntaxHighlighter>
+                        </>
+                      )}
+                      {execResult.search_result && (
+                        <>
+                          <span>Search Result:</span> <p>{execResult.search_result}</p>
+                        </>
+                      )}
+                      {execResult.code_generated && (
+                        <>
+                          <span>Code Generated:</span>
+                          <SyntaxHighlighter
+                            style={nord}
+                            wrapLines={true}
+                            lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
+                            language="python"
+                            PreTag="p">
+                            {execResult.code_generated}
+                          </SyntaxHighlighter>
+                        </>
+                      )}
                     </Stack>
                   )
                 })}
@@ -1137,8 +1178,11 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
             </Stack.Item>
           )}
           {appStateContext?.state.isChatHistoryOpen &&
-            appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && <ChatHistoryPanel />}
-    </>
+            appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured &&
+            type === ChatType.Template && <ChatHistoryPanel />}
+        </Stack>
+      )}
+    </div>
   )
 }
 

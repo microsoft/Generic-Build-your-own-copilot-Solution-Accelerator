@@ -743,16 +743,11 @@ def get_embedding(text, embedding_model_endpoint=None, embedding_model_key=None,
     FLAG_COHERE = os.getenv("FLAG_COHERE", "ENGLISH")
     FLAG_AOAI = os.getenv("FLAG_AOAI", "V3")
 
-    if azure_credential is None and (endpoint is None or key is None):
+    if azure_credential is None and (endpoint is None):
         raise Exception("EMBEDDING_MODEL_ENDPOINT and EMBEDDING_MODEL_KEY are required for embedding")
 
     try:
         if FLAG_EMBEDDING_MODEL == "AOAI":
-            # endpoint_parts = endpoint.split("/openai/deployments/")
-            # base_url = endpoint_parts[0]
-            # deployment_id = endpoint_parts[1].split("/embeddings")[0]
-            # api_version = endpoint_parts[1].split("api-version=")[1].split("&")[0]
-
             deployment_id = "embedding"
             api_version = "2024-02-01"
             
@@ -761,7 +756,7 @@ def get_embedding(text, embedding_model_endpoint=None, embedding_model_key=None,
             else:
                 api_key = embedding_model_key if embedding_model_key else os.getenv("AZURE_OPENAI_API_KEY")
             
-            client = AzureOpenAI(api_version=api_version, azure_endpoint="https://cog-generic-accelerator-dev.openai.azure.com/", api_key=api_key)
+            client = AzureOpenAI(api_version=api_version, azure_endpoint=endpoint, api_key=api_key)
             embeddings = client.embeddings.create(model=deployment_id, input=text)
 
             return embeddings.model_dump()['data'][0]['embedding']

@@ -11,3 +11,6 @@ static
 
 scripts/config.json
 venv
+
+grant_data
+promissory_note_data

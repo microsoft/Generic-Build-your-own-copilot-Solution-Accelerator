@@ -183,6 +183,15 @@ def create_or_update_search_index(
                 "analyzer": f"{language}.lucene" if language else None,
             },
             {
+                "name": "full_content",
+                "type": "Edm.String",
+                "searchable": True,
+                "sortable": False,
+                "facetable": False,
+                "filterable": False,
+                "analyzer": f"{language}.lucene" if language else None,
+            },
+            {
                 "name": "title",
                 "type": "Edm.String",
                 "searchable": True,
@@ -452,7 +461,7 @@ if __name__ == "__main__":
     parser.add_argument("--config", type=str, help="Path to config file containing settings for data preparation")
     parser.add_argument("--form-rec-resource", type=str, help="Name of your Form Recognizer resource to use for PDF cracking.")
     parser.add_argument("--form-rec-key", type=str, help="Key for your Form Recognizer resource to use for PDF cracking.")
-    parser.add_argument("--form-rec-use-layout", default=True, action='store_true', help="Whether to use Layout model for PDF cracking, if False will use Read model.")
+    parser.add_argument("--form-rec-use-layout", default=False, action='store_true', help="Whether to use Layout model for PDF cracking, if False will use Read model.")
     parser.add_argument("--njobs", type=valid_range, default=4, help="Number of jobs to run (between 1 and 32). Default=4")
     parser.add_argument("--embedding-model-endpoint", type=str, help="Endpoint for the embedding model to use for vector search. Format: 'https://<AOAI resource name>.openai.azure.com/openai/deployments/<Ada deployment name>/embeddings?api-version=2024-03-01-Preview'")
     parser.add_argument("--embedding-model-key", type=str, help="Key for the embedding model to use for vector search.")

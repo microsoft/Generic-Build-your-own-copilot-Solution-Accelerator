@@ -266,6 +266,7 @@ class Document(object):
     metadata: Optional[Dict] = None
     contentVector: Optional[List[float]] = None
     image_mapping: Optional[Dict] = None
+    full_content: Optional[str] = None
 
 def cleanup_content(content: str) -> str:
     """Cleans up the given content using regexes
@@ -884,7 +885,8 @@ def chunk_content(
                         url=url,
                         contentVector=doc.contentVector,
                         metadata=doc.metadata,
-                        image_mapping=doc.image_mapping
+                        image_mapping=doc.image_mapping,
+                        full_content=content
                     )
                 )
             else:

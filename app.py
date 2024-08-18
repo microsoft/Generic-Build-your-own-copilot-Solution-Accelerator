@@ -885,7 +885,7 @@ async def generate_section_content():
         template = await generate_section_content(request_json)
         return jsonify(template), 200
     except Exception as e:
-        logging.exception("Exception in /history/clear_messages")
+        logging.exception("Exception in /section/generate")
         return jsonify({"error": str(e)}), 500
 
 @bp.route("/document/<filepath>")
@@ -894,7 +894,7 @@ async def get_document(filepath):
         document = retrieve_document(filepath)
         return jsonify(document), 200
     except Exception as e:
-        logging.exception("Exception in /history/clear_messages")
+        logging.exception("Exception in /document/<filepath>")
         return jsonify({"error": str(e)}), 500
 
 async def generate_title(conversation_messages):
@@ -1002,8 +1002,9 @@ async def generate_section_content(request_json):
 
         template = json.loads(response.choices[0].message.content)
         return template
-    except Exception as e:
-        raise e
+    except Exception as ex:
+        logging.exception(ex)
+        return json.loads({"error": str(ex)})
     
 def retrieve_document(filepath):
     try:

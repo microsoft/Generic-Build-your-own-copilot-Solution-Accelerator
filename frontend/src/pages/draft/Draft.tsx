@@ -55,7 +55,7 @@ const Draft = (): JSX.Element => {
                       size: 20
                     }),
                     new TextRun({
-                      text: '\n',
+                      text: '',
                       break: 1 // Add a new line after the section title
                     }),
                     new TextRun({

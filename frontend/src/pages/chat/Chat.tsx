@@ -1,6 +1,17 @@
 import { useRef, useState, useEffect, useContext, useLayoutEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { CommandBarButton, IconButton, Dialog, DialogType, Stack } from '@fluentui/react'
+import {
+  CommandBarButton,
+  IconButton,
+  Dialog,
+  DialogType,
+  Stack,
+  Modal,
+  IStackTokens,
+  mergeStyleSets,
+  IModalStyles,
+  PrimaryButton
+} from '@fluentui/react'
 import { SquareRegular, ShieldLockRegular, ErrorCircleRegular } from '@fluentui/react-icons'
 
 import ReactMarkdown from 'react-markdown'
@@ -9,9 +20,6 @@ import rehypeRaw from 'rehype-raw'
 import uuid from 'react-uuid'
 import { isEmpty } from 'lodash'
 import DOMPurify from 'dompurify'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { nord } from 'react-syntax-highlighter/dist/esm/styles/prism'
-
 import styles from './Chat.module.css'
 import { XSSAllowTags } from '../../constants/xssAllowTags'
 
@@ -22,7 +30,6 @@ import {
   conversationApi,
   Citation,
   ToolMessageContent,
-  AzureSqlServerExecResults,
   ChatResponse,
   getUserInfo,
   Conversation,
@@ -32,7 +39,6 @@ import {
   ChatHistoryLoadingState,
   CosmosDBStatus,
   ErrorMessage,
-  ExecResults,
   Section,
   DraftedDocument
 } from '../../api'
@@ -61,6 +67,38 @@ const enum contentTemplateSections {
   JSONStructureError = 'Unable to render the sections within the template. Please try again.'
 }
 
+// Define stack tokens for spacing
+const stackTokens: IStackTokens = { childrenGap: 20 }
+
+// Define custom styles for the modal
+const modalStyles: IModalStyles = {
+  main: {
+    maxWidth: '80%',
+    minHeight: '40%',
+    padding: '20px',
+    backgroundColor: '#f3f2f1',
+    borderRadius: '8px'
+  },
+  root: undefined,
+  scrollableContent: undefined,
+  layer: undefined,
+  keyboardMoveIconContainer: undefined,
+  keyboardMoveIcon: undefined
+}
+
+// Define custom styles for the content inside the modal
+const contentStyles = mergeStyleSets({
+  iframe: {
+    width: '100%',
+    height: '500px',
+    border: 'none'
+  },
+  closeButton: {
+    marginTop: '20px',
+    alignSelf: 'flex-end'
+  }
+})
+
 interface Props {
   type?: ChatType
 }
@@ -82,11 +120,12 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [jsonDraftDocument, setJSONDraftDocument] = useState<string>('')
   const [draftDocument, setDraftDocument] = useState<DraftedDocument>()
-  const [execResults, setExecResults] = useState<ExecResults[]>([])
   const [processMessages, setProcessMessages] = useState<messageStatus>(messageStatus.NotRunning)
   const [clearingChat, setClearingChat] = useState<boolean>(false)
   const [hideErrorDialog, { toggle: toggleErrorDialog }] = useBoolean(true)
   const [errorMsg, setErrorMsg] = useState<ErrorMessage | null>()
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [modalUrl, setModalUrl] = useState('')
 
   const errorDialogContentProps = {
     type: DialogType.close,
@@ -214,11 +253,6 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }
 
   const processResultMessage = (resultMessage: ChatMessage, userMessage: ChatMessage, conversationId?: string) => {
-    if (resultMessage.content.includes('all_exec_results')) {
-      const parsedExecResults = JSON.parse(resultMessage.content) as AzureSqlServerExecResults
-      setExecResults(parsedExecResults.all_exec_results)
-    }
-
     if (resultMessage.role === ASSISTANT) {
       assistantContent += resultMessage.content
       assistantMessage = resultMessage
@@ -783,18 +817,15 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }, [showLoadingMessage, processMessages])
 
   const onShowCitation = (citation: Citation) => {
-    const path = `/#/document/${citation.filepath}`;
-
-    // Instead of navigating within the app, use window.open to open in a new tab
+    const path = `/#/document/${citation.filepath}`
     const url = window.location.origin + path
-    window.open(url, '_blank')
-
-    // setActiveCitation(citation)
-    // setIsCitationPanelOpen(true)
+    setModalUrl(url)
+    setIsModalOpen(true)
   }
 
-  const onShowExecResult = () => {
-    setIsIntentsPanelOpen(true)
+  const onCloseModal = () => {
+    setIsModalOpen(false)
+    setModalUrl('')
   }
 
   const onViewSource = (citation: Citation) => {
@@ -813,24 +844,6 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
       }
     }
     return []
-  }
-
-  const parsePlotFromMessage = (message: ChatMessage) => {
-    if (message?.role && message?.role === 'tool') {
-      try {
-        const execResults = JSON.parse(message.content) as AzureSqlServerExecResults
-        const codeExecResult = execResults.all_exec_results.at(-1)?.code_exec_result
-        if (codeExecResult === undefined) {
-          return null
-        }
-        return codeExecResult
-      } catch {
-        return null
-      }
-      // const execResults = JSON.parse(message.content) as AzureSqlServerExecResults;
-      // return execResults.all_exec_results.at(-1)?.code_exec_result;
-    }
-    return null
   }
 
   const disabledButton = () => {
@@ -913,13 +926,10 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                             answer:
                               type === ChatType.Browse ? answer.content : generateTemplateSections(jsonDraftDocument),
                             citations: parseCitationFromMessage(messages[index - 1]),
-                            plotly_data: parsePlotFromMessage(messages[index - 1]),
                             message_id: answer.id,
-                            feedback: answer.feedback,
-                            exec_results: execResults
+                            feedback: answer.feedback
                           }}
                           onCitationClicked={c => onShowCitation(c)}
-                          onExectResultClicked={() => onShowExecResult()}
                         />
                       </div>
                     ) : answer.role === ERROR ? (
@@ -939,11 +949,9 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                       <Answer
                         answer={{
                           answer: type === ChatType.Browse ? chatTypeResponse.Browse : chatTypeResponse.Generate,
-                          citations: [],
-                          plotly_data: null
+                          citations: []
                         }}
                         onCitationClicked={() => null}
-                        onExectResultClicked={() => null}
                       />
                     </div>
                   </>
@@ -1133,48 +1141,6 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                   onClick={() => setIsIntentsPanelOpen(false)}
                 />
               </Stack>
-              <Stack horizontalAlign="space-between">
-                {execResults.map(execResult => {
-                  return (
-                    <Stack className={styles.exectResultList} verticalAlign="space-between">
-                      <>
-                        <span>Intent:</span> <p>{execResult.intent}</p>
-                      </>
-                      {execResult.search_query && (
-                        <>
-                          <span>Search Query:</span>
-                          <SyntaxHighlighter
-                            style={nord}
-                            wrapLines={true}
-                            lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
-                            language="sql"
-                            PreTag="p">
-                            {execResult.search_query}
-                          </SyntaxHighlighter>
-                        </>
-                      )}
-                      {execResult.search_result && (
-                        <>
-                          <span>Search Result:</span> <p>{execResult.search_result}</p>
-                        </>
-                      )}
-                      {execResult.code_generated && (
-                        <>
-                          <span>Code Generated:</span>
-                          <SyntaxHighlighter
-                            style={nord}
-                            wrapLines={true}
-                            lineProps={{ style: { wordBreak: 'break-all', whiteSpace: 'pre-wrap' } }}
-                            language="python"
-                            PreTag="p">
-                            {execResult.code_generated}
-                          </SyntaxHighlighter>
-                        </>
-                      )}
-                    </Stack>
-                  )
-                })}
-              </Stack>
             </Stack.Item>
           )}
           {appStateContext?.state.isChatHistoryOpen &&
@@ -1182,6 +1148,14 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
             type === ChatType.Template && <ChatHistoryPanel />}
         </Stack>
       )}
+      <Modal isOpen={isModalOpen} onDismiss={onCloseModal} isBlocking={false} styles={modalStyles}>
+        <Stack tokens={stackTokens} styles={{ root: { padding: 20 } }}>
+          <iframe src={modalUrl} className={contentStyles.iframe} title="Citation"></iframe>
+          <PrimaryButton onClick={onCloseModal} className={contentStyles.closeButton}>
+            Close
+          </PrimaryButton>
+        </Stack>
+      </Modal>
     </div>
   )
 }

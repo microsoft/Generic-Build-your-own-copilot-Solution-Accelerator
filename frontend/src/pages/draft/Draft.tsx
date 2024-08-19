@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react'
+import { useState, useContext } from 'react'
 import styles from './Draft.module.css'
 import { useLocation } from 'react-router-dom'
 import TitleCard from '../../components/DraftCards/TitleCard'
@@ -16,6 +16,7 @@ const Draft = (): JSX.Element => {
   // get draftedDocument from context
   const draftedDocument = appStateContext?.state.draftedDocument
   const sections = draftedDocument?.sections ?? []
+  const aiWarningLabel = 'AI-generated content may be incorrect'
 
   const exportToWord = () => {
     const doc = new Document({
@@ -33,6 +34,14 @@ const Draft = (): JSX.Element => {
                 new TextRun({
                   text: '\n',
                   break: 1 // Add a new line after the title
+                }),
+                new TextRun({
+                  text: aiWarningLabel,
+                  size: 12
+                }),
+                new TextRun({
+                  text: '\n',
+                  break: 1 // Add a new line after the AI statement
                 })
               ]
             }),
@@ -79,16 +88,12 @@ const Draft = (): JSX.Element => {
   }
 
   return (
-    <div className={styles.container}>
-      <div style={{ display: 'flex', justifyContent: 'start', alignItems: 'center' }}>
-        <h4>Draft Document</h4>
-      </div>
-
+    <Stack className={styles.container}>
       <TitleCard onTitleChange={handleTitleChange} />
       {(sections ?? []).map((_, index) => (
         <SectionCard key={index} sectionIdx={index} />
       ))}
-      <Stack>
+      <Stack className={styles.buttonContainer}>
         <CommandBarButton
           role="button"
           styles={{
@@ -113,7 +118,7 @@ const Draft = (): JSX.Element => {
           text="Export Document"
         />
       </Stack>
-    </div>
+    </Stack>
   )
 }
 

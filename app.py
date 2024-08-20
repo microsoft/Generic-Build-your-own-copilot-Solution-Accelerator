@@ -823,8 +823,8 @@ async def generate_section_content():
         if "sectionDescription" not in request_json:
             return jsonify({"error": "sectionDescription is required"}), 400
         
-        template = await generate_section_content(request_json)
-        return jsonify(template), 200
+        content = await generate_section_content(request_json)
+        return jsonify({"section_content": content}), 200
     except Exception as e:
         logging.exception("Exception in /section/generate")
         return jsonify({"error": str(e)}), 500
@@ -880,8 +880,7 @@ async def generate_section_content(request_json):
             model=app_settings.azure_openai.model, messages=messages, temperature=0
         )
 
-        template = json.loads(response.choices[0].message.content)
-        return template
+        return response.choices[0].message.content
     except Exception as ex:
         logging.exception(ex)
         return json.loads({"error": str(ex)})

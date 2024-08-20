@@ -833,7 +833,6 @@ def chunk_content(
     Returns:
         List[Document]: List of chunked documents.
     """
-
     try:
         if file_name is None or (cracked_pdf and not use_layout):
             file_format = "text"
@@ -1084,6 +1083,7 @@ def process_file(
             captioning_model_endpoint=captioning_model_endpoint,
             captioning_model_key=captioning_model_key
         )
+
         for chunk_idx, chunk_doc in enumerate(result.chunks):
             chunk_doc.filepath = rel_file_path
             chunk_doc.metadata = json.dumps({"chunk_id": str(chunk_idx)})
@@ -1182,7 +1182,6 @@ def chunk_directory(
     all_files_directory = get_files_recursively(directory_path)
     files_to_process = [file_path for file_path in all_files_directory if os.path.isfile(file_path)]
     print(f"Total files to process={len(files_to_process)} out of total directory size={len(all_files_directory)}")
-
 
     if njobs==1:
         print("Single process to chunk and parse the files. --njobs > 1 can help performance.")

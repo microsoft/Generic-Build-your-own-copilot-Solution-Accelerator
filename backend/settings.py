@@ -126,7 +126,9 @@ class _AzureOpenAISettings(BaseSettings):
     'Respond with a json object in the format containing a list of section information {{"template": [{"section_title": string, "section_description": string}]}}.' +
     'Example: {"template": [{"section_title": "Introduction", "section_description": "This section introduces the document."}, {"section_title": "Section 2", "section_description": "This is section 2."}]}.' +
     'If the user provides a message that is not related to modifying the template, respond asking the user to go to the Browse tab to chat with documents.')
-    
+    generate_section_content_prompt: str = "Help the user generate content for a section in a document. The user has provided a section title and a brief description of the section. The user would like you to provide a more detailed description of the section. Respond with a JSON object in the format {\"section_content\": string}. Do not include any other commentary or description. Example: {\"section_content\": \"This section introduces the document.\"}."
+    title_prompt: str = "Summarize the conversation so far into a 4-word or less title. Do not use any quotation marks or punctuation. Respond with a json object in the format {{\"title\": string}}. Do not include any other commentary or description."
+
     @field_validator('tools', mode='before')
     @classmethod
     def deserialize_tools(cls, tools_json_str: str) -> List[_AzureOpenAITool]:

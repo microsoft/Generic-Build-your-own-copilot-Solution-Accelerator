@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext, useState } from 'react'
 import { Stack } from '@fluentui/react'
 import { AppStateContext } from '../../state/AppProvider'
 import { sectionGenerate, SectionGenerateRequest } from '../../api'
@@ -54,7 +54,10 @@ const useStyles = makeStyles({
     borderRadius: '4px',
     // margin top and bottom
     margin: '0.5rem 0',
-    padding: '0.5rem'
+    padding: '0.5rem',
+    '&::selection': {
+      backgroundColor: '#FFD6A5',
+    }
   },
 
   popoverGenerateButton: {
@@ -87,8 +90,6 @@ const useStyles = makeStyles({
     height: '100%',
     padding: '0.5rem',
     minHeight: '150px',
-
-    // selection
     '&::selection': {
       backgroundColor: '#FFD6A5'
     }
@@ -99,14 +100,22 @@ const useStyles = makeStyles({
     textAlign: 'left',
     fontSize: '12px',
     color: '#888'
+  },
+
+  characterCounter: {
+    marginRight: '5px',
+    fontSize: '12px',
+    color: '#888',
+    alignSelf: 'end'
   }
 })
 
 const SectionCard = ({ sectionIdx }: SectionCardProps) => {
   const classes = useStyles()
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [isPopoverOpen, setIsPopoverOpen] = React.useState(false)
-  const appStateContext = React.useContext(AppStateContext)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false)
+  const appStateContext = useContext(AppStateContext)
+  const [charCount, setCharCount] = useState(0)
 
   if (!appStateContext) {
     throw new Error('useAppState must be used within a AppStateProvider')
@@ -120,6 +129,7 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
   const sectionTitle = section.title
   const sectionDescription = section.description
   const sectionContent = section.content
+  const sectionCharacterLimit = 2000
 
   const handleOpenChange: PopoverProps['onOpenChange'] = (e, data) => setIsPopoverOpen(data.open || false)
 
@@ -136,6 +146,8 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
       content: responseBody.section_content
     }
     appStateContext?.dispatch({ type: 'UPDATE_SECTION', payload: { sectionIdx: sectionIdx, section: updatedSection } })
+    const content = updatedSection.content || ''
+    setCharCount(content.length)
 
     setIsLoading(false)
   }
@@ -172,7 +184,8 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
               appearance="outline"
               size="large"
               defaultValue={sectionDescription}
-              className={classes.popoverTextarea}
+              className={ classes.popoverTextarea }
+              textarea={{ className: classes.popoverTextarea }}
             />
 
             <Stack horizontal style={{ justifyContent: 'space-between' }}>
@@ -206,11 +219,14 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
               appearance="outline"
               size="large"
               defaultValue={sectionContent}
+              maxLength={sectionCharacterLimit}
               onChange={(e, data) => {
+                const content = data.value || ''
+                setCharCount(content.length)
                 const updatedSection: Section = {
                   title: sectionTitle,
                   description: sectionDescription,
-                  content: data.value || ''
+                  content: content
                 }
                 appStateContext?.dispatch({
                   type: 'UPDATE_SECTION',
@@ -218,9 +234,11 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
                 })
               }}
               textarea={{ className: classes.sectionContentTextarea }}
-              //   style={{ width: '100%', height: '100%' }}
             />
-            <Text className={classes.disclaimerText}>AI-generated content may be incorrect</Text>
+            <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
+              <Text className={classes.disclaimerText}>AI-generated content may be incorrect</Text>
+              <Text className={classes.characterCounter}>{sectionCharacterLimit - charCount} characters remaining</Text>
+            </Stack>
           </>
         )}
       </Stack>

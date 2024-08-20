@@ -1,9 +1,8 @@
 # Data Preparation
 
 # Prepare Data Locally
-Follow the instructions in this section to prepare your data locally. This is easiest for small data sets. For much larger sets, see the [instructions to use AML below](#use-aml-to-prepare-data).
 ## Setup
-- Install the necessary packages listed in requirements.txt, e.g. `pip install --user -r requirements.txt`
+- Install the necessary packages listed in requirements.txt, e.g. `pip install --user -r requirements-dev.txt`
 
 ## Configure
 - Create a .env file similar to the .env.example file. Fill in the values for the environment variables.

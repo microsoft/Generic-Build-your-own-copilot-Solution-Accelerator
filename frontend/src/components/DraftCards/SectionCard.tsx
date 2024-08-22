@@ -116,6 +116,7 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const appStateContext = useContext(AppStateContext)
   const [charCount, setCharCount] = useState(0)
+  const [wasInitialized, setWasInitialized] = useState(false)
 
   if (!appStateContext) {
     throw new Error('useAppState must be used within a AppStateProvider')
@@ -147,13 +148,19 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
     }
     appStateContext?.dispatch({ type: 'UPDATE_SECTION', payload: { sectionIdx: sectionIdx, section: updatedSection } })
     const content = updatedSection.content || ''
-    setCharCount(content.length)
+    
+    // limit the character count to 2000
+    if (content.length > sectionCharacterLimit) {
+      updatedSection.content = content.slice(0, sectionCharacterLimit)
+    }
 
+    setCharCount(content.length)
     setIsLoading(false)
   }
 
-  if (sectionContent === '' && !isLoading) {
+  if (sectionContent === '' && !isLoading && !wasInitialized) {
     fetchSectionContent(sectionTitle, sectionDescription)
+    setWasInitialized(true)
   }
 
   return (

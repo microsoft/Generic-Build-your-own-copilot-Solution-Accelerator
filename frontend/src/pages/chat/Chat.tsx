@@ -63,7 +63,7 @@ const enum contentTemplateSections {
   NewLine = '\n\n',
   Intro = 'The proposal will include the following sections:',
   Closing = 'Does this look good? If so, you can **generate the document** now. You can also ask me to **add an item** or **change the order of the sections**.',
-  JSONParseError = 'Unable to parse the template response into a valid structure. Please try again.',
+  JSONParseError = 'Could not create a template, please try again and ask for a document type.',
   JSONStructureError = 'Unable to render the sections within the template. Please try again.'
 }
 

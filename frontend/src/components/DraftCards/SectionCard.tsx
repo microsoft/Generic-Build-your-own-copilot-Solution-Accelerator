@@ -147,11 +147,11 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
       content: responseBody.section_content
     }
     appStateContext?.dispatch({ type: 'UPDATE_SECTION', payload: { sectionIdx: sectionIdx, section: updatedSection } })
-    const content = updatedSection.content || ''
+    let content = updatedSection.content || ''
     
     // limit the character count to 2000
     if (content.length > sectionCharacterLimit) {
-      updatedSection.content = content.slice(0, sectionCharacterLimit)
+      content = content.slice(0, sectionCharacterLimit)
     }
 
     setCharCount(content.length)

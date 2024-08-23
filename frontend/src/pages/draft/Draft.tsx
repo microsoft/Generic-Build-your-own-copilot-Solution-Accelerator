@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react'
 import styles from './Draft.module.css'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import TitleCard from '../../components/DraftCards/TitleCard'
 import SectionCard from '../../components/DraftCards/SectionCard'
 import { Document, Packer, Paragraph, TextRun } from 'docx'
@@ -12,11 +12,17 @@ const Draft = (): JSX.Element => {
   const appStateContext = useContext(AppStateContext)
   const location = useLocation()
   const [title, setTitle] = useState('')
+  const navigate = useNavigate()
 
   // get draftedDocument from context
   const draftedDocument = appStateContext?.state.draftedDocument
   const sections = draftedDocument?.sections ?? []
   const aiWarningLabel = 'AI-generated content may be incorrect'
+
+  // redirect to home page if draftedDocument is empty
+  if (!draftedDocument) {
+    navigate('/')
+  }
 
   const exportToWord = () => {
     const doc = new Document({

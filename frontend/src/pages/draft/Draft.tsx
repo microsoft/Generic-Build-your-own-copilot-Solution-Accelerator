@@ -7,7 +7,6 @@ import { Document, Packer, Paragraph, TextRun } from 'docx'
 import { saveAs } from 'file-saver'
 import { AppStateContext } from '../../state/AppProvider'
 import { CommandBarButton, Stack } from '@fluentui/react'
-import { useNavigate } from 'react-router-dom'
 
 const Draft = (): JSX.Element => {
   const appStateContext = useContext(AppStateContext)

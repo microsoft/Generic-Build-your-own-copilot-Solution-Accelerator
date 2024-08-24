@@ -1,13 +1,10 @@
 .venv
 frontend/node_modules
 .env
-# static
 .azure/
 __pycache__/
 .ipynb_checkpoints/
-
-data
 static
-
 scripts/config.json
 venv
+myenv

@@ -61,54 +61,30 @@ For additional training and support, please see:
 
 ### **How to install/deploy**
 
-1. TODO
+1. Please check the link [Azure Products by Region](
+https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/?products=all&regions=all) and choose a region where Azure AI Search, Azure OpenAI Service, and Azure AI Studio are available. If you are using the included sample data set, verify Document Intelligence (Form Recognizer) is available.
 
-### Environment variables
+2. Click the following deployment button to create the required resources for this accelerator in your Azure Subscription.
 
-Note: settings starting with `AZURE_SEARCH` are only needed when using Azure OpenAI on your data with Azure AI Search. If not connecting to your data, you only need to specify `AZURE_OPENAI` settings.
+   [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/)
 
-| App Setting | Value | Note |
-| --- | --- | ------------- |
-|AZURE_SEARCH_SERVICE||The name of your Azure AI Search resource|
-|AZURE_SEARCH_INDEX||The name of your Azure AI Search Index|
-|AZURE_SEARCH_KEY||An **admin key** for your Azure AI Search resource|
-|AZURE_SEARCH_USE_SEMANTIC_SEARCH|False|Whether or not to use semantic search|
-|AZURE_SEARCH_QUERY_TYPE|simple|Query type: simple, semantic, vector, vectorSimpleHybrid, or vectorSemanticHybrid. Takes precedence over AZURE_SEARCH_USE_SEMANTIC_SEARCH|
-|AZURE_SEARCH_SEMANTIC_SEARCH_CONFIG||The name of the semantic search configuration to use if using semantic search.|
-|AZURE_SEARCH_TOP_K|5|The number of documents to retrieve from Azure AI Search.|
-|AZURE_SEARCH_ENABLE_IN_DOMAIN|True|Limits responses to only queries relating to your data.|
-|AZURE_SEARCH_CONTENT_COLUMNS||List of fields in your Azure AI Search index that contains the text content of your documents to use when formulating a bot response. Represent these as a string joined with "|", e.g. `"product_description|product_manual"`|
-|AZURE_SEARCH_FILENAME_COLUMN|| Field from your Azure AI Search index that gives a unique identifier of the source of your data to display in the UI.|
-|AZURE_SEARCH_TITLE_COLUMN||Field from your Azure AI Search index that gives a relevant title or header for your data content to display in the UI.|
-|AZURE_SEARCH_URL_COLUMN||Field from your Azure AI Search index that contains a URL for the document, e.g. an Azure Blob Storage URI. This value is not currently used.|
-|AZURE_SEARCH_VECTOR_COLUMNS||List of fields in your Azure AI Search index that contain vector embeddings of your documents to use when formulating a bot response. Represent these as a string joined with "|", e.g. `"product_description|product_manual"`|
-|AZURE_SEARCH_PERMITTED_GROUPS_COLUMN||Field from your Azure AI Search index that contains AAD group IDs that determine document-level access control.|
-|AZURE_SEARCH_STRICTNESS|3|Integer from 1 to 5 specifying the strictness for the model limiting responses to your data.|
-|AZURE_OPENAI_RESOURCE||the name of your Azure OpenAI resource|
-|AZURE_OPENAI_MODEL||The name of your model deployment|
-|AZURE_OPENAI_ENDPOINT||The endpoint of your Azure OpenAI resource.|
-|AZURE_OPENAI_MODEL_NAME|gpt-35-turbo-16k|The name of the model|
-|AZURE_OPENAI_KEY||One of the API keys of your Azure OpenAI resource|
-|AZURE_OPENAI_TEMPERATURE|0|What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. A value of 0 is recommended when using your data.|
-|AZURE_OPENAI_TOP_P|1.0|An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. We recommend setting this to 1.0 when using your data.|
-|AZURE_OPENAI_MAX_TOKENS|1000|The maximum number of tokens allowed for the generated answer.|
-|AZURE_OPENAI_STOP_SEQUENCE||Up to 4 sequences where the API will stop generating further tokens. Represent these as a string joined with "|", e.g. `"stop1|stop2|stop3"`|
-|AZURE_OPENAI_SYSTEM_MESSAGE|You are an AI assistant that helps people find information.|A brief description of the role and tone the model should use|
-|AZURE_OPENAI_PREVIEW_API_VERSION|2024-02-15-preview|API version when using Azure OpenAI on your data|
-|AZURE_OPENAI_STREAM|True|Whether or not to use streaming for the response|
-|AZURE_OPENAI_EMBEDDING_NAME||The name of your embedding model deployment if using vector search.
-|UI_TITLE|Contoso| Chat title (left-top) and page title (HTML)
-|UI_LOGO|| Logo (left-top). Defaults to Contoso logo. Configure the URL to your logo image to modify.
-|UI_CHAT_LOGO|| Logo (chat window). Defaults to Contoso logo. Configure the URL to your logo image to modify.
-|UI_CHAT_TITLE|Start chatting| Title (chat window)
-|UI_CHAT_DESCRIPTION|This chatbot is configured to answer your questions| Description (chat window)
-|UI_FAVICON|| Defaults to Contoso favicon. Configure the URL to your favicon to modify.
-|UI_SHOW_SHARE_BUTTON|True|Share button (right-top)
-|SANITIZE_ANSWER|False|Whether to sanitize the answer from Azure OpenAI. Set to True to remove any HTML tags from the response.|
+3. You will need to select an Azure Subscription, create/select a Resource group, and Region. If your intention is to deploy this solution accelerator and the corresponding sample data set, the default settings will suffice.
+
+If you are using your own data, the next step is optional.
+
+4. Optional - Follow steps in [Sample data guide](./scripts/SAMPLE_DATA.md) to ingest the sample Promissory Note PDFs into the search index.
+
+If you want to enable authentication, you will need to add an identity provider.
+
+#### Add an identity provider
+After deployment, you will need to add an identity provider to provide authentication support in your app. See [this tutorial](https://learn.microsoft.com/en-us/azure/app-service/scenario-secure-app-authentication-app-service) for more information.
+
+If you don't add an identity provider, the chat functionality will allow anyone to access the chat functionality of your app. **This is not recommended for production apps.** To enable this restriction, you can add `AUTH_ENABLED=True` to the environment variables. This will enable authentication and prevent unauthorized access to the chat functionality of your app.
+
+To add further access controls, update the logic in `getUserInfoList` in `frontend/src/pages/chat/Chat.tsx`. 
 
 ### Local deployment
 Review the local deployment [README](./docs/README_LOCAL.md).
-<br/>
 <br>
 <h2><img src="./docs/images/supportingDocuments.png" width="64">
 <br/>
@@ -116,8 +92,6 @@ Supporting documents
 </h2>
 
 Supporting documents coming soon.
-
-
 <br>
 <h2><img src="./docs/images/customerTruth.png" width="64">
 </br>

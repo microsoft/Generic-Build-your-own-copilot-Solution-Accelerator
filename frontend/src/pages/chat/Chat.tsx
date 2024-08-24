@@ -80,7 +80,10 @@ const modalStyles: IModalStyles = {
     borderRadius: '8px'
   },
   root: undefined,
-  scrollableContent: undefined,
+  scrollableContent: 
+  {
+    minWidth: '800px'
+  },
   layer: undefined,
   keyboardMoveIconContainer: undefined,
   keyboardMoveIcon: undefined
@@ -1023,14 +1026,14 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                   }}
                   className={
                     appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured &&
-                    type !== ChatType.Template
+                    type !== ChatType.Browse
                       ? styles.clearChatBroom
                       : styles.clearChatBroomNoCosmos
                   }
                   iconProps={{ iconName: 'Broom' }}
                   onClick={
                     appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured &&
-                    type !== ChatType.Template
+                    type !== ChatType.Browse
                       ? clearChat
                       : newChat
                   }
@@ -1075,11 +1078,11 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                     }
                   }}
                   className={styles.generateDocumentIcon}
-                  iconProps={{ iconName: 'WordDocument' }}
+                  iconProps={{ iconName: 'Generate' }}
                   onClick={generateDocument} //Update for Document Generation
                   disabled={draftDocument === undefined && disabledButton()}
-                  aria-label="generate document"
-                  text="Generate Document"
+                  aria-label="generate draft"
+                  title='Generate Draft'
                 />
               )}
             </Stack>

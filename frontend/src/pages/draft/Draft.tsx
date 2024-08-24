@@ -64,14 +64,16 @@ const Draft = (): JSX.Element => {
                       text: '',
                       break: 1 // Add a new line after the section title
                     }),
-                    new TextRun({
-                      text: section.content,
-                      size: 16
-                    }),
-                    new TextRun({
-                      text: '\n',
-                      break: 1 // Add a new line after the content
-                    })
+                    ...section.content.split('\n').map((line, lineIndex) => [
+                      new TextRun({
+                        text: line,
+                        size: 16
+                      }),
+                      new TextRun({
+                        text: '',
+                        break: 1 // Add a new line after each line of content
+                      })
+                    ]).flat()
                   ]
                 })
             )

@@ -980,7 +980,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                 </Stack>
               )}
               <Stack>
-                {appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && (
+                {appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && type === ChatType.Template && (
                   <CommandBarButton
                     role="button"
                     styles={{
@@ -992,8 +992,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                       },
                       root: {
                         color: '#FFFFFF',
-                        background:
-                          'radial-gradient(109.81% 107.82% at 100.1% 90.19%, #0F6CBD 33.63%, #2D87C3 70.31%, #8DDDD8 100%)'
+                        background: '#0F6CBD'
                       },
                       rootDisabled: {
                         background: '#F0F0F0'
@@ -1017,19 +1016,13 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                     },
                     root: {
                       color: '#FFFFFF',
-                      background:
-                        'radial-gradient(109.81% 107.82% at 100.1% 90.19%, #0F6CBD 33.63%, #2D87C3 70.31%, #8DDDD8 100%)'
+                      background: '#0F6CBD'
                     },
                     rootDisabled: {
                       background: '#F0F0F0'
                     }
                   }}
-                  className={
-                    appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured &&
-                    type !== ChatType.Browse
-                      ? styles.clearChatBroom
-                      : styles.clearChatBroomNoCosmos
-                  }
+                  className={ styles.clearChatBroom }
                   iconProps={{ iconName: 'Broom' }}
                   onClick={
                     appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured &&
@@ -1071,8 +1064,6 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                     },
                     root: {
                       color: '#FFFFFF',
-                      background:
-                        'radial-gradient(109.81% 107.82% at 100.1% 90.19%, #0F6CBD 33.63%, #2D87C3 70.31%, #8DDDD8 100%)'
                     },
                     rootDisabled: {
                       background: '#F0F0F0'

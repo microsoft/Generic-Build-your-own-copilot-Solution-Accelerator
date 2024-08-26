@@ -80,7 +80,10 @@ const modalStyles: IModalStyles = {
     borderRadius: '8px'
   },
   root: undefined,
-  scrollableContent: undefined,
+  scrollableContent: 
+  {
+    minWidth: '800px'
+  },
   layer: undefined,
   keyboardMoveIconContainer: undefined,
   keyboardMoveIcon: undefined
@@ -1023,14 +1026,14 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                   }}
                   className={
                     appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured &&
-                    type !== ChatType.Template
+                    type !== ChatType.Browse
                       ? styles.clearChatBroom
                       : styles.clearChatBroomNoCosmos
                   }
                   iconProps={{ iconName: 'Broom' }}
                   onClick={
                     appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured &&
-                    type !== ChatType.Template
+                    type !== ChatType.Browse
                       ? clearChat
                       : newChat
                   }
@@ -1068,18 +1071,19 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                     },
                     root: {
                       color: '#FFFFFF',
-                      background: '#1367CF'
+                      background:
+                        'radial-gradient(109.81% 107.82% at 100.1% 90.19%, #0F6CBD 33.63%, #2D87C3 70.31%, #8DDDD8 100%)'
                     },
                     rootDisabled: {
                       background: '#F0F0F0'
                     }
                   }}
                   className={styles.generateDocumentIcon}
-                  iconProps={{ iconName: 'WordDocument' }}
+                  iconProps={{ iconName: 'Generate' }}
                   onClick={generateDocument} //Update for Document Generation
-                  disabled={draftDocument === undefined && disabledButton()}
-                  aria-label="generate document"
-                  text="Generate Document"
+                  disabled={draftDocument === undefined || disabledButton()}
+                  aria-label="generate draft"
+                  title='Generate Draft'
                 />
               )}
             </Stack>

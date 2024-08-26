@@ -819,6 +819,10 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'smooth' })
   }, [showLoadingMessage, processMessages])
 
+  useEffect(() => {
+    chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
   const onShowCitation = (citation: Citation) => {
     const path = `/#/document/${citation.filepath}`
     const url = window.location.origin + path

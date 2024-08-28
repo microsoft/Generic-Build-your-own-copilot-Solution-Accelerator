@@ -1068,6 +1068,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                     },
                     root: {
                       color: '#FFFFFF',
+                      background: '#0F6CBD'
                     },
                     rootDisabled: {
                       background: '#F0F0F0'

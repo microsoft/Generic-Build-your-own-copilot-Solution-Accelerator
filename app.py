@@ -198,7 +198,12 @@ def init_cosmosdb_client():
 
 
 def prepare_model_args(request_body, request_headers):
-    chat_type = ChatType.BROWSE if not (request_body["chat_type"] and request_body["chat_type"] == "template") else ChatType.TEMPLATE
+    
+    chat_type = None
+    if "chat_type" in request_body:
+        chat_type = ChatType.BROWSE if not (request_body["chat_type"] and request_body["chat_type"] == "template") else ChatType.TEMPLATE
+    
+    
     request_messages = request_body.get("messages", [])
     
     messages = []
@@ -206,7 +211,7 @@ def prepare_model_args(request_body, request_headers):
         messages = [
             {
                 "role": "system",
-                "content": app_settings.azure_openai.system_message if chat_type == ChatType.BROWSE else app_settings.azure_openai.template_system_message
+                "content": app_settings.azure_openai.system_message if chat_type == ChatType.BROWSE or not chat_type else app_settings.azure_openai.template_system_message
             }
         ]
 
@@ -823,7 +828,7 @@ async def generate_section_content():
         if "sectionDescription" not in request_json:
             return jsonify({"error": "sectionDescription is required"}), 400
         
-        content = await generate_section_content(request_json)
+        content = await generate_section_content(request_json, request.headers)
         return jsonify({"section_content": content}), 200
     except Exception as e:
         logging.exception("Exception in /section/generate")
@@ -859,11 +864,11 @@ async def generate_title(conversation_messages):
     except Exception as e:
         return messages[-2]["content"]
 
-async def generate_section_content(request_json):
+async def generate_section_content(request_body, request_headers):
     prompt = f"""{app_settings.azure_openai.generate_section_content_prompt}
     
-    Section Title: {request_json['sectionTitle']}
-    Section Description: {request_json['sectionDescription']}
+    Section Title: {request_body['sectionTitle']}
+    Section Description: {request_body['sectionDescription']}
     """
 
     messages = [
@@ -873,17 +878,20 @@ async def generate_section_content(request_json):
         }
     ]
     messages.append({"role": "user", "content": prompt})
+       
+    request_body['messages'] = messages
+    model_args = prepare_model_args(request_body, request_headers)
 
     try:
         azure_openai_client = init_openai_client()
-        response = await azure_openai_client.chat.completions.create(
-            model=app_settings.azure_openai.model, messages=messages, temperature=0
-        )
+        raw_response = await azure_openai_client.chat.completions.with_raw_response.create(**model_args)
+        response = raw_response.parse()
 
-        return response.choices[0].message.content
-    except Exception as ex:
-        logging.exception(ex)
-        return json.loads({"error": str(ex)})
+    except Exception as e:
+        logging.exception("Exception in send_chat_request")
+        raise e
+
+    return response.choices[0].message.content
     
 def retrieve_document(filepath):
     try:

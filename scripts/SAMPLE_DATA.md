@@ -11,7 +11,7 @@
 - Copy and paste the contents from the scripts/.env.sample file. 
 - Replace the values for `<AZURE_OPENAI_RESOURCE>` and `<AZURE_OPENAI_KEY>` with the name of the Azure OpenAI resource and either KEY 1 or KEY 2.
 - Save the .env file.
-- Within the scripts folder, create a config file `config.json`. The format will be a list of JSON objects, with each object specifying a configuration of local data path and target search service and index. Assuming you used "Deploy to Azure" to deploy this solution accelerator, these values can be found within the resources themselves. Copy and paste the following script block into the config.json file and update accordingly.
+- Within the scripts folder, create a config file `config.json`. The format will be a list of JSON objects, with each object specifying a configuration of local data path and target search service and index. Assuming you used "Deploy to Azure" to deploy this solution accelerator, these values can be found within the resources themselves. If you did not change the Search Index name, the default value is: promissory-notes-index. Copy and paste the following script block into the config.json file and update accordingly. 
 
 ```
 [
@@ -21,7 +21,7 @@
         "subscription_id": "<subscription id>",
         "resource_group": "<resource group name>",
         "search_service_name": "<search service name to use>",
-        "index_name": "promissory-notes-index",
+        "index_name": "<search index name to use>",
         "chunk_size": 1024,
         "token_overlap": 128,
         "semantic_config_name": "default",
@@ -36,8 +36,8 @@
 - Create a virtual environment for the sample data preparation
     - Open a terminal window.
     - Create the virtual environment: `python -m venv scriptsenv`
-    - Activate the virtual environment: `.\scriptsenv\bin\activate`
-- Install the necessary packages listed in scripts/requirements-dev.txt, e.g. `pip install --user -r requirements-dev.txt`
+    - Activate the virtual environment: `.\scriptsenv\Scripts\activate`
+- Install the necessary packages listed in scripts/requirements-dev.txt, e.g. `pip install -r requirements-dev.txt`
 - Create the index and ingest PDF data with Form Recognizer 
     - Replace `<form-rec-resource-name>` with the name of the existing or recently created Azure Document Intelligence (Form Recognizer) resource and replace `<form-rec-key>` with key 1 or key 2 of the existing or recently created Azure Document Intelligence (Form Recognizer) resource:
     `python data_preparation.py --config config.json --njobs=1 --form-rec-resource <form-rec-resource-name> --form-rec-key <form-rec-key>`

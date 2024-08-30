@@ -36,7 +36,7 @@
 - Create a virtual environment for the sample data preparation
     - Open a terminal window.
     - Create the virtual environment: `python -m venv scriptsenv`
-    - Activate the virtual environment: `.\scriptsenv\bin\activate`
+    - Activate the virtual environment: `.\scriptsenv\Scripts\activate`
 - Install the necessary packages listed in scripts/requirements-dev.txt, e.g. `pip install -r requirements-dev.txt`
 - Create the index and ingest PDF data with Form Recognizer 
     - Replace `<form-rec-resource-name>` with the name of the existing or recently created Azure Document Intelligence (Form Recognizer) resource and replace `<form-rec-key>` with key 1 or key 2 of the existing or recently created Azure Document Intelligence (Form Recognizer) resource:

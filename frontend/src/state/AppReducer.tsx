@@ -75,30 +75,32 @@ export const appStateReducer = (state: AppState, action: Action): AppState => {
         }
       }
     case 'UPDATE_SECTION':
-        const sectionIdx = action.payload.sectionIdx
-  
-        if (!state.draftedDocument?.sections || sectionIdx >= state.draftedDocument.sections.length) {
-          console.error('Section not found')
-          return state
+      const sectionIdx = action.payload.sectionIdx
+
+      if (!state.draftedDocument?.sections || sectionIdx >= state.draftedDocument.sections.length) {
+        console.error('Section not found')
+        return state
+      }
+
+      // create new sections list
+      const updatedSections = [...state.draftedDocument.sections]
+      updatedSections[sectionIdx] = action.payload.section
+
+      return {
+        ...state,
+        draftedDocument: {
+          ...state.draftedDocument,
+          sections: updatedSections
         }
-  
-        // create new sections list
-        const updatedSections = [...state.draftedDocument.sections]
-        updatedSections[sectionIdx] = action.payload.section
-  
-        return {
-          ...state,
-          draftedDocument: {
-            ...state.draftedDocument,
-            sections: updatedSections
-          }
-        }
+      }
     case 'UPDATE_DRAFTED_DOCUMENT':
       return { ...state, draftedDocument: action.payload }
     case 'UPDATE_BROWSE_CHAT':
       return { ...state, browseChat: action.payload }
     case 'UPDATE_GENERATE_CHAT':
       return { ...state, generateChat: action.payload }
+    case 'UPDATE_DRAFTED_DOCUMENT_TITLE':
+      return { ...state, draftedDocumentTitle: action.payload }
     default:
       return state
   }

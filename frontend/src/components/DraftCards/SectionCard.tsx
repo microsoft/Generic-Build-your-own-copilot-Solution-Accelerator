@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { Stack } from '@fluentui/react'
 import { AppStateContext } from '../../state/AppProvider'
 import { sectionGenerate, SectionGenerateRequest } from '../../api'
@@ -8,6 +8,7 @@ import GenerateIcon from '../../assets/Generate.svg'
 import type { PopoverProps } from '@fluentui/react-components'
 import { Dismiss16Regular } from '@fluentui/react-icons'
 import { Textarea, makeStyles, Text, Popover, PopoverSurface, PopoverTrigger, Button } from '@fluentui/react-components'
+import { useLocation } from 'react-router-dom'
 
 interface SectionCardProps {
   sectionIdx: number
@@ -56,7 +57,7 @@ const useStyles = makeStyles({
     margin: '0.5rem 0',
     padding: '0.5rem',
     '&::selection': {
-      backgroundColor: '#FFD6A5',
+      backgroundColor: '#FFD6A5'
     }
   },
 
@@ -111,12 +112,13 @@ const useStyles = makeStyles({
 })
 
 const SectionCard = ({ sectionIdx }: SectionCardProps) => {
+  const location = useLocation()
   const classes = useStyles()
   const [isLoading, setIsLoading] = useState(false)
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const appStateContext = useContext(AppStateContext)
   const [charCount, setCharCount] = useState(0)
-  const [wasInitialized, setWasInitialized] = useState(false)
+  const [isManuallyCleared, setIsManuallyCleared] = useState(false)
 
   if (!appStateContext) {
     throw new Error('useAppState must be used within a AppStateProvider')
@@ -131,6 +133,10 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
   const sectionDescription = section.description
   const sectionContent = section.content
   const sectionCharacterLimit = 2000
+
+  useEffect(() => {
+    setCharCount(sectionContent.length)
+  }, [location])
 
   const handleOpenChange: PopoverProps['onOpenChange'] = (e, data) => setIsPopoverOpen(data.open || false)
 
@@ -148,7 +154,7 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
     }
     appStateContext?.dispatch({ type: 'UPDATE_SECTION', payload: { sectionIdx: sectionIdx, section: updatedSection } })
     let content = updatedSection.content || ''
-    
+
     // limit the character count to 2000
     if (content.length > sectionCharacterLimit) {
       content = content.slice(0, sectionCharacterLimit)
@@ -158,10 +164,11 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
     setIsLoading(false)
   }
 
-  if (sectionContent === '' && !isLoading && !wasInitialized) {
-    fetchSectionContent(sectionTitle, sectionDescription)
-    setWasInitialized(true)
-  }
+  useEffect(() => {
+    if (sectionContent === '' && !isLoading && !isManuallyCleared) {
+      fetchSectionContent(sectionTitle, sectionDescription)
+    }
+  }, [sectionContent, isLoading, isManuallyCleared])
 
   return (
     <Stack className={classes.sectionCard}>
@@ -191,7 +198,7 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
               appearance="outline"
               size="large"
               defaultValue={sectionDescription}
-              className={ classes.popoverTextarea }
+              className={classes.popoverTextarea}
               textarea={{ className: classes.popoverTextarea }}
             />
 
@@ -229,6 +236,11 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
               maxLength={sectionCharacterLimit}
               onChange={(e, data) => {
                 const content = data.value || ''
+                if (content === '') {
+                  setIsManuallyCleared(true)
+                } else {
+                  setIsManuallyCleared(false)
+                }
                 setCharCount(content.length)
                 const updatedSection: Section = {
                   title: sectionTitle,

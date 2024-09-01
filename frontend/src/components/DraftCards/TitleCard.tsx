@@ -1,10 +1,9 @@
 import { Stack, TextField } from '@fluentui/react'
 import { makeStyles, Text } from '@fluentui/react-components'
-import React from 'react'
+import React, { useContext } from 'react'
+import { AppStateContext } from '../../state/AppProvider'
 
-interface TitleCardProps {
-  onTitleChange: (value: string) => void
-}
+interface TitleCardProps {}
 
 const useStyles = makeStyles({
   sectionTitle: {
@@ -15,11 +14,18 @@ const useStyles = makeStyles({
   }
 })
 
-const TitleCard: React.FC<TitleCardProps> = ({ onTitleChange }) => {
+const TitleCard: React.FC<TitleCardProps> = () => {
+  const appStateContext = useContext(AppStateContext)
   const classes = useStyles()
   const handleChange = (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    onTitleChange(event.currentTarget.value)
+    appStateContext?.dispatch({ type: 'UPDATE_DRAFTED_DOCUMENT_TITLE', payload: event.currentTarget.value })
   }
+
+  if (!appStateContext) {
+    throw new Error('useAppState must be used within a AppStateProvider')
+  }
+
+  const title = appStateContext.state.draftedDocumentTitle === null ? '' : appStateContext.state.draftedDocumentTitle
 
   return (
     <Stack style={{ marginBottom: '1rem' }}>
@@ -29,6 +35,7 @@ const TitleCard: React.FC<TitleCardProps> = ({ onTitleChange }) => {
         onChange={handleChange}
         placeholder="Enter title here"
         styles={{ root: { width: '100%' } }} // Adjust styles as needed
+        value={title}
       />
     </Stack>
   )

@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react'
+import { useContext } from 'react'
 import styles from './Draft.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
 import TitleCard from '../../components/DraftCards/TitleCard'
@@ -11,7 +11,6 @@ import { CommandBarButton, Stack } from '@fluentui/react'
 const Draft = (): JSX.Element => {
   const appStateContext = useContext(AppStateContext)
   const location = useLocation()
-  const [title, setTitle] = useState('')
   const navigate = useNavigate()
 
   // get draftedDocument from context
@@ -33,7 +32,7 @@ const Draft = (): JSX.Element => {
             new Paragraph({
               children: [
                 new TextRun({
-                  text: title,
+                  text: getTitle(),
                   bold: true,
                   size: 24
                 }),
@@ -64,16 +63,19 @@ const Draft = (): JSX.Element => {
                       text: '',
                       break: 1 // Add a new line after the section title
                     }),
-                    ...section.content.split('\n').map((line, lineIndex) => [
-                      new TextRun({
-                        text: line,
-                        size: 16
-                      }),
-                      new TextRun({
-                        text: '',
-                        break: 1 // Add a new line after each line of content
-                      })
-                    ]).flat()
+                    ...section.content
+                      .split('\n')
+                      .map((line, lineIndex) => [
+                        new TextRun({
+                          text: line,
+                          size: 16
+                        }),
+                        new TextRun({
+                          text: '',
+                          break: 1 // Add a new line after each line of content
+                        })
+                      ])
+                      .flat()
                   ]
                 })
             )
@@ -83,21 +85,21 @@ const Draft = (): JSX.Element => {
     })
 
     Packer.toBlob(doc).then(blob => {
-      saveAs(blob, `DraftTemplate-${sanitizeTitle(title)}.docx`)
+      saveAs(blob, `DraftTemplate-${sanitizeTitle(getTitle())}.docx`)
     })
   }
 
-  const handleTitleChange = (newTitle: string) => {
-    setTitle(newTitle)
+  function getTitle() {
+    if (appStateContext === undefined) return ''
+    return appStateContext.state.draftedDocumentTitle === null ? '' : appStateContext.state.draftedDocumentTitle
   }
-
   function sanitizeTitle(title: string): string {
     return title.replace(/[^a-zA-Z0-9]/g, '')
   }
 
   return (
     <Stack className={styles.container}>
-      <TitleCard onTitleChange={handleTitleChange} />
+      <TitleCard />
       {(sections ?? []).map((_, index) => (
         <SectionCard key={index} sectionIdx={index} />
       ))}

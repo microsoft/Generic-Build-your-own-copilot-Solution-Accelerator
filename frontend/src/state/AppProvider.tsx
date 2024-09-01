@@ -1,5 +1,4 @@
-import React, { createContext, ReactNode, useEffect, 
-  useReducer } from 'react'
+import React, { createContext, ReactNode, useEffect, useReducer } from 'react'
 
 import {
   ChatHistoryLoadingState,
@@ -29,6 +28,7 @@ export interface AppState {
   frontendSettings: FrontendSettings | null
   feedbackState: { [answerId: string]: Feedback.Neutral | Feedback.Positive | Feedback.Negative }
   draftedDocument: DraftedDocument | null
+  draftedDocumentTitle: string
 }
 
 export type Action =
@@ -53,6 +53,7 @@ export type Action =
   | { type: 'UPDATE_DRAFTED_DOCUMENT'; payload: DraftedDocument }
   | { type: 'UPDATE_BROWSE_CHAT'; payload: Conversation | null }
   | { type: 'UPDATE_GENERATE_CHAT'; payload: Conversation | null }
+  | { type: 'UPDATE_DRAFTED_DOCUMENT_TITLE'; payload: string }
 
 const initialState: AppState = {
   isChatHistoryOpen: false,
@@ -68,7 +69,8 @@ const initialState: AppState = {
   },
   frontendSettings: null,
   feedbackState: {},
-  draftedDocument: null
+  draftedDocument: null,
+  draftedDocumentTitle: ''
 }
 
 export const AppStateContext = createContext<

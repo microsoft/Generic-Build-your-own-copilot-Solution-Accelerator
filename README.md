@@ -21,7 +21,7 @@ It leverages Azure Open AI Service and Azure AI Search, to identify relevant doc
 
 This example focuses on a generic use case - chat with your own data, generate a document template using your own data, and exporting the document in a docx format.
 
-The sample data is sourced from 1) generic AI-generated promissory notes and 2) a select set of research and grants published on PubMed and NIH.
+The sample data is sourced from generic AI-generated promissory notes.
 The documents are intended for use as sample data only.
 
 <br/>

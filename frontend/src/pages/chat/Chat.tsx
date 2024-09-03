@@ -63,7 +63,7 @@ const enum contentTemplateSections {
   NewLine = '\n\n',
   Intro = 'The proposal will include the following sections:',
   Closing = 'Does this look good? If so, you can **generate the document** now. You can also ask me to **add an item** or **change the order of the sections**.',
-  JSONParseError = 'Could not create a template, please try again and ask for a document type.',
+  JSONParseError = 'I was unable to find content related to your query and could not generate a template. Please try again.',
   JSONStructureError = 'Unable to render the sections within the template. Please try again.'
 }
 
@@ -80,8 +80,7 @@ const modalStyles: IModalStyles = {
     borderRadius: '8px'
   },
   root: undefined,
-  scrollableContent: 
-  {
+  scrollableContent: {
     minWidth: '800px'
   },
   layer: undefined,
@@ -931,7 +930,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                         <Answer
                           answer={{
                             answer:
-                              type === ChatType.Browse ? answer.content : generateTemplateSections(jsonDraftDocument),
+                              type === ChatType.Browse ? answer.content : generateTemplateSections(answer.content),
                             citations: parseCitationFromMessage(messages[index - 1]),
                             message_id: answer.id,
                             feedback: answer.feedback
@@ -984,31 +983,32 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                 </Stack>
               )}
               <Stack>
-                {appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured && type === ChatType.Template && (
-                  <CommandBarButton
-                    role="button"
-                    styles={{
-                      icon: {
-                        color: '#FFFFFF'
-                      },
-                      iconDisabled: {
-                        color: '#BDBDBD !important'
-                      },
-                      root: {
-                        color: '#FFFFFF',
-                        background: '#0F6CBD'
-                      },
-                      rootDisabled: {
-                        background: '#F0F0F0'
-                      }
-                    }}
-                    className={styles.newChatIcon}
-                    iconProps={{ iconName: 'Add' }}
-                    onClick={newChat}
-                    disabled={disabledButton()}
-                    aria-label="start a new chat button"
-                  />
-                )}
+                {appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured &&
+                  type === ChatType.Template && (
+                    <CommandBarButton
+                      role="button"
+                      styles={{
+                        icon: {
+                          color: '#FFFFFF'
+                        },
+                        iconDisabled: {
+                          color: '#BDBDBD !important'
+                        },
+                        root: {
+                          color: '#FFFFFF',
+                          background: '#0F6CBD'
+                        },
+                        rootDisabled: {
+                          background: '#F0F0F0'
+                        }
+                      }}
+                      className={styles.newChatIcon}
+                      iconProps={{ iconName: 'Add' }}
+                      onClick={newChat}
+                      disabled={disabledButton()}
+                      aria-label="start a new chat button"
+                    />
+                  )}
                 <CommandBarButton
                   role="button"
                   styles={{
@@ -1026,7 +1026,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                       background: '#F0F0F0'
                     }
                   }}
-                  className={ styles.clearChatBroom }
+                  className={styles.clearChatBroom}
                   iconProps={{ iconName: 'Broom' }}
                   onClick={
                     appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured &&
@@ -1079,7 +1079,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                   onClick={generateDocument} //Update for Document Generation
                   disabled={draftDocument === undefined || disabledButton()}
                   aria-label="generate draft"
-                  title='Generate Draft'
+                  title="Generate Draft"
                 />
               )}
             </Stack>

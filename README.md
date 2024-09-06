@@ -83,6 +83,10 @@ If you don't add an identity provider, the chat functionality will allow anyone 
 
 To add further access controls, update the logic in `getUserInfoList` in `frontend/src/pages/chat/Chat.tsx`. 
 
+#### Recommended practices
+1. **For enhanced relevance and accuracy**, we recommend implementing [Azure hybrid search](https://learn.microsoft.com/en-us/azure/search/hybrid-search-overview) over full-text search. Azure hybrid search provides superior relevance, accuracy, support for complex queries, improved user experience, scalability, performance, advanced features, and integration with AI services. These advantages make it the ideal choice for modern applications that require robust and intelligent search capabilities.
+2. **Importance of prompt engineering**. Prompt engineering is a critical aspect of working with AI models, especially when leveraging advanced capabilities such as those provided by Azure AI services. Proper prompt engineering ensures that the AI models generate accurate, relevant, and contextually appropriate responses. It involves carefully crafting and refining prompts to guide the model's behavior and output effectively. Neglecting prompt engineering can result in suboptimal performance, irrelevant outputs, and increased frustration for users. Therefore, it is essential to invest time and effort in prompt engineering to fully harness the potential of AI models
+
 ### Local deployment
 Review the local deployment [README](./docs/README_LOCAL.md).
 <br>

@@ -209,9 +209,9 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
 
   const processTemplateResponse = () => {
     if (type === ChatType.Template) {
-      let lines: string[]
+      let jsonString = ''
       if (assistantMessage.role === ASSISTANT) {
-        lines = assistantContent.split('\n')
+        jsonString = cleanJSON(assistantContent)
       } else {
         let latestChat = appStateContext?.state.currentChat
         if (!latestChat) return
@@ -221,17 +221,11 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
         const mostRecentAssistantMessage =
           assistantMessages.length > 0 ? assistantMessages[assistantMessages.length - 1] : undefined
         if (mostRecentAssistantMessage) {
-          lines = mostRecentAssistantMessage.content.split('\n')
+          jsonString = cleanJSON(mostRecentAssistantMessage.content)
         } else return
       }
-      if (!lines) return
+      if (jsonString === '') return
 
-      let jsonString = ''
-      lines?.forEach((line: string) => {
-        if (!line.includes('json') && !line.includes('```')) {
-          jsonString += line.trim()
-        }
-      })
       setJSONDraftDocument(jsonString) // use in the Answer response
       try {
         const jsonObject = JSON.parse(jsonString)
@@ -662,6 +656,22 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     setClearingChat(false)
   }
 
+  const cleanJSON = (jsonString: string) => {
+    try {
+      let lines: string[]
+      let cleanString = ''
+      lines = jsonString.split('\n')
+      lines?.forEach((line: string) => {
+        if (!line.includes('json') && !line.includes('```')) {
+          cleanString += line.trim()
+        }
+      })
+      return cleanString
+    } catch (e) {
+      return ''
+    }
+  }
+
   const tryGetRaiPrettyError = (errorMessage: string) => {
     try {
       // Using a regex to extract the JSON part that contains "innererror"
@@ -864,7 +874,8 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   const generateTemplateSections = (jsonString: string) => {
     let jsonResponse
     try {
-      jsonResponse = JSON.parse(jsonString)
+      let cleanString = cleanJSON(jsonString)
+      jsonResponse = JSON.parse(cleanString)
     } catch (e) {
       return contentTemplateSections.JSONParseError
     }

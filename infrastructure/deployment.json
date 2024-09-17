@@ -37,6 +37,13 @@
         "description": "The pricing tier for the App Service plan"
       }
     },
+    "WorkspaceName": {
+      "type": "string",
+      "defaultValue": "[format('worksp-{0}', guid(resourceGroup().id))]",
+      "metadata": {
+        "description": "The name of the Log Analytics Workspace resource"
+      }
+    },
     "ApplicationInsightsName": {
       "type": "string",
       "defaultValue": "[format('appins-{0}', guid(resourceGroup().id))]",
@@ -517,6 +524,18 @@
       ]
     },
     {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2020-08-01",
+      "name": "[parameters('WorkspaceName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30
+      }
+    },
+    {
       "type": "Microsoft.Insights/components",
       "apiVersion": "2020-02-02",
       "name": "[parameters('ApplicationInsightsName')]",
@@ -525,9 +544,13 @@
         "[format('hidden-link:{0}', resourceId('Microsoft.Web/sites', parameters('ApplicationInsightsName')))]": "Resource"
       },
       "properties": {
-        "Application_Type": "web"
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('WorkspaceName'))]"
       },
-      "kind": "web"
+      "kind": "web",
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('WorkspaceName'))]"
+      ]
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",

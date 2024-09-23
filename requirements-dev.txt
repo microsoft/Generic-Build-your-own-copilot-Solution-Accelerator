@@ -5,7 +5,7 @@ requests==2.32.3
 tqdm==4.66.5
 tiktoken
 langchain==0.2.12
-bs4==0.0.1
+bs4==0.0.2
 urllib3==2.2.2
 pytest==7.4.0
 pytest-asyncio==0.23.2

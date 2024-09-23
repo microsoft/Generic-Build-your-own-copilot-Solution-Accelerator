@@ -1,8 +1,21 @@
 import { chatHistorySampleData } from '../constants/chatHistory'
 
-import { ChatMessage, Conversation, ConversationRequest, SectionGenerateRequest, CosmosDBHealth, CosmosDBStatus, UserInfo, ChatType } from './models'
+import {
+  ChatMessage,
+  Conversation,
+  ConversationRequest,
+  SectionGenerateRequest,
+  CosmosDBHealth,
+  CosmosDBStatus,
+  UserInfo,
+  ChatType
+} from './models'
 
-export async function conversationApi(options: ConversationRequest, abortSignal: AbortSignal, chatType: ChatType = ChatType.Browse): Promise<Response> {
+export async function conversationApi(
+  options: ConversationRequest,
+  abortSignal: AbortSignal,
+  chatType: ChatType = ChatType.Browse
+): Promise<Response> {
   const response = await fetch('/conversation', {
     method: 'POST',
     headers: {
@@ -116,17 +129,20 @@ export const historyRead = async (convId: string): Promise<ChatMessage[]> => {
 export const historyGenerate = async (
   options: ConversationRequest,
   abortSignal: AbortSignal,
-  convId?: string
+  convId?: string,
+  chatType: ChatType = ChatType.Browse
 ): Promise<Response> => {
   let body
   if (convId) {
     body = JSON.stringify({
       conversation_id: convId,
-      messages: options.messages
+      messages: options.messages,
+      chat_type: chatType
     })
   } else {
     body = JSON.stringify({
-      messages: options.messages
+      messages: options.messages,
+      chat_type: chatType
     })
   }
   const response = await fetch('/history/generate', {
@@ -355,9 +371,7 @@ export const historyMessageFeedback = async (messageId: string, feedback: string
   return response
 }
 
-export const sectionGenerate = async (
-  options: SectionGenerateRequest,
-): Promise<Response> => {
+export const sectionGenerate = async (options: SectionGenerateRequest): Promise<Response> => {
   // set timeout to 10 seconds
   const abortController = new AbortController()
   const abortSignal = abortController.signal
@@ -365,12 +379,12 @@ export const sectionGenerate = async (
   const timeout = setTimeout(() => {
     abortController.abort()
   }, 10000)
-  
+
   let body = JSON.stringify({
     sectionTitle: options.sectionTitle,
-    sectionDescription: options.sectionDescription,
+    sectionDescription: options.sectionDescription
   })
-  
+
   const response = await fetch('/section/generate', {
     method: 'POST',
     headers: {
@@ -386,9 +400,11 @@ export const sectionGenerate = async (
     .catch(_err => {
       clearTimeout(timeout)
       console.error('There was an issue fetching your data.')
-      return new Response()
+      return new Response(
+        JSON.stringify({ section_content: 'There was an issue fetching your data. Please try again.' })
+      )
     })
-  
+
   return response
 }
 
@@ -397,8 +413,12 @@ export const documentRead = async (docId: string): Promise<Response> => {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' }
   })
-    .then(res => { return res })
-    .catch(_err => { throw new Error('There was an issue fetching your data.') })
+    .then(res => {
+      return res
+    })
+    .catch(_err => {
+      throw new Error('There was an issue fetching your data.')
+    })
 
   return response
 }

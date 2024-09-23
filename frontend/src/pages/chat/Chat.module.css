@@ -21,9 +21,9 @@
   flex-direction: column;
   align-items: center;
   background: radial-gradient(108.78% 108.78% at 50.02% 19.78%, #ffffff 57.29%, #eef6fe 100%);
-  box-shadow:
+  /* box-shadow:
     0px 2px 4px rgba(0, 0, 0, 0.14),
-    0px 0px 2px rgba(0, 0, 0, 0.12);
+    0px 0px 2px rgba(0, 0, 0, 0.12); */
   border-radius: 8px;
   overflow-y: auto;
   max-height: calc(100vh - 100px);
@@ -211,9 +211,9 @@
   justify-content: center;
   align-items: center;
   position: absolute;
-  width: 100px;
+  width: 40px;
   height: 40px;
-  right: -120px;
+  right: -60px;
   top: 40px;
   color: #ffffff;
   border-radius: 4px;
@@ -381,24 +381,6 @@ a {
 .viewSourceButton:hover {
   text-decoration: underline;
   cursor: pointer;
-}
-
-.loadingOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.459); 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000; /* Ensure it is above other content */
-}
-
-.spinner {
-  font-size: 24px;
-  color: #ccc;
 }
 
 @media (max-width: 480px) {

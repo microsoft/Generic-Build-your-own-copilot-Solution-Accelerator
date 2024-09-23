@@ -32,8 +32,7 @@ from backend.utils import (
     format_as_ndjson,
     format_stream_response,
     format_non_streaming_response,
-    convert_to_pf_format,
-    format_pf_non_streaming_response,
+    ChatType
 )
 
 bp = Blueprint("routes", __name__, static_folder="static", template_folder="static")
@@ -162,7 +161,6 @@ def init_ai_search_client():
         endpoint = app_settings.datasource.endpoint
         key_credential = app_settings.datasource.key
         index_name = app_settings.datasource.index
-
         client = SearchClient(endpoint=endpoint, index_name=index_name, credential=AzureKeyCredential(key_credential))
         return client
     except Exception as e:
@@ -200,31 +198,22 @@ def init_cosmosdb_client():
 
 
 def prepare_model_args(request_body, request_headers):
-    template_chat_system_prompt = ('Generate a template for a document given a user description of the template. Do not include any other commentary or description.' +
-    'Respond with a json object in the format containing a list of section information {{"template": [{"section_title": string, "section_description": string}]}}.' +
-    'Example: {"template": [{"section_title": "Introduction", "section_description": "This section introduces the document."}, {"section_title": "Section 2", "section_description": "This is section 2."}]}.' +
-    'If the user provides a message that is not related to modifying the template, respond asking the user to go to the Browse tab to chat with documents.')
-    request_messages = request_body.get("messages", [])
     
-    # template chat should only respond to messages for template modification
-    system_message = app_settings.azure_openai.system_message if not ("chat_type" in request_body and request_body["chat_type"] == "template") else template_chat_system_prompt
+    chat_type = None
+    if "chat_type" in request_body:
+        chat_type = ChatType.BROWSE if not (request_body["chat_type"] and request_body["chat_type"] == "template") else ChatType.TEMPLATE
+    
+    
+    request_messages = request_body.get("messages", [])
     
     messages = []
     if not app_settings.datasource:
         messages = [
             {
                 "role": "system",
-                "content": system_message
+                "content": app_settings.azure_openai.system_message if chat_type == ChatType.BROWSE or not chat_type else app_settings.azure_openai.template_system_message
             }
         ]
-    
-    if ("chat_type" in request_body and request_body["chat_type"] == "template"):
-        messages.append(
-            {
-                "role": "assistant",
-                "content": system_message
-            }
-        )
 
     for message in request_messages:
         if message:
@@ -246,7 +235,7 @@ def prepare_model_args(request_body, request_headers):
         "max_tokens": app_settings.azure_openai.max_tokens,
         "top_p": app_settings.azure_openai.top_p,
         "stop": app_settings.azure_openai.stop_sequence,
-        "stream": app_settings.azure_openai.stream,
+        "stream": app_settings.azure_openai.stream if chat_type == ChatType.BROWSE else False,
         "model": app_settings.azure_openai.model,
         "user": user_json
     }
@@ -259,6 +248,11 @@ def prepare_model_args(request_body, request_headers):
                 )
             ]
         }
+
+        # change role information if template chat
+        if chat_type == ChatType.TEMPLATE:
+            model_args["extra_body"]["data_sources"][0]["parameters"]["role_information"] = app_settings.azure_openai.template_system_message
+
 
     model_args_clean = copy.deepcopy(model_args)
     if model_args_clean.get("extra_body"):
@@ -299,39 +293,6 @@ def prepare_model_args(request_body, request_headers):
     return model_args
 
 
-async def promptflow_request(request):
-    try:
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {app_settings.promptflow.api_key}",
-        }
-        # Adding timeout for scenarios where response takes longer to come back
-        logging.debug(f"Setting timeout to {app_settings.promptflow.response_timeout}")
-        async with httpx.AsyncClient(
-            timeout=float(app_settings.promptflow.response_timeout)
-        ) as client:
-            pf_formatted_obj = convert_to_pf_format(
-                request,
-                app_settings.promptflow.request_field_name,
-                app_settings.promptflow.response_field_name
-            )
-            # NOTE: This only support question and chat_history parameters
-            # If you need to add more parameters, you need to modify the request body
-            response = await client.post(
-                app_settings.promptflow.endpoint,
-                json={
-                    app_settings.promptflow.request_field_name: pf_formatted_obj[-1]["inputs"][app_settings.promptflow.request_field_name],
-                    "chat_history": pf_formatted_obj[:-1],
-                },
-                headers=headers,
-            )
-        resp = response.json()
-        resp["id"] = request["messages"][-1]["id"]
-        return resp
-    except Exception as e:
-        logging.error(f"An error occurred while making promptflow_request: {e}")
-
-
 async def send_chat_request(request_body, request_headers):
     filtered_messages = []
     messages = request_body.get("messages", [])
@@ -355,19 +316,9 @@ async def send_chat_request(request_body, request_headers):
 
 
 async def complete_chat_request(request_body, request_headers):
-    if app_settings.base_settings.use_promptflow:
-        response = await promptflow_request(request_body)
-        history_metadata = request_body.get("history_metadata", {})
-        return format_pf_non_streaming_response(
-            response,
-            history_metadata,
-            app_settings.promptflow.response_field_name,
-            app_settings.promptflow.citations_field_name
-        )
-    else:
-        response, apim_request_id = await send_chat_request(request_body, request_headers)
-        history_metadata = request_body.get("history_metadata", {})
-        return format_non_streaming_response(response, history_metadata, apim_request_id)
+    response, apim_request_id = await send_chat_request(request_body, request_headers)
+    history_metadata = request_body.get("history_metadata", {})
+    return format_non_streaming_response(response, history_metadata, apim_request_id)
 
 
 async def stream_chat_request(request_body, request_headers):
@@ -383,7 +334,8 @@ async def stream_chat_request(request_body, request_headers):
 
 async def conversation_internal(request_body, request_headers):
     try:
-        if app_settings.azure_openai.stream:
+        chat_type = ChatType.BROWSE if not (request_body["chat_type"] and request_body["chat_type"] == "template") else ChatType.TEMPLATE
+        if app_settings.azure_openai.stream and chat_type == ChatType.BROWSE:
             result = await stream_chat_request(request_body, request_headers)
             response = await make_response(format_as_ndjson(result))
             response.timeout = None
@@ -865,20 +817,6 @@ async def ensure_cosmos():
         else:
             return jsonify({"error": "CosmosDB is not working"}), 500
     
-@bp.route("/extract_template_from_image", methods=["POST"])
-async def extract_template_from_image():
-    request_json = await request.get_json()
-    try:
-        if "image_url" not in request_json:
-            # bad request if image_url is not provided
-            return jsonify({"error": "image_url is required"}), 400
-
-        template = await extract_template_from_image(request_json["image_url"])
-        return jsonify(template), 200
-    except Exception as e:
-        logging.exception("Exception in /history/clear_messages")
-        return jsonify({"error": str(e)}), 500
-    
 @bp.route("/section/generate", methods=["POST"])
 async def generate_section_content():
     request_json = await request.get_json()
@@ -890,24 +828,24 @@ async def generate_section_content():
         if "sectionDescription" not in request_json:
             return jsonify({"error": "sectionDescription is required"}), 400
         
-        template = await generate_section_content(request_json)
-        return jsonify(template), 200
+        content = await generate_section_content(request_json, request.headers)
+        return jsonify({"section_content": content}), 200
     except Exception as e:
-        logging.exception("Exception in /history/clear_messages")
+        logging.exception("Exception in /section/generate")
         return jsonify({"error": str(e)}), 500
 
-@bp.route("/document/<documentId>")
-async def get_document(documentId):
+@bp.route("/document/<filepath>")
+async def get_document(filepath):
     try:
-        document = retrieve_document(documentId)
+        document = retrieve_document(filepath)
         return jsonify(document), 200
     except Exception as e:
-        logging.exception("Exception in /history/clear_messages")
+        logging.exception("Exception in /document/<filepath>")
         return jsonify({"error": str(e)}), 500
 
 async def generate_title(conversation_messages):
     ## make sure the messages are sorted by _ts descending
-    title_prompt = 'Summarize the conversation so far into a 4-word or less title. Do not use any quotation marks or punctuation. Respond with a json object in the format {{"title": string}}. Do not include any other commentary or description.'
+    title_prompt = app_settings.azure_openai.title_prompt
 
     messages = [
         {"role": msg["role"], "content": msg["content"]}
@@ -925,73 +863,12 @@ async def generate_title(conversation_messages):
         return title
     except Exception as e:
         return messages[-2]["content"]
+
+async def generate_section_content(request_body, request_headers):
+    prompt = f"""{app_settings.azure_openai.generate_section_content_prompt}
     
-async def extract_template_from_image(image_url):
-    template_prompt = """You are an assistant that can look at an image of a document
-    and produce a description of a template that the document follows.
-    A document uploaded will be an instance of a template.
-
-    The structure of the document describes the section titles that exist and what type of information should be present in each section.
-    The section_desription should be a brief description of the type of information that should be present in that section.
-    You will need to infer the section descriptions based on the instance of that section in the document.
-    The section_description should not contain any information about the content of the document, only the structure of the document.
-
-    Return a resonse as a json object:
-    {"template": [
-        {"section_title": <section_title_goes_here>, "section_description": <section_description_goes_here>},
-        ...
-    ]}
-
-    The json object should be a valid json object with a list of dictionaries. Don't respond in markdown or any other format.
-
-    Do not include any other commentary or description in the response.
-    If the image is not a document, respond with <INVALID_DOCUMENT>.
-    """
-
-    # add system prompt to messages
-    messages = [
-        {
-            "role": "system",
-            "content": app_settings.azure_openai.system_message
-        }
-    ]
-    messages.append(
-        {
-            "role": "user", 
-            "content": [  
-                {
-                    "type": "text", 
-                    "text": template_prompt,
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": image_url
-                    }
-                }
-            ]
-        }
-    )
-
-    try:
-        azure_openai_client = init_openai_client()
-        response = await azure_openai_client.chat.completions.create(
-            model=app_settings.azure_openai.model, messages=messages, temperature=0
-        )
-
-        template = json.loads(response.choices[0].message.content)
-        return template
-    except Exception as e:
-        raise e
-
-async def generate_section_content(request_json):
-    prompt = f"""Help the user generate content for a section in a document. The user has provided a section title and a brief description of the section.
-    The user would like you to provide a more detailed description of the section. Respond with a json object in the format {{"section_content": string}}.
-    Do not include any other commentary or description. Example: {{"section_content": "This section introduces the document."}}.
-    
-    Here is the section title and description:
-    Section Title: {request_json['sectionTitle']}
-    Section Description: {request_json['sectionDescription']}
+    Section Title: {request_body['sectionTitle']}
+    Section Description: {request_body['sectionDescription']}
     """
 
     messages = [
@@ -1001,22 +878,30 @@ async def generate_section_content(request_json):
         }
     ]
     messages.append({"role": "user", "content": prompt})
+       
+    request_body['messages'] = messages
+    model_args = prepare_model_args(request_body, request_headers)
 
     try:
         azure_openai_client = init_openai_client()
-        response = await azure_openai_client.chat.completions.create(
-            model=app_settings.azure_openai.model, messages=messages, temperature=0
-        )
+        raw_response = await azure_openai_client.chat.completions.with_raw_response.create(**model_args)
+        response = raw_response.parse()
 
-        template = json.loads(response.choices[0].message.content)
-        return template
     except Exception as e:
+        logging.exception("Exception in send_chat_request")
         raise e
+
+    return response.choices[0].message.content
     
-def retrieve_document(id):
+def retrieve_document(filepath):
     try:
         search_client = init_ai_search_client()
-        document = search_client.get_document(id)
+        search_query = f"filepath eq '{filepath}'"
+        # Execute the search query
+        results = search_client.search(search_query)
+
+        # Get the full_content of the first result
+        document = next(results)
         return document
     except Exception as e:
         logging.exception("Exception in retrieve_document")

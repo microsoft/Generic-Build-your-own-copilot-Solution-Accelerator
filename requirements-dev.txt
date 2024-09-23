@@ -1,6 +1,6 @@
 -r requirements.txt
 azure-ai-documentintelligence==1.0.0b2
-Markdown==3.4.4
+Markdown==3.7
 requests==2.32.3
 tqdm==4.66.5
 tiktoken

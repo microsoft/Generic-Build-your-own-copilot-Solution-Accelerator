@@ -198,23 +198,20 @@ def init_cosmosdb_client():
 
 
 def prepare_model_args(request_body, request_headers):
-    
-    chat_type = None
-    if "chat_type" in request_body:
-        chat_type = ChatType.BROWSE if not (request_body["chat_type"] and request_body["chat_type"] == "template") else ChatType.TEMPLATE
-    
-    
+    # Prepare the messages for the current query without including past context
     request_messages = request_body.get("messages", [])
     
-    messages = []
+    messages = []  # Start with an empty message list
     if not app_settings.datasource:
+        # Add only the current system message for each independent query
         messages = [
             {
                 "role": "system",
-                "content": app_settings.azure_openai.system_message if chat_type == ChatType.BROWSE or not chat_type else app_settings.azure_openai.template_system_message
+                "content": app_settings.azure_openai.system_message
             }
         ]
-
+    
+    # Add the current user query without including previous messages
     for message in request_messages:
         if message:
             messages.append(
@@ -223,91 +220,39 @@ def prepare_model_args(request_body, request_headers):
                     "content": message["content"]
                 }
             )
-
-    user_json = None
-    if (MS_DEFENDER_ENABLED):
-        authenticated_user_details = get_authenticated_user_details(request_headers)
-        user_json = get_msdefender_user_json(authenticated_user_details, request_headers)
-
+    
+    # Continue with the rest of the request body processing without prior context
     model_args = {
-        "messages": messages,
+        "messages": messages,  # Only the current query messages
         "temperature": app_settings.azure_openai.temperature,
         "max_tokens": app_settings.azure_openai.max_tokens,
         "top_p": app_settings.azure_openai.top_p,
         "stop": app_settings.azure_openai.stop_sequence,
-        "stream": app_settings.azure_openai.stream if chat_type == ChatType.BROWSE else False,
-        "model": app_settings.azure_openai.model,
-        "user": user_json
+        "stream": app_settings.azure_openai.stream,
+        "model": app_settings.azure_openai.model
     }
-
-    if app_settings.datasource:
-        model_args["extra_body"] = {
-            "data_sources": [
-                app_settings.datasource.construct_payload_configuration(
-                    request=request
-                )
-            ]
-        }
-
-        # change role information if template chat
-        if chat_type == ChatType.TEMPLATE:
-            model_args["extra_body"]["data_sources"][0]["parameters"]["role_information"] = app_settings.azure_openai.template_system_message
-
-
-    model_args_clean = copy.deepcopy(model_args)
-    if model_args_clean.get("extra_body"):
-        secret_params = [
-            "key",
-            "connection_string",
-            "embedding_key",
-            "encoded_api_key",
-            "api_key",
-        ]
-        for secret_param in secret_params:
-            if model_args_clean["extra_body"]["data_sources"][0]["parameters"].get(
-                secret_param
-            ):
-                model_args_clean["extra_body"]["data_sources"][0]["parameters"][
-                    secret_param
-                ] = "*****"
-        authentication = model_args_clean["extra_body"]["data_sources"][0][
-            "parameters"
-        ].get("authentication", {})
-        for field in authentication:
-            if field in secret_params:
-                model_args_clean["extra_body"]["data_sources"][0]["parameters"][
-                    "authentication"
-                ][field] = "*****"
-        embeddingDependency = model_args_clean["extra_body"]["data_sources"][0][
-            "parameters"
-        ].get("embedding_dependency", {})
-        if "authentication" in embeddingDependency:
-            for field in embeddingDependency["authentication"]:
-                if field in secret_params:
-                    model_args_clean["extra_body"]["data_sources"][0]["parameters"][
-                        "embedding_dependency"
-                    ]["authentication"][field] = "*****"
-
-    logging.debug(f"REQUEST BODY: {json.dumps(model_args_clean, indent=4)}")
-
+    
     return model_args
 
-
+# Replace existing send_chat_request with this one
 async def send_chat_request(request_body, request_headers):
+    # Filter messages to remove any context or tool-based messages
     filtered_messages = []
     messages = request_body.get("messages", [])
     for message in messages:
-        if message.get("role") != 'tool':
+        if message.get("role") != 'tool':  # Exclude any tool-specific messages
             filtered_messages.append(message)
             
+    # Pass only the current query without context
     request_body['messages'] = filtered_messages
     model_args = prepare_model_args(request_body, request_headers)
 
     try:
+        # Initialize OpenAI client
         azure_openai_client = init_openai_client()
         raw_response = await azure_openai_client.chat.completions.with_raw_response.create(**model_args)
         response = raw_response.parse()
-        apim_request_id = raw_response.headers.get("apim-request-id") 
+        apim_request_id = raw_response.headers.get("apim-request-id")  # Get request ID for tracking
     except Exception as e:
         logging.exception("Exception in send_chat_request")
         raise e

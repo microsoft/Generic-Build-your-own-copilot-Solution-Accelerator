@@ -75,7 +75,6 @@ const Sidebar = (): JSX.Element => {
 
   useEffect(() => {
     setIsLoading(appStateContext?.state.isGenerating)
-    console.log(appStateContext?.state.isGenerating)
   }, [appStateContext?.state.isGenerating])
 
   // determine url from react-router-dom  

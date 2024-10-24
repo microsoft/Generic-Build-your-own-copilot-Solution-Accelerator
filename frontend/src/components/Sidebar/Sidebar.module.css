@@ -44,7 +44,7 @@
     align-items: center;
     border-radius: 8px;
     margin: 8px;
-
+    cursor: not-allowed;
     padding: 8px, 8px, 8px, 8px;
     background: var(--Colors-Alpha-Black-5, #0000000D);
 

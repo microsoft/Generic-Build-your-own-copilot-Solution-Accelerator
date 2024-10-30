@@ -159,7 +159,7 @@ class PdfTextSplitter(TextSplitter):
             for end_tag in end_tags:
                 if end_tag in part:
                 table, rest = part.split(end_tag)
-                table = start_tag[0] + table + end_tag[0] 
+                table = start_tags[0] + table + end_tags[0] 
                 minitables = self.chunk_table(table, table_caption_prefix)
                 final_chunks.extend(minitables)
 

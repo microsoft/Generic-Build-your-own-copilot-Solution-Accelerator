@@ -146,8 +146,8 @@ class PdfTextSplitter(TextSplitter):
 
     def split_text(self, text: str) -> List[str]:
         content_dict, masked_text = self.mask_urls_and_imgs(text)
-        start_tag = self._table_tags["table_open"]
-        end_tag = self._table_tags["table_close"]
+        start_tags = [self._table_tags["table_open"], "<tabular>"]
+        end_tags = [self._table_tags["table_close"], "</tabular>"]
         splits = masked_text.split(start_tag)
         
         final_chunks = self.chunk_rest(splits[0]) # the first split is before the first table tag so it is regular text
@@ -156,10 +156,12 @@ class PdfTextSplitter(TextSplitter):
         if len(final_chunks)>0:
             table_caption_prefix += self.extract_caption(final_chunks[-1]) # extracted from the last chunk before the table
         for part in splits[1:]:
-            table, rest = part.split(end_tag)
-            table = start_tag + table + end_tag 
-            minitables = self.chunk_table(table, table_caption_prefix)
-            final_chunks.extend(minitables)
+            for end_tag in end_tags:
+                if end_tag in part:
+                table, rest = part.split(end_tag)
+                table = start_tag[0] + table + end_tag[0] 
+                minitables = self.chunk_table(table, table_caption_prefix)
+                final_chunks.extend(minitables)
 
             if rest.strip()!="":
                 text_minichunks = self.chunk_rest(rest)
@@ -167,7 +169,7 @@ class PdfTextSplitter(TextSplitter):
                 table_caption_prefix = self.extract_caption(text_minichunks[-1])
             else:
                 table_caption_prefix = ""
-            
+            break
 
         final_final_chunks = [chunk for chunk, chunk_size in merge_chunks_serially(final_chunks, self._chunk_size, content_dict)]
 

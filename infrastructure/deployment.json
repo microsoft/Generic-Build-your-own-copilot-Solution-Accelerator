@@ -263,7 +263,7 @@
     }
   },
   "variables": {
-    "WebAppImageName": "DOCKER|acrbyocga.azurecr.io/webapp:latest",
+    "WebAppImageName": "DOCKER|byocgacontainerreg.azurecr.io/webapp:dev",
     "cosmosdb_database_name": "db_conversation_history",
     "cosmosdb_container_name": "conversations",
     "roleDefinitionId": "00000000-0000-0000-0000-000000000002",

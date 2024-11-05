@@ -101,6 +101,8 @@ export const appStateReducer = (state: AppState, action: Action): AppState => {
       return { ...state, generateChat: action.payload }
     case 'UPDATE_DRAFTED_DOCUMENT_TITLE':
       return { ...state, draftedDocumentTitle: action.payload }
+    case 'GENERATE_ISLODING':
+      return { ...state, isGenerating: action.payload }
     default:
       return state
   }

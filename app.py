@@ -682,7 +682,7 @@ async def rename_conversation():
 
     ## update the title
     title = request_json.get("title", None)
-    if not title:
+    if not title or title.strip() == "":
         return jsonify({"error": "title is required"}), 400
     conversation["title"] = title
     updated_conversation = await cosmos_conversation_client.upsert_conversation(

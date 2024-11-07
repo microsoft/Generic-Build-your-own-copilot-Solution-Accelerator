@@ -25,6 +25,7 @@ import { AppStateContext } from '../../state/AppProvider'
 import { GroupedChatHistory } from './ChatHistoryList'
 
 import styles from './ChatHistoryPanel.module.css'
+import _ from 'lodash'
 
 interface ChatHistoryListItemCellProps {
   item?: Conversation
@@ -123,6 +124,17 @@ export const ChatHistoryListItemCell: React.FC<ChatHistoryListItemCellProps> = (
   const handleSaveEdit = async (e: any) => {
     e.preventDefault()
     if (errorRename || renameLoading) {
+      return
+    }
+    if (_.trim(editTitle) === "") {
+      setErrorRename('Error: Title is required.')
+      setTimeout(() => {
+        setErrorRename(undefined)
+        setTextFieldFocused(true)
+        if (textFieldRef.current) {
+          textFieldRef.current.focus()
+        }
+      }, 5000)
       return
     }
     if (editTitle == item.title) {

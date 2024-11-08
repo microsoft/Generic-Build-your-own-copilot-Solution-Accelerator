@@ -85,6 +85,14 @@ const Sidebar = (): JSX.Element => {
   const navigate = useNavigate()
   const location = useLocation()
   const [name, setName] = useState<string>('')
+  useEffect(() => {
+  if(appStateContext?.state.isRequestInitiated == true){
+    NavigationButtonStates.Disabled
+  }
+  else{
+    NavigationButtonStates.Active
+  }
+})
 
   useEffect(() => {
     if (!appStateContext) {
@@ -113,7 +121,12 @@ const Sidebar = (): JSX.Element => {
   }
 
   const currentView = determineView()
-  const isGenerating = appStateContext?.state.isGenerating
+    // inactive, disabled, active
+    var draftButtonState = NavigationButtonStates.Disabled
+    if (appStateContext?.state.draftedDocument) {
+      draftButtonState = currentView === 'draft' ? NavigationButtonStates.Active : NavigationButtonStates.Inactive
+    }
+  const isGenerating = appStateContext?.state.isRequestInitiated
 
   return (
     <Stack className={styles.sidebarContainer}>
@@ -125,9 +138,9 @@ const Sidebar = (): JSX.Element => {
           text={'Browse'}
           buttonState={
             currentView === 'chat'
-              ? NavigationButtonStates.Active
-              : appStateContext?.state.isGenerating
-                ? NavigationButtonStates.Disabled
+            ? NavigationButtonStates.Active
+            : appStateContext?.state.isRequestInitiated
+              ? NavigationButtonStates.Disabled
                 : NavigationButtonStates.Inactive
           }
           onClick={() => {
@@ -141,9 +154,10 @@ const Sidebar = (): JSX.Element => {
           buttonState={
             currentView === 'generate'
               ? NavigationButtonStates.Active
-              : appStateContext?.state.isGenerating
+              : appStateContext?.state.isRequestInitiated
                 ? NavigationButtonStates.Disabled
                 : NavigationButtonStates.Inactive
+
           }
           onClick={() => {
             if (!isGenerating) {
@@ -153,17 +167,10 @@ const Sidebar = (): JSX.Element => {
         />
         <NavigationButton
           text={'Draft'}
-          buttonState={
-            currentView === 'draft'
-              ? NavigationButtonStates.Active
-              : appStateContext?.state.isGenerating
-                ? NavigationButtonStates.Disabled
-                : NavigationButtonStates.Inactive
-          }
+          buttonState={draftButtonState}
+         
           onClick={() => {
-            if (!isGenerating) {
-              navigate('/draft')
-            }
+            navigate('/draft')
           }}
         />
       </Stack>

@@ -287,6 +287,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     setShowLoadingMessage(true)
     const abortController = new AbortController()
     abortFuncs.current.unshift(abortController)
+    appStateContext?.dispatch({ type: 'SET_IS_REQUEST_INITIATED', payload: true })
 
     const userMessage: ChatMessage = {
       id: uuid(),
@@ -402,6 +403,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
       setShowLoadingMessage(false)
       appStateContext?.dispatch({ type: 'GENERATE_ISLODING', payload: false })
       abortFuncs.current = abortFuncs.current.filter(a => a !== abortController)
+      appStateContext?.dispatch({ type: 'SET_IS_REQUEST_INITIATED', payload: false })
       setProcessMessages(messageStatus.Done)
     }
 
@@ -414,6 +416,8 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     setShowLoadingMessage(true)
     const abortController = new AbortController()
     abortFuncs.current.unshift(abortController)
+    appStateContext?.dispatch({ type: 'SET_IS_REQUEST_INITIATED', payload: true })
+
 
     const userMessage: ChatMessage = {
       id: uuid(),
@@ -640,6 +644,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
       setShowLoadingMessage(false)
       abortFuncs.current = abortFuncs.current.filter(a => a !== abortController)
       setProcessMessages(messageStatus.Done)
+      appStateContext?.dispatch({ type: 'SET_IS_REQUEST_INITIATED', payload: false })
     }
     return abortController.abort()
   }

@@ -103,6 +103,8 @@ export const appStateReducer = (state: AppState, action: Action): AppState => {
       return { ...state, draftedDocumentTitle: action.payload }
     case 'GENERATE_ISLODING':
       return { ...state, isGenerating: action.payload }
+      case 'SET_IS_REQUEST_INITIATED' : 
+      return {...state, isRequestInitiated : action.payload}
     default:
       return state
   }

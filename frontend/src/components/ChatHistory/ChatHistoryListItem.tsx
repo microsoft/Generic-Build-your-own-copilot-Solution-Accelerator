@@ -60,7 +60,8 @@ export const ChatHistoryListItemCell: React.FC<ChatHistoryListItemCellProps> = (
   const [errorRename, setErrorRename] = useState<string | undefined>(undefined)
   const [textFieldFocused, setTextFieldFocused] = useState(false)
   const textFieldRef = useRef<ITextField | null>(null)
-
+  const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(false);
+  
   const appStateContext = React.useContext(AppStateContext)
   const isSelected = item?.id === appStateContext?.state.currentChat?.id
   const dialogContentProps = {
@@ -94,6 +95,12 @@ export const ChatHistoryListItemCell: React.FC<ChatHistoryListItemCellProps> = (
       setEditTitle('')
     }
   }, [appStateContext?.state.currentChat?.id, item?.id])
+
+  useEffect(()=>{
+    let v = appStateContext?.state.isRequestInitiated;
+    if(v!=undefined)
+      setIsButtonDisabled(v && isSelected)
+  },[appStateContext?.state.isRequestInitiated])
 
   const onDelete = async () => {
     const response = await historyDelete(item.id)
@@ -267,6 +274,7 @@ export const ChatHistoryListItemCell: React.FC<ChatHistoryListItemCellProps> = (
                   iconProps={{ iconName: 'Delete' }}
                   title="Delete"
                   onClick={toggleDeleteDialog}
+                  disabled={isButtonDisabled}
                   onKeyDown={e => (e.key === ' ' ? toggleDeleteDialog() : null)}
                 />
                 <IconButton
@@ -274,6 +282,7 @@ export const ChatHistoryListItemCell: React.FC<ChatHistoryListItemCellProps> = (
                   iconProps={{ iconName: 'Edit' }}
                   title="Edit"
                   onClick={onEdit}
+                  disabled={isButtonDisabled}
                   onKeyDown={e => (e.key === ' ' ? onEdit() : null)}
                 />
               </Stack>

@@ -26,6 +26,8 @@ const config: Config.InitialOptions = {
   collectCoverage: true,
   //collectCoverageFrom: ['src/**/*.{ts,tsx}'],  // Adjust the path as needed
   //coverageReporters: ['json', 'lcov', 'text', 'clover'],
+
+  collectCoverageFrom: ['src/**/*.{ts,tsx,js,jsx}'],
   coverageThreshold: {
     global: {
       branches: 80,
@@ -42,6 +44,12 @@ const config: Config.InitialOptions = {
     '<rootDir>/src/api/',
     '<rootDir>/src/mocks/',
     //'<rootDir>/src/test/',
+    '<rootDir>/src/components/QuestionInput/index.ts',
+    '<rootDir>/src/components/Answer/index.ts',
+    '<rootDir>/src/pages/NoPage.tsx',
+    '<rootDir>/src/index.tsx',
+    '<rootDir>/src/vite-env.d.ts',
+    '<rootDir>/src/helpers/'
   ],
 }
 

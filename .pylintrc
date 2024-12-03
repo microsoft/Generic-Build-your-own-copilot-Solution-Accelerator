@@ -1,0 +1,31 @@
+[MESSAGES CONTROL]
+# Disable certain warnings and errors
+disable=
+    missing-docstring,  # Missing docstrings
+    invalid-name,  # Variable names not in snake_case
+    too-many-arguments,  # Exceeding argument limits
+    too-many-locals,  # Exceeding local variable limits
+    too-many-branches,  # Complex functions
+    too-many-lines,  # Exceeding file line limit
+    import-error,  # Ignored unresolved imports
+    no-name-in-module,  # Missing module names
+    broad-exception-raised,  # Avoid broad exceptions
+    redefined-outer-name,  # Outer variable shadowing
+    no-else-return,  # Remove unnecessary else
+    unused-import,  # Unused imports
+
+[FORMAT]
+# Set the maximum line length
+max-line-length=120
+
+[DESIGN]
+# Adjust thresholds for warnings
+max-args=10
+max-locals=30
+max-branches=20
+max-lines=1500
+max-statements=100
+
+[LOGGING]
+# Disable logging format errors
+logging-format-style=old

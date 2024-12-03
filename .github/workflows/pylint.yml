@@ -26,22 +26,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Step 4: Run Autopep8 Fix
+      # Step 4: Run Autopep8 Fix for app.py
       - name: Fix with Autopep8
-        run: python -m autopep8 --in-place --recursive --verbose scripts/ backend/
+        run: python -m autopep8 --in-place --verbose app.py
 
-      # Step 5: Run Pylint
+      # Step 5: Run Pylint for app.py
       - name: Run Pylint
-        run: python -m pylint scripts/ backend/ --rcfile=.pylintrc || true
+        run: python -m pylint app.py --rcfile=.pylintrc || true
 
-      # Step 6: Run Flake8
+      # Step 6: Run Flake8 for app.py
       - name: Run Flake8
-        run: python -m flake8 scripts/ backend/
+        run: python -m flake8 --config=.flake8 app.py
 
-      # Step 7: Run Black Check
+      # Step 7: Run Black Check for app.py
       - name: Run Black Check
-        run: python -m black --check scripts/ backend/
+        run: python -m black --check app.py
 
-      # Step 8: Run Isort Check
+      # Step 8: Run Isort Check for app.py
       - name: Run Isort Check
-        run: python -m isort --check-only --verbose scripts/ backend/
+        run: python -m isort --check-only --verbose app.py

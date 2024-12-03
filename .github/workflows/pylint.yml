@@ -38,6 +38,10 @@ jobs:
       - name: Run Flake8
         run: python -m flake8 --config=.flake8 app.py
 
+      # Step 7: Fix imports with Isort
+      - name: Fix with Isort
+        run: python -m isort app.py 
+
       # Step 7: Run Black Check for app.py
       - name: Run Black Check
         run: python -m black --check app.py

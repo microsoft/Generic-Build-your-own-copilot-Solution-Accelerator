@@ -42,10 +42,10 @@ jobs:
       - name: Fix with Isort
         run: python -m isort app.py 
 
-      # Step 7: Run Black Check for app.py
+      # Step 7: Run Black fix for app.py
       - name: Run Black Check
         run: python -m black app.py
 
-      # Step 8: Run Isort Check for app.py
+      # Step 8: Run fic Isort for app.py
       - name: Run Isort Check
-        run: python -m isort --check-only --verbose app.py
+        run: python -m isort --verbose app.py

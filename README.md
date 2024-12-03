@@ -72,7 +72,7 @@ https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-regi
 
 If you are using your own data, the next step is optional.
 
-4. Optional - Follow steps in [Sample data guide](./scripts/SAMPLE_DATA.md) to ingest the sample Promissory Note PDFs into the search index.
+4. Follow steps in [Sample data guide](./scripts/SAMPLE_DATA.md) to ingest the sample Promissory Note PDFs into the search index.
 
 If you want to enable authentication, you will need to add an identity provider.
 

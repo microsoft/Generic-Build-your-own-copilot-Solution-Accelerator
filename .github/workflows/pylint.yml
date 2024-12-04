@@ -26,26 +26,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Step 4: Run Autopep8 Fix for app.py
-      - name: Fix with Autopep8
-        run: python -m autopep8 --in-place --verbose app.py
-
-      # Step 5: Run Pylint for app.py
-      - name: Run Pylint
-        run: python -m pylint app.py --rcfile=.pylintrc || true
-
-      # Step 6: Run Flake8 for app.py
-      - name: Run Flake8
-        run: python -m flake8 --config=.flake8 app.py
-
-      # Step 7: Fix imports with Isort
+      # Step 4: Fix imports with Isort
       - name: Fix with Isort
-        run: python -m isort app.py 
+        run: python -m isort --verbose .
 
-      # Step 7: Run Black fix for app.py
-      - name: Run Black Fix
-        run: python -m black app.py
+      # Step 5: Format code with Black
+      - name: Format with Black
+        run: python -m black --verbose .
 
-      # Step 8: Run fic Isort for app.py
-      - name: Run Isort
-        run: python -m isort --verbose app.py
+      # Step 6: Run Flake8 for linting
+      - name: Run Flake8
+        run: python -m flake8 --config=.flake8 --verbose .
+
+      # Step 7: Run Pylint for static analysis
+      - name: Run Pylint
+        run: python -m pylint --rcfile=.pylintrc --verbose . || true

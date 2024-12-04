@@ -151,7 +151,7 @@ def format_stream_response(chatCompletionChunk, history_metadata, apim_request_i
 
 
 def comma_separated_string_to_list(s: str) -> List[str]:
-    '''
+    """
     Split comma-separated values into a list.
-    '''
-    return s.strip().replace(' ', '').split(',')
+    """
+    return s.strip().replace(" ", "").split(",")

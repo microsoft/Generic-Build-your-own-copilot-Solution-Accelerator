@@ -23,7 +23,6 @@ max-line-length=120
 max-args=10
 max-locals=30
 max-branches=20
-max-lines=1500
 max-statements=100
 
 [LOGGING]

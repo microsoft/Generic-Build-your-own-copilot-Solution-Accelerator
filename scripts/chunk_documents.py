@@ -16,12 +16,16 @@ def get_document_intelligence_client(config, secret_client):
     secret_name = config.get("document_intelligence_secret_name")
 
     if not secret_client or not secret_name:
-        print("No keyvault url or secret name provided in config file. Document Intelligence client will not be set up.")
+        print(
+            "No keyvault url or secret name provided in config file. Document Intelligence client will not be set up."
+        )
         return None
 
     endpoint = config.get("document_intelligence_endpoint")
     if not endpoint:
-        print("No endpoint provided in config file. Document Intelligence client will not be set up.")
+        print(
+            "No endpoint provided in config file. Document Intelligence client will not be set up."
+        )
         return None
 
     try:
@@ -29,9 +33,13 @@ def get_document_intelligence_client(config, secret_client):
         os.environ["FORM_RECOGNIZER_ENDPOINT"] = endpoint
         os.environ["FORM_RECOGNIZER_KEY"] = document_intelligence_secret.value
 
-        document_intelligence_credential = AzureKeyCredential(document_intelligence_secret.value)
+        document_intelligence_credential = AzureKeyCredential(
+            document_intelligence_secret.value
+        )
 
-        document_intelligence_client = DocumentAnalysisClient(endpoint, document_intelligence_credential)
+        document_intelligence_client = DocumentAnalysisClient(
+            endpoint, document_intelligence_credential
+        )
         print("Document Intelligence client set up.")
         return document_intelligence_client
     except Exception as e:
@@ -59,13 +67,17 @@ if __name__ == "__main__":
         # Keyvault Secret Client
         keyvault_url = index_config.get("keyvault_url")
         if not keyvault_url:
-            print("No keyvault url provided in config file. Secret client will not be set up.")
+            print(
+                "No keyvault url provided in config file. Secret client will not be set up."
+            )
             secret_client = None
         else:
             secret_client = SecretClient(keyvault_url, credential)
 
         # Optional client for cracking documents
-        document_intelligence_client = get_document_intelligence_client(index_config, secret_client)
+        document_intelligence_client = get_document_intelligence_client(
+            index_config, secret_client
+        )
 
         # Crack and chunk documents
         print("Cracking and chunking documents...")
@@ -76,10 +88,13 @@ if __name__ == "__main__":
             token_overlap=index_config.get("token_overlap", 128),
             form_recognizer_client=document_intelligence_client,
             use_layout=index_config.get("use_layout", False),
-            njobs=1)
+            njobs=1,
+        )
 
         print(f"Processed {chunking_result.total_files} files")
-        print(f"Unsupported formats: {chunking_result.num_unsupported_format_files} files")
+        print(
+            f"Unsupported formats: {chunking_result.num_unsupported_format_files} files"
+        )
         print(f"Files with errors: {chunking_result.num_files_with_errors} files")
         print(f"Found {len(chunking_result.chunks)} chunks")
 

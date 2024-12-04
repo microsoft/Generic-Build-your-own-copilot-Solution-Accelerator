@@ -6,11 +6,7 @@ from subprocess import Popen, TimeoutExpired
 from time import sleep
 
 
-script_base_path = os.path.dirname(
-    os.path.dirname(
-        os.path.dirname(__file__)
-    )
-)
+script_base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 script_timeout = 240
 

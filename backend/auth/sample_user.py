@@ -11,9 +11,9 @@ sample_user = {
     "Max-Forwards": "10",
     "Origin": "https://your_app_service.azurewebsites.net",
     "Referer": "https://your_app_service.azurewebsites.net/",
-    "Sec-Ch-Ua": "\"Microsoft Edge\";v=\"113\", \"Chromium\";v=\"113\", \"Not-A.Brand\";v=\"24\"",
+    "Sec-Ch-Ua": '"Microsoft Edge";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
     "Sec-Ch-Ua-Mobile": "?0",
-    "Sec-Ch-Ua-Platform": "\"Windows\"",
+    "Sec-Ch-Ua-Platform": '"Windows"',
     "Sec-Fetch-Dest": "empty",
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "same-origin",
@@ -35,5 +35,5 @@ sample_user = {
     "X-Ms-Token-Aad-Id-Token": "your_aad_id_token",
     "X-Original-Url": "/chatgpt",
     "X-Site-Deployment-Id": "your_app_service",
-    "X-Waws-Unencoded-Url": "/chatgpt"
+    "X-Waws-Unencoded-Url": "/chatgpt",
 }

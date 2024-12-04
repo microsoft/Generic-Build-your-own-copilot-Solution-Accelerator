@@ -10,29 +10,17 @@ from quart import Quart
 datasources = [
     "AzureCognitiveSearch",
     "Elasticsearch",
-    "none"  # TODO: add tests for additional data sources
+    "none",  # TODO: add tests for additional data sources
 ]
 
 
-def render_template_to_tempfile(
-    template_prefix,
-    input_template,
-    **template_params
-):
+def render_template_to_tempfile(template_prefix, input_template, **template_params):
     template_environment = Environment()
-    template_environment.loader = FileSystemLoader(
-        os.path.dirname(input_template)
-    )
+    template_environment.loader = FileSystemLoader(os.path.dirname(input_template))
     template_environment.trim_blocks = True
-    template = template_environment.get_template(
-        os.path.basename(input_template)
-    )
+    template = template_environment.get_template(os.path.basename(input_template))
 
-    with NamedTemporaryFile(
-        'w',
-        prefix=f"{template_prefix}-",
-        delete=False
-    ) as g:
+    with NamedTemporaryFile("w", prefix=f"{template_prefix}-", delete=False) as g:
         g.write(template.render(**template_params))
         rendered_output = g.name
 
@@ -45,22 +33,34 @@ def datasource(request):
     return request.param
 
 
-@pytest.fixture(scope="function", params=[True, False], ids=["with_chat_history", "no_chat_history"])
+@pytest.fixture(
+    scope="function", params=[True, False], ids=["with_chat_history", "no_chat_history"]
+)
 def enable_chat_history(request):
     return request.param
 
 
-@pytest.fixture(scope="function", params=[True, False], ids=["streaming", "nonstreaming"])
+@pytest.fixture(
+    scope="function", params=[True, False], ids=["streaming", "nonstreaming"]
+)
 def stream(request):
     return request.param
 
 
-@pytest.fixture(scope="function", params=[True, False], ids=["with_aoai_embeddings", "no_aoai_embeddings"])
+@pytest.fixture(
+    scope="function",
+    params=[True, False],
+    ids=["with_aoai_embeddings", "no_aoai_embeddings"],
+)
 def use_aoai_embeddings(request):
     return request.param
 
 
-@pytest.fixture(scope="function", params=[True, False], ids=["with_es_embeddings", "no_es_embeddings"])
+@pytest.fixture(
+    scope="function",
+    params=[True, False],
+    ids=["with_es_embeddings", "no_es_embeddings"],
+)
 def use_elasticsearch_embeddings(request):
     return request.param
 
@@ -73,13 +73,11 @@ def dotenv_rendered_template_path(
     enable_chat_history,
     stream,
     use_aoai_embeddings,
-    use_elasticsearch_embeddings
+    use_elasticsearch_embeddings,
 ):
     rendered_template_name = request.node.name.replace("[", "_").replace("]", "_")
     template_path = os.path.join(
-        os.path.dirname(__file__),
-        "dotenv_templates",
-        "dotenv.jinja2"
+        os.path.dirname(__file__), "dotenv_templates", "dotenv.jinja2"
     )
 
     if datasource != "none":
@@ -89,7 +87,9 @@ def dotenv_rendered_template_path(
         pytest.skip("Elasticsearch embeddings not supported for test.")
 
     if datasource == "Elasticsearch":
-        dotenv_template_params["useElasticsearchEmbeddings"] = use_elasticsearch_embeddings
+        dotenv_template_params[
+            "useElasticsearchEmbeddings"
+        ] = use_elasticsearch_embeddings
 
     dotenv_template_params["useAoaiEmbeddings"] = use_aoai_embeddings
 
@@ -104,9 +104,7 @@ def dotenv_rendered_template_path(
     dotenv_template_params["azureOpenaiStream"] = stream
 
     return render_template_to_tempfile(
-        rendered_template_name,
-        template_path,
-        **dotenv_template_params
+        rendered_template_name, template_path, **dotenv_template_params
     )
 
 
@@ -132,14 +130,7 @@ async def test_dotenv(test_app: Quart, dotenv_template_params: dict[str, str]):
         message_content = "What is Contoso?"
 
     request_path = "/conversation"
-    request_data = {
-        "messages": [
-            {
-                "role": "user",
-                "content": message_content
-            }
-        ]
-    }
+    request_data = {"messages": [{"role": "user", "content": message_content}]}
     test_client = test_app.test_client()
     response = await test_client.post(request_path, json=request_data)
     assert response.status_code == 200

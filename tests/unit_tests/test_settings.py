@@ -6,11 +6,7 @@ from importlib import import_module, reload
 @pytest.fixture(scope="function")
 def dotenv_path(request):
     test_case_name = request.node.originalname.partition("test_")[2]
-    return os.path.join(
-        os.path.dirname(__file__),
-        "dotenv_data",
-        test_case_name
-    )
+    return os.path.join(os.path.dirname(__file__), "dotenv_data", test_case_name)
 
 
 @pytest.fixture(scope="function")

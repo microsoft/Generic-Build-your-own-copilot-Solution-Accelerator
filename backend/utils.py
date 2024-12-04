@@ -112,6 +112,7 @@ def format_non_streaming_response(chatCompletion, history_metadata, apim_request
 
     return {}
 
+
 def format_stream_response(chatCompletionChunk, history_metadata, apim_request_id):
     response_obj = {
         "id": chatCompletionChunk.id,
@@ -148,9 +149,9 @@ def format_stream_response(chatCompletionChunk, history_metadata, apim_request_i
 
     return {}
 
+
 def comma_separated_string_to_list(s: str) -> List[str]:
     '''
     Split comma-separated values into a list.
     '''
     return s.strip().replace(' ', '').split(',')
-

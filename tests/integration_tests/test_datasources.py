@@ -71,7 +71,7 @@ def dotenv_rendered_template_path(
     dotenv_template_params,
     datasource,
     enable_chat_history,
-    stream, 
+    stream,
     use_aoai_embeddings,
     use_elasticsearch_embeddings
 ):
@@ -84,25 +84,25 @@ def dotenv_rendered_template_path(
 
     if datasource != "none":
         dotenv_template_params["datasourceType"] = datasource
-    
+
     if datasource != "Elasticsearch" and use_elasticsearch_embeddings:
         pytest.skip("Elasticsearch embeddings not supported for test.")
-        
+
     if datasource == "Elasticsearch":
         dotenv_template_params["useElasticsearchEmbeddings"] = use_elasticsearch_embeddings
-    
+
     dotenv_template_params["useAoaiEmbeddings"] = use_aoai_embeddings
-    
+
     if use_aoai_embeddings or use_elasticsearch_embeddings:
         dotenv_template_params["azureSearchQueryType"] = "vector"
         dotenv_template_params["elasticsearchQueryType"] = "vector"
     else:
         dotenv_template_params["azureSearchQueryType"] = "simple"
         dotenv_template_params["elasticsearchQueryType"] = "simple"
-    
+
     dotenv_template_params["enableChatHistory"] = enable_chat_history
     dotenv_template_params["azureOpenaiStream"] = stream
-    
+
     return render_template_to_tempfile(
         rendered_template_name,
         template_path,
@@ -115,7 +115,7 @@ def test_app(dotenv_rendered_template_path) -> Quart:
     os.environ["DOTENV_PATH"] = dotenv_rendered_template_path
     app_module = import_module("app")
     app_module = reload(app_module)
-    
+
     app = getattr(app_module, "app")
     return app
 
@@ -124,13 +124,13 @@ def test_app(dotenv_rendered_template_path) -> Quart:
 async def test_dotenv(test_app: Quart, dotenv_template_params: dict[str, str]):
     if dotenv_template_params["datasourceType"] == "AzureCognitiveSearch":
         message_content = dotenv_template_params["azureSearchQuery"]
-        
+
     elif dotenv_template_params["datasourceType"] == "Elasticsearch":
         message_content = dotenv_template_params["elasticsearchQuery"]
-        
+
     else:
         message_content = "What is Contoso?"
-        
+
     request_path = "/conversation"
     request_data = {
         "messages": [

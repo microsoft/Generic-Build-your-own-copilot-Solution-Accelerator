@@ -10,6 +10,7 @@ from azure.ai.formrecognizer import DocumentAnalysisClient
 
 from data_utils import chunk_directory
 
+
 def get_document_intelligence_client(config, secret_client):
     print("Setting up Document Intelligence client...")
     secret_name = config.get("document_intelligence_secret_name")
@@ -22,7 +23,7 @@ def get_document_intelligence_client(config, secret_client):
     if not endpoint:
         print("No endpoint provided in config file. Document Intelligence client will not be set up.")
         return None
-    
+
     try:
         document_intelligence_secret = secret_client.get_secret(secret_name)
         os.environ["FORM_RECOGNIZER_ENDPOINT"] = endpoint
@@ -53,7 +54,7 @@ if __name__ == "__main__":
 
     if type(config) is not list:
         config = [config]
-    
+
     for index_config in config:
         # Keyvault Secret Client
         keyvault_url = index_config.get("keyvault_url")
@@ -70,13 +71,13 @@ if __name__ == "__main__":
         print("Cracking and chunking documents...")
 
         chunking_result = chunk_directory(
-                            directory_path=args.input_data_path, 
-                            num_tokens=index_config.get("chunk_size", 1024),
-                            token_overlap=index_config.get("token_overlap", 128),
-                            form_recognizer_client=document_intelligence_client,
-                            use_layout=index_config.get("use_layout", False),
-                            njobs=1)
-        
+            directory_path=args.input_data_path,
+            num_tokens=index_config.get("chunk_size", 1024),
+            token_overlap=index_config.get("token_overlap", 128),
+            form_recognizer_client=document_intelligence_client,
+            use_layout=index_config.get("use_layout", False),
+            njobs=1)
+
         print(f"Processed {chunking_result.total_files} files")
         print(f"Unsupported formats: {chunking_result.num_unsupported_format_files} files")
         print(f"Files with errors: {chunking_result.num_files_with_errors} files")

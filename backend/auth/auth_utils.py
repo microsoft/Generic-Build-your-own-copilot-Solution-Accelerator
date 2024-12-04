@@ -1,14 +1,14 @@
 def get_authenticated_user_details(request_headers):
     user_object = {}
 
-    ## check the headers for the Principal-Id (the guid of the signed in user)
+    # check the headers for the Principal-Id (the guid of the signed in user)
     if "X-Ms-Client-Principal-Id" not in request_headers.keys():
-        ## if it's not, assume we're in development mode and return a default user
+        # if it's not, assume we're in development mode and return a default user
         from . import sample_user
         raw_user_object = sample_user.sample_user
     else:
-        ## if it is, get the user details from the EasyAuth headers
-        raw_user_object = {k:v for k,v in request_headers.items()}
+        # if it is, get the user details from the EasyAuth headers
+        raw_user_object = {k: v for k, v in request_headers.items()}
 
     user_object['user_principal_id'] = raw_user_object.get('X-Ms-Client-Principal-Id')
     user_object['user_name'] = raw_user_object.get('X-Ms-Client-Principal-Name')

@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     if type(config) is not list:
         config = [config]
-    
+
     for index_config in config:
         # Keyvault Secret Client
         keyvault_url = index_config.get("keyvault_url")
@@ -54,14 +54,13 @@ if __name__ == "__main__":
                 # Sleep/Retry in case embedding model is rate limited.
                 for _ in range(RETRY_COUNT):
                     try:
-                        embedding = get_embedding(document["content"], embedding_endpoint,  embedding_key)
+                        embedding = get_embedding(document["content"], embedding_endpoint, embedding_key)
                         document["contentVector"] = embedding
                         break
                     except:
                         print("Error generating embedding. Retrying...")
                         sleep(30)
-                
+
                 output_file.write(json.dumps(document) + "\n")
 
         print("Embeddings generated and saved to {}.".format(args.output_file_path))
-

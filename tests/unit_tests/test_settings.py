@@ -19,10 +19,10 @@ def app_settings(dotenv_path):
     os.environ["DOTENV_PATH"] = dotenv_path
     settings_module = import_module("backend.settings")
     settings_module = reload(settings_module)
-    
+
     yield getattr(settings_module, "app_settings")
 
-    
+
 def test_dotenv_with_azure_search_success(app_settings):
     # Validate model object
     assert app_settings.search is not None
@@ -30,11 +30,10 @@ def test_dotenv_with_azure_search_success(app_settings):
     assert app_settings.datasource is not None
     assert app_settings.datasource.service is not None
     assert app_settings.azure_openai is not None
-    
+
     # Validate API payload structure
     payload = app_settings.datasource.construct_payload_configuration()
     assert payload["type"] == "azure_search"
     assert payload["parameters"] is not None
     assert payload["parameters"]["endpoint"] is not None
     print(payload)
-

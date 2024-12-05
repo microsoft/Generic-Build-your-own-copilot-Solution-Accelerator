@@ -10,6 +10,7 @@ uvicorn==0.24.0
 aiohttp==3.10.5
 gunicorn==20.1.0
 pydantic-settings==2.2.1
+
 # Development Tools
 pylint==2.17.5
 autopep8==2.0.2

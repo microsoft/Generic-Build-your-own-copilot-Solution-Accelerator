@@ -2,28 +2,17 @@ import argparse
 import dataclasses
 import time
 
-from tqdm import tqdm
-from azure.identity import AzureDeveloperCliCredential
+from azure.ai.formrecognizer import DocumentAnalysisClient
 from azure.core.credentials import AzureKeyCredential
+from azure.identity import AzureDeveloperCliCredential
+from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
-    SearchableField,
-    SearchField,
-    SearchFieldDataType,
-    SemanticField,
-    SemanticSettings,
-    SemanticConfiguration,
-    SearchIndex,
-    PrioritizedFields,
-    VectorSearch,
-    VectorSearchAlgorithmConfiguration,
-    HnswParameters
-)
-from azure.search.documents import SearchClient
-from azure.ai.formrecognizer import DocumentAnalysisClient
-
-
+    HnswParameters, PrioritizedFields, SearchableField, SearchField,
+    SearchFieldDataType, SearchIndex, SemanticConfiguration, SemanticField,
+    SemanticSettings, VectorSearch, VectorSearchAlgorithmConfiguration)
 from data_utils import chunk_directory
+from tqdm import tqdm
 
 
 def create_search_index(index_name, index_client):
@@ -92,7 +81,7 @@ def upload_documents_to_index(docs, search_client, upload_batch_size=50):
     for i in tqdm(
         range(0, len(to_upload_dicts), upload_batch_size), desc="Indexing Chunks..."
     ):
-        batch = to_upload_dicts[i : i + upload_batch_size]
+        batch = to_upload_dicts[i: i + upload_batch_size]
         results = search_client.upload_documents(documents=batch)
         num_failures = 0
         errors = set()
@@ -122,7 +111,8 @@ def validate_index(index_name, index_client):
         else:
             print(f"The index contains {num_chunks} chunks.")
             average_chunk_size = stats["storage_size"] / num_chunks
-            print(f"The average chunk size of the index is {average_chunk_size} bytes.")
+            print(
+                f"The average chunk size of the index is {average_chunk_size} bytes.")
             break
 
 
@@ -146,7 +136,8 @@ def create_and_populate_index(
     )
 
     if len(result.chunks) == 0:
-        raise Exception("No chunks found. Please check the data path and chunk size.")
+        raise Exception(
+            "No chunks found. Please check the data path and chunk size.")
 
     print(f"Processed {result.total_files} files")
     print(f"Unsupported formats: {result.num_unsupported_format_files} files")
@@ -211,7 +202,8 @@ if __name__ == "__main__":
     )
     default_creds = azd_credential if args.searchkey == None else None
     search_creds = (
-        default_creds if args.searchkey == None else AzureKeyCredential(args.searchkey)
+        default_creds if args.searchkey == None else AzureKeyCredential(
+            args.searchkey)
     )
     formrecognizer_creds = (
         default_creds
@@ -222,7 +214,8 @@ if __name__ == "__main__":
     print("Data preparation script started")
     print("Preparing data for index:", args.index)
     search_endpoint = f"https://{args.searchservice}.search.windows.net/"
-    index_client = SearchIndexClient(endpoint=search_endpoint, credential=search_creds)
+    index_client = SearchIndexClient(
+        endpoint=search_endpoint, credential=search_creds)
     search_client = SearchClient(
         endpoint=search_endpoint, credential=search_creds, index_name=args.index
     )

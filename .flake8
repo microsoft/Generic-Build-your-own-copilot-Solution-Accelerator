@@ -1,0 +1,13 @@
+[flake8]
+max-line-length = 120
+exclude = .venv, _pycache_, migrations, build, dist
+ignore =
+    F401
+    F841
+    W293
+    E501
+    E722
+    W503
+    F811
+    E266
+    F541

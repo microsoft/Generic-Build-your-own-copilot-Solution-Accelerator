@@ -36,8 +36,8 @@ jobs:
 
       # Step 6: Run Flake8 for linting
       - name: Run Flake8
-        run: python -m flake8 --config=.flake8 || true
+        run: python -m flake8 --config=.flake8 --verbose . || true
 
       # Step 7: Run Pylint for static analysis
       - name: Run Pylint
-        run: python -m pylint --rcfile=.pylintrc || true
+        run: python -m pylint --rcfile=.pylintrc --verbose . || true

@@ -1,6 +1,6 @@
 [MASTER]
-ignore=__init__.py
-ignore-patterns=.*\.pyc, __init__.*
+ignore=__init__.py,__pycache__, .vscode, .github, OneDrive
+
 
 [MESSAGES CONTROL]
 # Retain your disabled warnings and errors

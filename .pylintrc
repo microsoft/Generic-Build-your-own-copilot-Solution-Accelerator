@@ -1,5 +1,5 @@
 [MASTER]
-ignore=init.py
+ignore=__init__.py
 ignore-patterns=.*\.pyc, __init__.*
 
 [MESSAGES CONTROL]

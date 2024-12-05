@@ -1,5 +1,5 @@
 [MASTER]
-ignore=__init__.py,__pycache__, .vscode, .github, OneDrive
+ignore=__init__.py,__pycache__, .vscode, .github
 
 
 [MESSAGES CONTROL]

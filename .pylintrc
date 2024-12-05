@@ -1,6 +1,6 @@
 [MASTER]
 ignore=init.py
-ignore-patterns=.\.pyc, init.
+ignore-patterns=.*\.pyc, __init__.*
 
 [MESSAGES CONTROL]
 # Retain your disabled warnings and errors

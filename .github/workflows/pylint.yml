@@ -31,7 +31,7 @@ jobs:
         run: python -m isort --verbose .
 
       # Step 5: Format code with Black
-      - name: Format with Black
+      - name: Run Black
         run: python -m black --verbose .
 
       # Step 6: Run Flake8 for linting

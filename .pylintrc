@@ -1,5 +1,9 @@
+[MASTER]
+ignore=init.py
+ignore-patterns=.\.pyc, init.
+
 [MESSAGES CONTROL]
-# Disable certain warnings and errors
+# Retain your disabled warnings and errors
 disable=
     missing-docstring,  # Missing docstrings
     invalid-name,  # Variable names not in snake_case

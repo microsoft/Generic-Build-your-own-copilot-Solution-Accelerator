@@ -58,7 +58,10 @@ const mockState = {
   },
   frontendSettings: null,
   feedbackState: {},
-  draftedDocumentTitle: ''
+  draftedDocumentTitle: '',
+ 
+  isGenerating: false,
+  isRequestInitiated: false,
 }
 
 const renderWithContext = (idx = 0) =>

@@ -23,6 +23,8 @@ const mockState = {
   feedbackState: {},
   draftedDocument: null,
   draftedDocumentTitle: '',
+  isGenerating: false,
+  isRequestInitiated: false,
 };
 
 const renderChatHistoryList = (stateOverride = {}) => {

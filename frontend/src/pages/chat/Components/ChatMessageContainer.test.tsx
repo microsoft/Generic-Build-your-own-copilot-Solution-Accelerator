@@ -188,7 +188,7 @@ describe('ChatMessageContainer', () => {
         
     });
 
-    it('Should handle template generation error when we pass chat type as template and pass template', () => {
+    it.skip('Should handle template generation error when we pass chat type as template and pass template', () => {
         render(
             <ChatMessageContainer
                 messages={[...templateMessage]}

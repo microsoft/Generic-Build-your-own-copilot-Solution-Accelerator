@@ -16,7 +16,9 @@ const defaultMockState = {
   frontendSettings: null,
   feedbackState: {},
   draftedDocument: null,
-  draftedDocumentTitle: ''
+  draftedDocumentTitle: '',
+  isGenerating: false,
+  isRequestInitiated: false,
 };
 
 // Create a custom render function

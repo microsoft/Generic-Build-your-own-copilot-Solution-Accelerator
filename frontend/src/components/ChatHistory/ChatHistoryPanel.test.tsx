@@ -47,6 +47,8 @@ const mockState = {
     draftedDocument: null, // Adjust as necessary
     draftedDocumentTitles: [], // Adjust as necessary
     draftedDocumentTitle: 'Some Title', // Ensure this is included
+    isGenerating: false,
+  isRequestInitiated: false,
   };
   
 const mockDispatch = jest.fn();

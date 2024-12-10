@@ -5,6 +5,9 @@ on:
     types: [closed]
     branches:
       - main
+      - dev
+      - demo
+      - test
   workflow_dispatch: # Add this line to enable manual triggering
 
 jobs:
@@ -26,7 +29,17 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
+      - name: Set Docker image tag
+        id: docker_tag
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "TAG=latest" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            echo "TAG=dev" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == "refs/heads/test" ]]; then
+            echo "TAG=test" >> $GITHUB_ENV
+          fi
+
       - name: Build and push Docker image
         run: |
-          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/webapp:latest -f WebApp.Dockerfile .
-          docker push ${{ secrets.ACR_LOGIN_SERVER }}/webapp:latest
+          echo "tag name ${{ env.TAG }}"

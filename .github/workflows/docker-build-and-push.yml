@@ -7,7 +7,6 @@ on:
       - main
       - dev
       - demo
-      - dev-test
   workflow_dispatch: # Add this line to enable manual triggering
 
 jobs:

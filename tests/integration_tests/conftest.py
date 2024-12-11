@@ -9,7 +9,7 @@ VAULT_NAME = os.environ.get("VAULT_NAME")
 
 
 @pytest.fixture(scope="module")
-def secret_client() -> SecretClient: 
+def secret_client() -> SecretClient:
     kv_uri = f"https://{VAULT_NAME}.vault.azure.net"
     print(f"init secret_client from kv_uri={kv_uri}")
     credential = AzureCliCredential(additionally_allowed_tenants="*")
@@ -22,7 +22,5 @@ def dotenv_template_params(secret_client: SecretClient) -> dict[str, str]:
     secrets = {}
     for secret in secrets_properties_list:
         secrets[secret.name] = secret_client.get_secret(secret.name).value
-        
+
     return secrets
-
-

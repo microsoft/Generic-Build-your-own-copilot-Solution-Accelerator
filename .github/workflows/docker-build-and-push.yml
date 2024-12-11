@@ -29,7 +29,7 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Log in to Azure Container Registry
+      - name: Log in to Azure Container Registry (Dev/Demo)
         if: ${{ github.ref_name == 'dev' || github.ref_name == 'demo' }}
         uses: azure/docker-login@v2
         with:
@@ -54,7 +54,7 @@ jobs:
           docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/webapp:${{ env.TAG }} -f WebApp.Dockerfile .
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/webapp:${{ env.TAG }}
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image (Dev/Demo)
         if: ${{ github.ref_name == 'dev' || github.ref_name == 'demo' }}
         run: |
           docker build -t ${{ secrets.ACR_DEV_LOGIN_SERVER }}/webapp:${{ env.TAG }} -f WebApp.Dockerfile .

@@ -41,7 +41,6 @@ jobs:
       - name: Set Docker image tag
         id: docker_tag
         run: |
-          echo "server... ${{secrets.ACR_LOGIN_SERVER}}"
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "TAG=latest" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then

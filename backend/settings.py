@@ -1,25 +1,18 @@
-import os
 import json
 import logging
+import os
 from abc import ABC, abstractmethod
-from pydantic import (
-    BaseModel,
-    confloat,
-    conint,
-    conlist,
-    Field,
-    field_validator,
-    model_validator,
-    PrivateAttr,
-    ValidationError,
-    ValidationInfo,
-)
+from typing import List, Literal, Optional
+
+from pydantic import (BaseModel, Field, PrivateAttr, ValidationError,
+                      ValidationInfo, confloat, conint, conlist,
+                      field_validator, model_validator)
 from pydantic.alias_generators import to_snake
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List, Literal, Optional
-from typing_extensions import Self
 from quart import Request
-from backend.utils import parse_multi_columns, generateFilterString
+from typing_extensions import Self
+
+from backend.utils import generateFilterString, parse_multi_columns
 
 DOTENV_PATH = os.environ.get(
     "DOTENV_PATH", os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")

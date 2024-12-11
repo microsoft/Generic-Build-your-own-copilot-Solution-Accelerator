@@ -1,11 +1,11 @@
-import os
+import dataclasses
 import json
 import logging
-import requests
-import dataclasses
+import os
 from enum import Enum
-
 from typing import List
+
+import requests
 
 DEBUG = os.environ.get("DEBUG", "false")
 if DEBUG.lower() == "true":

@@ -1,10 +1,9 @@
 import argparse
-from asyncio import sleep
 import json
+from asyncio import sleep
 
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
-
 from data_utils import get_embedding
 
 RETRY_COUNT = 5

@@ -1,6 +1,7 @@
 import os
-import pytest
 from importlib import import_module, reload
+
+import pytest
 
 
 @pytest.fixture(scope="function")

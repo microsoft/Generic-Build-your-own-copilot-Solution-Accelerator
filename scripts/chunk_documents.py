@@ -3,11 +3,10 @@ import dataclasses
 import json
 import os
 
-from azure.identity import DefaultAzureCredential
-from azure.core.credentials import AzureKeyCredential
-from azure.keyvault.secrets import SecretClient
 from azure.ai.formrecognizer import DocumentAnalysisClient
-
+from azure.core.credentials import AzureKeyCredential
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 from data_utils import chunk_directory
 
 

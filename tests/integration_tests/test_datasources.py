@@ -1,11 +1,10 @@
 import os
-import pytest
-from tempfile import NamedTemporaryFile
 from importlib import import_module, reload
-from jinja2 import FileSystemLoader
-from jinja2 import Environment
-from quart import Quart
+from tempfile import NamedTemporaryFile
 
+import pytest
+from jinja2 import Environment, FileSystemLoader
+from quart import Quart
 
 datasources = [
     "AzureCognitiveSearch",

@@ -11,10 +11,9 @@ from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential
 from azure.identity import AzureCliCredential
 from azure.search.documents import SearchClient
+from data_utils import chunk_blob_container, chunk_directory
 from dotenv import load_dotenv
 from tqdm import tqdm
-
-from data_utils import chunk_directory, chunk_blob_container
 
 # Configure environment variables
 load_dotenv()  # take environment variables from .env.

@@ -2,28 +2,17 @@ import argparse
 import dataclasses
 import time
 
-from tqdm import tqdm
-from azure.identity import AzureDeveloperCliCredential
+from azure.ai.formrecognizer import DocumentAnalysisClient
 from azure.core.credentials import AzureKeyCredential
+from azure.identity import AzureDeveloperCliCredential
+from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
-    SearchableField,
-    SearchField,
-    SearchFieldDataType,
-    SemanticField,
-    SemanticSettings,
-    SemanticConfiguration,
-    SearchIndex,
-    PrioritizedFields,
-    VectorSearch,
-    VectorSearchAlgorithmConfiguration,
-    HnswParameters,
-)
-from azure.search.documents import SearchClient
-from azure.ai.formrecognizer import DocumentAnalysisClient
-
-
+    HnswParameters, PrioritizedFields, SearchableField, SearchField,
+    SearchFieldDataType, SearchIndex, SemanticConfiguration, SemanticField,
+    SemanticSettings, VectorSearch, VectorSearchAlgorithmConfiguration)
 from data_utils import chunk_directory
+from tqdm import tqdm
 
 
 def create_search_index(index_name, index_client):

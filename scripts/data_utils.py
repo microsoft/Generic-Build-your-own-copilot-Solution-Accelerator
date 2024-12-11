@@ -1,5 +1,6 @@
 """Data utilities for index preparation."""
 import ast
+import base64
 import html
 import json
 import os
@@ -14,25 +15,22 @@ from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from functools import partial
 from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
-from azure.ai.documentintelligence.models import AnalyzeDocumentRequest
-import fitz
-import base64
 
+import fitz
 import markdown
 import requests
 import tiktoken
 from azure.ai.documentintelligence import DocumentIntelligenceClient
+from azure.ai.documentintelligence.models import AnalyzeDocumentRequest
 from azure.core.credentials import AzureKeyCredential
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import ContainerClient
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from langchain.text_splitter import (
-    TextSplitter,
-    MarkdownTextSplitter,
-    RecursiveCharacterTextSplitter,
-    PythonCodeTextSplitter,
-)
+from langchain.text_splitter import (MarkdownTextSplitter,
+                                     PythonCodeTextSplitter,
+                                     RecursiveCharacterTextSplitter,
+                                     TextSplitter)
 from openai import AzureOpenAI
 from tqdm import tqdm
 

@@ -1,10 +1,9 @@
 import os
-import pytest
 import sys
-
 from subprocess import Popen, TimeoutExpired
 from time import sleep
 
+import pytest
 
 script_base_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 

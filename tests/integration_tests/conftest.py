@@ -1,9 +1,9 @@
 import json
 import os
+
 import pytest
 from azure.identity import AzureCliCredential
 from azure.keyvault.secrets import SecretClient
-
 
 VAULT_NAME = os.environ.get("VAULT_NAME")
 

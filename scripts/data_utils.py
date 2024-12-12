@@ -27,12 +27,10 @@ from azure.identity import DefaultAzureCredential
 from azure.storage.blob import ContainerClient
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from langchain.text_splitter import (
-    MarkdownTextSplitter,
-    PythonCodeTextSplitter,
-    RecursiveCharacterTextSplitter,
-    TextSplitter,
-)
+from langchain.text_splitter import (MarkdownTextSplitter,
+                                     PythonCodeTextSplitter,
+                                     RecursiveCharacterTextSplitter,
+                                     TextSplitter)
 from openai import AzureOpenAI
 from tqdm import tqdm
 

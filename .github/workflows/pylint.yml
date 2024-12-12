@@ -28,7 +28,7 @@ jobs:
           echo "Fixing imports with Isort..."
           python -m isort --check --verbose .
           echo "Formatting code with Black..."
-          python -m black --check --verbose .
+          python -m black --check .
           echo "Running Flake8..."
           python -m flake8 --config=.flake8 --verbose .
           echo "Running Pylint..."

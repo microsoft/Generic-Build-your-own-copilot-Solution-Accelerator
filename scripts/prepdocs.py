@@ -8,9 +8,18 @@ from azure.identity import AzureDeveloperCliCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
-    HnswParameters, PrioritizedFields, SearchableField, SearchField,
-    SearchFieldDataType, SearchIndex, SemanticConfiguration, SemanticField,
-    SemanticSettings, VectorSearch, VectorSearchAlgorithmConfiguration)
+    HnswParameters,
+    PrioritizedFields,
+    SearchableField,
+    SearchField,
+    SearchFieldDataType,
+    SearchIndex,
+    SemanticConfiguration,
+    SemanticField,
+    SemanticSettings,
+    VectorSearch,
+    VectorSearchAlgorithmConfiguration,
+)
 from data_utils import chunk_directory
 from tqdm import tqdm
 

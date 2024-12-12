@@ -26,9 +26,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           echo "Fixing imports with Isort..."
-          python -m isort --check --verbose .
+          python -m isort --verbose .
           echo "Formatting code with Black..."
-          python -m black --check .
+          python -m black --verbose .
           echo "Running Flake8..."
           python -m flake8 --config=.flake8 --verbose .
           echo "Running Pylint..."

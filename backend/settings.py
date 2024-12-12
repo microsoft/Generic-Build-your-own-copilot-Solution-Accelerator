@@ -4,18 +4,9 @@ import os
 from abc import ABC, abstractmethod
 from typing import List, Literal, Optional
 
-from pydantic import (
-    BaseModel,
-    Field,
-    PrivateAttr,
-    ValidationError,
-    ValidationInfo,
-    confloat,
-    conint,
-    conlist,
-    field_validator,
-    model_validator,
-)
+from pydantic import (BaseModel, Field, PrivateAttr, ValidationError,
+                      ValidationInfo, confloat, conint, conlist,
+                      field_validator, model_validator)
 from pydantic.alias_generators import to_snake
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from quart import Request

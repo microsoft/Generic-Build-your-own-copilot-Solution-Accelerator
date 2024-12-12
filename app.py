@@ -6,32 +6,21 @@ import uuid
 
 import httpx
 from azure.core.credentials import AzureKeyCredential
-from azure.identity.aio import DefaultAzureCredential, get_bearer_token_provider
+from azure.identity.aio import (DefaultAzureCredential,
+                                get_bearer_token_provider)
 from azure.search.documents import SearchClient
 from openai import AsyncAzureOpenAI
-from quart import (
-    Blueprint,
-    Quart,
-    jsonify,
-    make_response,
-    render_template,
-    request,
-    send_from_directory,
-)
+from quart import (Blueprint, Quart, jsonify, make_response, render_template,
+                   request, send_from_directory)
 
 from backend.auth.auth_utils import get_authenticated_user_details
 from backend.history.cosmosdbservice import CosmosConversationClient
 from backend.security.ms_defender_utils import get_msdefender_user_json
 from backend.settings import (
-    MINIMUM_SUPPORTED_AZURE_OPENAI_PREVIEW_API_VERSION,
-    app_settings,
-)
-from backend.utils import (
-    ChatType,
-    format_as_ndjson,
-    format_non_streaming_response,
-    format_stream_response,
-)
+    MINIMUM_SUPPORTED_AZURE_OPENAI_PREVIEW_API_VERSION, app_settings)
+from backend.utils import (ChatType, format_as_ndjson,
+                           format_non_streaming_response,
+                           format_stream_response)
 
 bp = Blueprint("routes", __name__, static_folder="static", template_folder="static")
 

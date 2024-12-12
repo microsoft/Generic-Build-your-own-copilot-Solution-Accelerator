@@ -1,8 +1,8 @@
 import argparse
 import subprocess
 
-from azure.identity import AzureDeveloperCliCredential
 import urllib3
+from azure.identity import AzureDeveloperCliCredential
 
 
 def get_auth_headers(credential):

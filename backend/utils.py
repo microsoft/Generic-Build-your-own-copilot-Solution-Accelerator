@@ -1,11 +1,11 @@
-import os
+import dataclasses
 import json
 import logging
-import requests
-import dataclasses
+import os
 from enum import Enum
-
 from typing import List
+
+import requests
 
 DEBUG = os.environ.get("DEBUG", "false")
 if DEBUG.lower() == "true":
@@ -112,6 +112,7 @@ def format_non_streaming_response(chatCompletion, history_metadata, apim_request
 
     return {}
 
+
 def format_stream_response(chatCompletionChunk, history_metadata, apim_request_id):
     response_obj = {
         "id": chatCompletionChunk.id,
@@ -148,9 +149,9 @@ def format_stream_response(chatCompletionChunk, history_metadata, apim_request_i
 
     return {}
 
-def comma_separated_string_to_list(s: str) -> List[str]:
-    '''
-    Split comma-separated values into a list.
-    '''
-    return s.strip().replace(' ', '').split(',')
 
+def comma_separated_string_to_list(s: str) -> List[str]:
+    """
+    Split comma-separated values into a list.
+    """
+    return s.strip().replace(" ", "").split(",")

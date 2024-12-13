@@ -821,18 +821,28 @@ async def ensure_cosmos():
 async def generate_section_content():
     request_json = await request.get_json()
     try:
-        # verify that section title and section description are provided
-        if "sectionTitle" not in request_json:
-            return jsonify({"error": "sectionTitle is required"}), 400
-        
-        if "sectionDescription" not in request_json:
-            return jsonify({"error": "sectionDescription is required"}), 400
-        
+        if not request_json or not isinstance(request_json, list):
+            return jsonify({"error": "Request must be a non-empty list."}), 400
+
+        if (
+            "sectionTitle" not in request_json[0]
+            or "sectionDescription" not in request_json[0]
+        ):
+            return (
+                jsonify(
+                    {
+                        "error": "Each item in request must contain 'sectionTitle' and 'sectionDescription'."
+                    }
+                ),
+                400,
+            )
+
         content = await generate_section_content(request_json, request.headers)
         return jsonify({"section_content": content}), 200
     except Exception as e:
         logging.exception("Exception in /section/generate")
         return jsonify({"error": str(e)}), 500
+
 
 @bp.route("/document/<filepath>")
 async def get_document(filepath):
@@ -842,6 +852,7 @@ async def get_document(filepath):
     except Exception as e:
         logging.exception("Exception in /document/<filepath>")
         return jsonify({"error": str(e)}), 500
+
 
 async def generate_title(conversation_messages):
     ## make sure the messages are sorted by _ts descending
@@ -864,35 +875,45 @@ async def generate_title(conversation_messages):
     except Exception as e:
         return messages[-2]["content"]
 
+
 async def generate_section_content(request_body, request_headers):
-    prompt = f"""{app_settings.azure_openai.generate_section_content_prompt}
-    
-    Section Title: {request_body['sectionTitle']}
-    Section Description: {request_body['sectionDescription']}
-    """
+    user_prompt = f"{app_settings.azure_openai.generate_section_content_prompt}\n\n"
+    for section in request_body:
+        user_prompt += f"Section Title: {section['sectionTitle']}\nSection Description: {section['sectionDescription']}\n\n"
 
-    messages = [
-        {
-            "role": "system",
-            "content": app_settings.azure_openai.system_message
-        }
-    ]
-    messages.append({"role": "user", "content": prompt})
-       
-    request_body['messages'] = messages
-    model_args = prepare_model_args(request_body, request_headers)
-
+    messages = [{"role": "system", "content": app_settings.azure_openai.system_message}]
+    messages.append({"role": "user", "content": user_prompt})
+    model_args = prepare_model_args({"messages": messages}, request_headers)
     try:
         azure_openai_client = init_openai_client()
-        raw_response = await azure_openai_client.chat.completions.with_raw_response.create(**model_args)
+        raw_response = (
+            await azure_openai_client.chat.completions.with_raw_response.create(
+                **model_args
+            )
+        )
         response = raw_response.parse()
+
+        response_content = response.choices[0].message.content
+        if "The requested information is not available" in response_content:
+            return response_content
+
+        # Split the response content into individual sections
+        response_content = response_content.strip().split("\n\n")
+        results = []
+        for i, section in enumerate(request_body):
+            results.append(
+                {
+                    "sectionTitle": section["sectionTitle"],
+                    "content": response_content[i],
+                }
+            )
+        return results
 
     except Exception as e:
         logging.exception("Exception in send_chat_request")
         raise e
 
-    return response.choices[0].message.content
-    
+
 def retrieve_document(filepath):
     try:
         search_client = init_ai_search_client()
@@ -906,5 +927,6 @@ def retrieve_document(filepath):
     except Exception as e:
         logging.exception("Exception in retrieve_document")
         raise e
+
 
 app = create_app()

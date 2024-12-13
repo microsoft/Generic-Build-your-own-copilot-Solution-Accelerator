@@ -18,20 +18,20 @@ import {
   Text
 } from '@fluentui/react'
 import { useBoolean } from '@fluentui/react-hooks'
-
+ 
 import { ChatHistoryLoadingState, historyDeleteAll } from '../../api'
 import { AppStateContext } from '../../state/AppProvider'
-
+ 
 import ChatHistoryList from './ChatHistoryList'
-
+ 
 import styles from './ChatHistoryPanel.module.css'
-
+ 
 interface ChatHistoryPanelProps {}
-
+ 
 export enum ChatHistoryPanelTabs {
   History = 'History'
 }
-
+ 
 const commandBarStyle: ICommandBarStyles = {
   root: {
     padding: '0',
@@ -40,9 +40,9 @@ const commandBarStyle: ICommandBarStyles = {
     backgroundColor: 'transparent'
   }
 }
-
+ 
 const commandBarButtonStyle: Partial<IStackStyles> = { root: { height: '50px' } }
-
+ 
 export function ChatHistoryPanel(_props: ChatHistoryPanelProps) {
   const appStateContext = useContext(AppStateContext)
   const [showContextualMenu, setShowContextualMenu] = React.useState(false)
@@ -58,29 +58,29 @@ export function ChatHistoryPanel(_props: ChatHistoryPanelProps) {
       ? 'All chat history will be permanently removed.'
       : 'Please try again. If the problem persists, please contact the site administrator.'
   }
-
+ 
   const modalProps = {
     titleAriaId: 'labelId',
     subtitleAriaId: 'subTextId',
     isBlocking: true,
     styles: { main: { maxWidth: 450 } }
   }
-
+ 
   const menuItems: IContextualMenuItem[] = [
     { key: 'clearAll', text: 'Clear all chat history',disabled: !hasChatHistory, iconProps: { iconName: 'Delete' }}
   ]
-
+ 
   const handleHistoryClick = () => {
     appStateContext?.dispatch({ type: 'TOGGLE_CHAT_HISTORY' })
   }
-
+ 
   const onShowContextualMenu = React.useCallback((ev: React.MouseEvent<HTMLElement>) => {
     ev.preventDefault() // don't navigate
     setShowContextualMenu(true)
   }, [])
-
+ 
   const onHideContextualMenu = React.useCallback(() => setShowContextualMenu(false), [])
-
+ 
   const onClearAllChatHistory = async () => {
     setClearing(true)
     const response = await historyDeleteAll()
@@ -92,16 +92,16 @@ export function ChatHistoryPanel(_props: ChatHistoryPanelProps) {
     }
     setClearing(false)
   }
-
+ 
   const onHideClearAllDialog = () => {
     toggleClearAllDialog()
     setTimeout(() => {
       setClearingError(false)
     }, 2000)
   }
-
+ 
   React.useEffect(() => {}, [appStateContext?.state.chatHistory, clearingError])
-
+ 
   return (
     <section className={styles.container} data-is-scrollable aria-label={'chat history panel'}>
       <Stack horizontal horizontalAlign="space-between" verticalAlign="center" wrap aria-label="chat history header">
@@ -139,6 +139,7 @@ export function ChatHistoryPanel(_props: ChatHistoryPanelProps) {
             />
             <CommandBarButton
               iconProps={{ iconName: 'Cancel' }}
+              data-testid="toggle-chat-history-button"
               title={'Hide'}
               onClick={handleHistoryClick}
               aria-label={'hide button'}

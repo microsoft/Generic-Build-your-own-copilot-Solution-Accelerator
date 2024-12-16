@@ -898,7 +898,16 @@ async def generate_section_content(request_body, request_headers):
             return response_content
 
         # Split the response content into individual sections
-        response_content = response_content.strip().split("\n\n")
+        if len(request_body) == 1:
+            return [
+                {
+                    "sectionTitle": request_body[0]["sectionTitle"],
+                    "content": response.choices[0].message.content,
+                }
+            ]
+        else:
+            response_content = response_content.strip().split("\n\n")
+
         results = []
         for i, section in enumerate(request_body):
             results.append(

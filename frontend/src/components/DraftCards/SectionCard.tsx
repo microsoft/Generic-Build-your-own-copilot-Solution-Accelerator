@@ -119,6 +119,7 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
   const appStateContext = useContext(AppStateContext)
   const [charCount, setCharCount] = useState(0)
   const [isManuallyCleared, setIsManuallyCleared] = useState(false)
+  const [sectionContent, setSectionContent] = useState('');
 
   if (!appStateContext) {
     throw new Error('useAppState must be used within a AppStateProvider')
@@ -131,12 +132,15 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
 
   const sectionTitle = section.title
   const sectionDescription = section.description
-  const sectionContent = section.content
   const sectionCharacterLimit = 2000
 
   useEffect(() => {
     setCharCount(sectionContent.length)
   }, [location])
+
+  useEffect(()=>{
+    setSectionContent(section.content)
+  },[section])
 
   const handleOpenChange: PopoverProps['onOpenChange'] = (e, data) => setIsPopoverOpen(data.open || false)
 
@@ -145,12 +149,13 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
     const sectionGenerateRequest = [{'sectionTitle' : sectionTitle, 'sectionDescription': sectionDescription }]
 
     const response = await sectionGenerate(sectionGenerateRequest)
-    const responseBody = await response.json()
+    const responseBody = await response.json();
+    const sContent = Array.isArray(responseBody.section_content) ? responseBody.section_content[0].content : responseBody.section_content;
 
     const updatedSection: Section = {
       title: sectionTitle,
       description: sectionDescription,
-      content: responseBody.section_content
+      content: sContent
     }
     appStateContext?.dispatch({ type: 'UPDATE_SECTION', payload: { sectionIdx: sectionIdx, section: updatedSection } })
     let content = updatedSection.content || ''
@@ -233,6 +238,7 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
               appearance="outline"
               size="large"
               defaultValue={sectionContent}
+              value={sectionContent}
               maxLength={sectionCharacterLimit}
               onChange={(e, data) => {
                 const content = data.value || ''

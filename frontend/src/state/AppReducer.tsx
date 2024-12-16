@@ -93,6 +93,15 @@ export const appStateReducer = (state: AppState, action: Action): AppState => {
           sections: updatedSections
         }
       }
+    case 'UPDATE_SECTIONS':
+      return {
+        ...state,
+        draftedDocument: {
+          ...state.draftedDocument, // Retain all existing properties of draftedDocument
+          title: state.draftedDocument?.title || 'Enter a draft document title',
+          sections: [...action.payload], // Update only the sections property
+        },
+      };
     case 'UPDATE_DRAFTED_DOCUMENT':
       return { ...state, draftedDocument: action.payload }
     case 'UPDATE_BROWSE_CHAT':

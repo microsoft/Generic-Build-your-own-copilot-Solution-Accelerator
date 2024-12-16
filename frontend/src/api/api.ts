@@ -371,7 +371,7 @@ export const historyMessageFeedback = async (messageId: string, feedback: string
   return response
 }
 
-export const sectionGenerate = async (options: SectionGenerateRequest): Promise<Response> => {
+export const sectionGenerate = async (options: SectionGenerateRequest[]): Promise<Response> => {
   // set timeout to 10 seconds
   const abortController = new AbortController()
   const abortSignal = abortController.signal
@@ -380,10 +380,13 @@ export const sectionGenerate = async (options: SectionGenerateRequest): Promise<
     abortController.abort()
   }, 10000)
 
-  let body = JSON.stringify({
-    sectionTitle: options.sectionTitle,
-    sectionDescription: options.sectionDescription
-  })
+  // let body = JSON.stringify({
+  //   sectionTitle: options.sectionTitle,
+  //   sectionDescription: options.sectionDescription
+  // })
+
+  let body = JSON.stringify(options)
+
 
   const response = await fetch('/section/generate', {
     method: 'POST',

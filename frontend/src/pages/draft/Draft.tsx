@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useContext, useEffect } from 'react'
 import styles from './Draft.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
 import TitleCard from '../../components/DraftCards/TitleCard'
@@ -7,11 +7,25 @@ import { Document, Packer, Paragraph, TextRun } from 'docx'
 import { saveAs } from 'file-saver'
 import { AppStateContext } from '../../state/AppProvider'
 import { CommandBarButton, Stack } from '@fluentui/react'
+import { sectionGenerate, SectionGenerateRequest } from '../../api'
+
+// Define the type for the section
+interface Section {
+  title: string;
+  description: string;
+}
+
+// Define the type for the request object
+interface RequestObject {
+  sectionTitle: string;
+  sectionDescription: string;
+}
 
 const Draft = (): JSX.Element => {
   const appStateContext = useContext(AppStateContext)
   const location = useLocation()
   const navigate = useNavigate()
+
 
   // get draftedDocument from context
   const draftedDocument = appStateContext?.state.draftedDocument
@@ -22,6 +36,33 @@ const Draft = (): JSX.Element => {
   if (!draftedDocument) {
     navigate('/')
   }
+
+
+ // Fetch function with type annotations
+async function fetchAllSectionContent(req: RequestObject[]): Promise<void> {
+  console.log("req", req);
+  try {
+    const response = await sectionGenerate(req);
+    const responseBody = await response.json();
+    console.log("responseBody", responseBody);
+  } catch (error) {
+    console.error("Error fetching section content:", error);
+  }
+}
+// Function to generate the API request array
+const generateAPIRequest = (sections: Section[]): RequestObject[] => {
+  return sections.map((section) => ({
+    sectionTitle: section.title,
+    sectionDescription: section.description,
+  }));
+};
+
+  useEffect(()=>{
+      if(sections.length>0){
+        const requestArray = generateAPIRequest(sections);
+        fetchAllSectionContent(requestArray)
+      }
+  },[])
 
   const exportToWord = () => {
     const doc = new Document({

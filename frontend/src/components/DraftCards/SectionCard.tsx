@@ -142,7 +142,7 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
 
   async function fetchSectionContent(sectionTitle: string, sectionDescription: string) {
     setIsLoading(true)
-    const sectionGenerateRequest: SectionGenerateRequest = { sectionTitle, sectionDescription }
+    const sectionGenerateRequest = [{'sectionTitle' : sectionTitle, 'sectionDescription': sectionDescription }]
 
     const response = await sectionGenerate(sectionGenerateRequest)
     const responseBody = await response.json()
@@ -164,11 +164,11 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
     setIsLoading(false)
   }
 
-  useEffect(() => {
-    if (sectionContent === '' && !isLoading && !isManuallyCleared) {
-      fetchSectionContent(sectionTitle, sectionDescription)
-    }
-  }, [sectionContent, isLoading, isManuallyCleared])
+  // useEffect(() => {
+  //   if (sectionContent === '' && !isLoading && !isManuallyCleared) {
+  //     fetchSectionContent(sectionTitle, sectionDescription)
+  //   }
+  // }, [sectionContent, isLoading, isManuallyCleared])
 
   return (
     <Stack className={classes.sectionCard}>

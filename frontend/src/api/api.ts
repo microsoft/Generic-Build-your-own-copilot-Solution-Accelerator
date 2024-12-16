@@ -376,9 +376,9 @@ export const sectionGenerate = async (options: SectionGenerateRequest[]): Promis
   const abortController = new AbortController()
   const abortSignal = abortController.signal
 
-  const timeout = setTimeout(() => {
-    abortController.abort()
-  }, 10000)
+  // const timeout = setTimeout(() => {
+  //   abortController.abort()
+  // }, 10000)
 
   // let body = JSON.stringify({
   //   sectionTitle: options.sectionTitle,
@@ -397,11 +397,11 @@ export const sectionGenerate = async (options: SectionGenerateRequest[]): Promis
     signal: abortSignal
   })
     .then(res => {
-      clearTimeout(timeout)
+      //clearTimeout(timeout)
       return res
     })
     .catch(_err => {
-      clearTimeout(timeout)
+     // clearTimeout(timeout)
       console.error('There was an issue fetching your data.')
       return new Response(
         JSON.stringify({ section_content: 'There was an issue fetching your data. Please try again.' })

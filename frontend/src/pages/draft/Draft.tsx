@@ -62,10 +62,9 @@ const Draft = (): JSX.Element => {
   // Fetch function with type annotations
   async function fetchAllSectionContent(req: RequestObject[]): Promise<void> {
     try {
-       const response = await sectionGenerate(req);
-      const responseBody = await response.json();
       setDraftLoading(true);
-      
+       const response = await sectionGenerate(req);
+       const responseBody = await response.json();
         // Map the data
         const sections = req.map(reqSection => {
           const matchedResponse = responseBody.section_content.find(

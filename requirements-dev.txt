@@ -1,5 +1,5 @@
 -r requirements.txt
-azure-ai-documentintelligence==1.0.0b2
+azure-ai-documentintelligence==1.0.0
 Markdown==3.4.4
 requests==2.32.3
 tqdm==4.66.5

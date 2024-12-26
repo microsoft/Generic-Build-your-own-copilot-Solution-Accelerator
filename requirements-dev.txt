@@ -6,7 +6,7 @@ tqdm==4.66.5
 tiktoken
 langchain==0.3.13
 bs4==0.0.1
-urllib3==2.2.2
+urllib3==2.3.0
 pytest==7.4.0
 pytest-asyncio==0.23.2
 PyMuPDF==1.25.1

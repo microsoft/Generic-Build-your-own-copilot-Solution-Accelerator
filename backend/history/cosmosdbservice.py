@@ -1,11 +1,12 @@
 import uuid
 from datetime import datetime
 
-from azure.cosmos import exceptions
-from azure.cosmos.aio import CosmosClient
+
 
 
 class CosmosConversationClient:
+from azure.cosmos import exceptions
+from azure.cosmos.aio import CosmosClient
     def __init__(
         self,
         cosmosdb_endpoint: str,

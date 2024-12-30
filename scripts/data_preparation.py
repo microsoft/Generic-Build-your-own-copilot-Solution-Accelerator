@@ -1,4 +1,5 @@
 """Data Preparation Script for an Azure Cognitive Search Index."""
+
 import argparse
 import dataclasses
 import json
@@ -599,9 +600,9 @@ if __name__ == "__main__":
         os.environ["AZURE_SEARCH_ADMIN_KEY"] = args.search_admin_key
 
     if args.form_rec_resource and args.form_rec_key:
-        os.environ[
-            "FORM_RECOGNIZER_ENDPOINT"
-        ] = f"https://{args.form_rec_resource}.cognitiveservices.azure.com/"
+        os.environ["FORM_RECOGNIZER_ENDPOINT"] = (
+            f"https://{args.form_rec_resource}.cognitiveservices.azure.com/"
+        )
         os.environ["FORM_RECOGNIZER_KEY"] = args.form_rec_key
         if args.njobs == 1:
             form_recognizer_client = DocumentIntelligenceClient(

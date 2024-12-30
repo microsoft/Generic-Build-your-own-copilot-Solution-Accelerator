@@ -11,11 +11,8 @@ aiohttp==3.10.5
 gunicorn==20.1.0
 pydantic-settings==2.2.1
 # Development Tools
-pylint==2.17.5
-autopep8==2.0.2
-black==23.9.1
-isort==5.12.0
-flake8==6.0.0
-pyment==0.3.3
-charset-normalizer==3.3.0
-pycodestyle==2.10.0
+flake8==7.1.1
+black==24.8.0
+autoflake==2.3.1
+isort==5.13.2
+

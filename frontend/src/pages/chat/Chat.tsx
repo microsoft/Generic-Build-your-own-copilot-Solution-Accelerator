@@ -830,11 +830,11 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }, [AUTH_ENABLED])
 
   useLayoutEffect(() => {
-    chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'smooth' })
+    chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'auto' })
   }, [showLoadingMessage, processMessages])
 
   useEffect(() => {
-    chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'smooth' })
+    chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'auto' })
   }, [messages])
 
   const onShowCitation = (citation: Citation) => {

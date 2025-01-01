@@ -1,7 +1,7 @@
 import argparse
 
-from azure.identity import AzureDeveloperCliCredential
 import urllib3
+from azure.identity import AzureDeveloperCliCredential
 
 
 def update_redirect_uris(credential, app_id, uri):

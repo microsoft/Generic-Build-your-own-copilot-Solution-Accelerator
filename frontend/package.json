@@ -15,7 +15,7 @@
     "format": "npm run prettier:fix && npm run lint:fix"
   },
   "dependencies": {
-    "@fluentui/react": "^8.105.3",
+    "@fluentui/react": "^8.122.3",
     "@fluentui/react-components": "^9.56.8",
     "@fluentui/react-hooks": "^8.6.29",
     "@fluentui/react-icons": "^2.0.270",

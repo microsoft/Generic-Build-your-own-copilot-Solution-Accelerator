@@ -14,6 +14,17 @@ Object.assign(global, {
 })
 
 describe('Layout', () => {
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: jest.fn(),
+      },
+    });
+  });
+
   const mockDispatch = jest.fn()
 
   const mockAppState = {
@@ -63,6 +74,8 @@ describe('Layout', () => {
   })
 
   it('copies URL to clipboard when the copy button is clicked', async () => {
+    const mockWriteText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+
     renderWithContext(mockAppState)
 
     const shareButton = screen.getByText('Share')
@@ -72,13 +85,82 @@ describe('Layout', () => {
     fireEvent.click(copyButton)
 
     await waitFor(() => {
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(window.location.href)
+      //expect(navigator.clipboard.writeText).toHaveBeenCalledWith(window.location.href)
+      expect(mockWriteText).toHaveBeenCalledWith(window.location.href);
     })
 
     expect(screen.getByText('Copied URL')).toBeInTheDocument()
   })
 
+  it('should trigger handleCopyClick when Enter key is pressed', () => {
+    // Mock the clipboard function
+    const mockWriteText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+
+    // Render the component
+    renderWithContext(mockAppState)
+
+    const shareButton = screen.getByText('Share')
+    fireEvent.click(shareButton)
+
+    // Find the copy button container
+    const copyButton = screen.getByLabelText('Copy')
+
+    // Simulate keydown event for the Enter key
+    fireEvent.keyDown(copyButton, { key: 'Enter', code: 'Enter' });
+
+    // Assert that the clipboard writeText function is called
+    expect(mockWriteText).toHaveBeenCalledWith(window.location.href);
+    expect(screen.getByText('Copied URL')).toBeInTheDocument();
+  });
+
+  it('should trigger handleCopyClick when Space key is pressed', () => {
+    // Mock the clipboard function
+    const mockWriteText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+
+    // Render the component
+    renderWithContext(mockAppState)
+
+    const shareButton = screen.getByText('Share')
+    fireEvent.click(shareButton)
+
+    // Find the copy button container
+    const copyButton = screen.getByLabelText('Copy')
+
+    // Simulate keydown event for the Space key
+    fireEvent.keyDown(copyButton, { key: ' ', code: 'Space' });
+
+    // Assert that the clipboard writeText function is called
+    expect(mockWriteText).toHaveBeenCalledWith(window.location.href);
+    expect(screen.getByText('Copied URL')).toBeInTheDocument();
+  });
+
+  it('should not trigger handleCopyClick for other keys', () => {
+    // Mock the clipboard function
+    const mockWriteText = jest.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+
+    // Render the component
+    renderWithContext(mockAppState)
+
+    const shareButton = screen.getByText('Share')
+    fireEvent.click(shareButton)
+
+    // Find the copy button container
+    const copyButton = screen.getByLabelText('Copy')
+
+    // Simulate keydown event for an unrelated key
+    fireEvent.keyDown(copyButton, { key: 'Tab', code: 'Tab' });
+
+    // Assert that the clipboard writeText function is not called
+    expect(mockWriteText).not.toHaveBeenCalled();
+  });
+
   it('toggles history visibility when history button is clicked', async () => {
+
+    jest.spyOn(window, 'location', 'get').mockReturnValue({
+      ...window.location,
+      pathname: '/generate',
+    });
+ 
     renderWithContext(mockAppState)
 
     const historyButton = screen.getByText('Show template history')
@@ -99,40 +181,7 @@ describe('Layout', () => {
 
     expect(screen.queryByText('Share')).not.toBeInTheDocument()
   })
-  it('shows the share button', () => {
-    renderWithContext(mockAppState)
-    expect(screen.getByText('Share')).toBeInTheDocument()
-  })
-
-  it('opens share panel when share button is clicked', () => {
-    renderWithContext(mockAppState)
-    fireEvent.click(screen.getByText('Share'))
-    expect(screen.getByText('Share the web app')).toBeInTheDocument()
-  })
-
-  it('copies URL to clipboard when copy button is clicked', () => {
-    Object.assign(navigator, {
-      clipboard: {
-        writeText: jest.fn()
-      }
-    })
-
-    renderWithContext(mockAppState)
-    fireEvent.click(screen.getByText('Share'))
-    fireEvent.click(screen.getByRole('button', { name: /copy/i }))
-
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(window.location.href)
-    expect(screen.getByText('Copied URL')).toBeInTheDocument()
-  })
-
-  it('closes the share panel when dismissed', () => {
-    renderWithContext(mockAppState)
-    fireEvent.click(screen.getByText('Share'))
-    fireEvent.click(screen.getByLabelText('Close'))
-
-    expect(screen.queryByText('Share the web app')).not.toBeInTheDocument()
-  })
-
+  
   it('toggles history button visibility based on path', () => {
     renderWithContext(mockAppState)
     expect(screen.queryByText('Show template history')).not.toBeInTheDocument()

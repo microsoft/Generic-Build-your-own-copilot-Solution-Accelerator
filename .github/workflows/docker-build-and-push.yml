@@ -30,4 +30,3 @@ jobs:
         run: |
           docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/webapp:latest -f WebApp.Dockerfile .
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/webapp:latest
-          

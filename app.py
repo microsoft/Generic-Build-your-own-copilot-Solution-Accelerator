@@ -4,7 +4,6 @@ import logging
 import os
 import uuid
 
-import httpx
 from azure.core.credentials import AzureKeyCredential
 from azure.identity.aio import (DefaultAzureCredential,
                                 get_bearer_token_provider)
@@ -29,6 +28,7 @@ def create_app():
     app = Quart(__name__)
     app.register_blueprint(bp)
     app.config["TEMPLATES_AUTO_RELOAD"] = True
+    app.config['PROVIDE_AUTOMATIC_OPTIONS'] = True
     return app
 
 
@@ -206,9 +206,11 @@ def prepare_model_args(request_body, request_headers):
         messages = [
             {
                 "role": "system",
-                "content": app_settings.azure_openai.system_message
-                if chat_type == ChatType.BROWSE or not chat_type
-                else app_settings.azure_openai.template_system_message,
+                "content": (
+                    app_settings.azure_openai.system_message
+                    if chat_type == ChatType.BROWSE or not chat_type
+                    else app_settings.azure_openai.template_system_message
+                ),
             }
         ]
 
@@ -229,9 +231,9 @@ def prepare_model_args(request_body, request_headers):
         "max_tokens": app_settings.azure_openai.max_tokens,
         "top_p": app_settings.azure_openai.top_p,
         "stop": app_settings.azure_openai.stop_sequence,
-        "stream": app_settings.azure_openai.stream
-        if chat_type == ChatType.BROWSE
-        else False,
+        "stream": (
+            app_settings.azure_openai.stream if chat_type == ChatType.BROWSE else False
+        ),
         "model": app_settings.azure_openai.model,
         "user": user_json,
     }
@@ -555,14 +557,10 @@ async def delete_conversation():
             raise Exception("CosmosDB is not configured or not working")
 
         # delete the conversation messages from cosmos first
-        deleted_messages = await cosmos_conversation_client.delete_messages(
-            conversation_id, user_id
-        )
+        await cosmos_conversation_client.delete_messages(conversation_id, user_id)
 
         # Now delete the conversation
-        deleted_conversation = await cosmos_conversation_client.delete_conversation(
-            user_id, conversation_id
-        )
+        await cosmos_conversation_client.delete_conversation(user_id, conversation_id)
 
         await cosmos_conversation_client.cosmosdb_client.close()
 
@@ -729,12 +727,12 @@ async def delete_all_conversations():
         # delete each conversation
         for conversation in conversations:
             # delete the conversation messages from cosmos first
-            deleted_messages = await cosmos_conversation_client.delete_messages(
+            await cosmos_conversation_client.delete_messages(
                 conversation["id"], user_id
             )
 
             # Now delete the conversation
-            deleted_conversation = await cosmos_conversation_client.delete_conversation(
+            await cosmos_conversation_client.delete_conversation(
                 user_id, conversation["id"]
             )
         await cosmos_conversation_client.cosmosdb_client.close()
@@ -772,9 +770,7 @@ async def clear_messages():
             raise Exception("CosmosDB is not configured or not working")
 
         # delete the conversation messages from cosmos
-        deleted_messages = await cosmos_conversation_client.delete_messages(
-            conversation_id, user_id
-        )
+        await cosmos_conversation_client.delete_messages(conversation_id, user_id)
 
         return (
             jsonify(
@@ -843,7 +839,7 @@ async def generate_section_content():
         if "sectionDescription" not in request_json:
             return jsonify({"error": "sectionDescription is required"}), 400
 
-        content = await generate_section_content(request_json, request.headers)
+        content = await get_section_content(request_json, request.headers)
         return jsonify({"section_content": content}), 200
     except Exception as e:
         logging.exception("Exception in /section/generate")
@@ -881,11 +877,11 @@ async def generate_title(conversation_messages):
 
         title = json.loads(response.choices[0].message.content)["title"]
         return title
-    except Exception as e:
+    except Exception:
         return messages[-2]["content"]
 
 
-async def generate_section_content(request_body, request_headers):
+async def get_section_content(request_body, request_headers):
     prompt = f"""{app_settings.azure_openai.generate_section_content_prompt}
     Section Title: {request_body['sectionTitle']}
     Section Description: {request_body['sectionDescription']}

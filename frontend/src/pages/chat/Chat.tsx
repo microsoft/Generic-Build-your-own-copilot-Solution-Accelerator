@@ -105,6 +105,11 @@ interface Props {
   type?: ChatType
 }
 
+
+const renderLink = (props: any) => {
+  return <a {...props} target="_blank" rel="noopener noreferrer" />;
+};
+
 const Chat = ({ type = ChatType.Browse }: Props) => {
   const location = useLocation()
 
@@ -845,11 +850,11 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }, [AUTH_ENABLED])
 
   useLayoutEffect(() => {
-    chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'smooth' })
+    chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'auto' })
   }, [showLoadingMessage, processMessages])
 
   useEffect(() => {
-    chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'smooth' })
+    chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'auto' })
   }, [messages])
 
   const onShowCitation = (citation: Citation) => {
@@ -1146,11 +1151,13 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
               </h5>
               <div tabIndex={0}>
                 <ReactMarkdown
-                  linkTarget="_blank"
                   className={styles.citationPanelContent}
                   children={DOMPurify.sanitize(activeCitation.content, { ALLOWED_TAGS: XSSAllowTags })}
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeRaw]}
+                  components={{
+                    a: renderLink, 
+                  }}
                 />
               </div>
             </Stack.Item>

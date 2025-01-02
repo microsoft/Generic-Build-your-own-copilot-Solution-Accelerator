@@ -1,15 +1,13 @@
 """Data utilities for index preparation."""
+
 import ast
 import base64
 import html
 import json
 import os
 import re
-import ssl
-import subprocess
 import tempfile
 import time
-import urllib.request
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
@@ -23,7 +21,6 @@ import tiktoken
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.ai.documentintelligence.models import AnalyzeDocumentRequest
 from azure.core.credentials import AzureKeyCredential
-from azure.identity import DefaultAzureCredential
 from azure.storage.blob import ContainerClient
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv

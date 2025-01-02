@@ -507,7 +507,8 @@ def create_index(
             )
 
         print(f"Processed {result.total_files} files")
-        print(f"Unsupported formats: {result.num_unsupported_format_files} files")
+        print(
+            f"Unsupported formats: {result.num_unsupported_format_files} files")
         print(f"Files with errors: {result.num_files_with_errors} files")
         print(f"Found {len(result.chunks)} chunks")
 
@@ -531,7 +532,8 @@ def create_index(
 def valid_range(n):
     n = int(n)
     if n < 1 or n > 32:
-        raise argparse.ArgumentTypeError("njobs must be an Integer between 1 and 32.")
+        raise argparse.ArgumentTypeError(
+            "njobs must be an Integer between 1 and 32.")
     return n
 
 

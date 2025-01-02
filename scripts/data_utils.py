@@ -75,7 +75,8 @@ class TokenEstimator(object):
 
     def construct_tokens_with_size(self, tokens: str, numofTokens: int) -> str:
         newTokens = self.GPT2_TOKENIZER.decode(
-            self.GPT2_TOKENIZER.encode(tokens, allowed_special="all")[:numofTokens]
+            self.GPT2_TOKENIZER.encode(tokens, allowed_special="all")[
+                :numofTokens]
         )
         return newTokens
 
@@ -451,7 +452,7 @@ class TextParser(BaseParser):
         title = None
         for line in content.splitlines():
             if line.startswith(property):
-                title = line[len(property) :].strip()
+                title = line[len(property):].strip()
                 break
         return title
 
@@ -769,7 +770,8 @@ def extract_pdf_content(file_path, form_recognizer_client, use_layout=False):
 
             # Add the image tag to the full text
             replace_start = figure["spans"][0]["offset"]
-            replace_end = figure["spans"][0]["offset"] + figure["spans"][0]["length"]
+            replace_end = figure["spans"][0]["offset"] + \
+                figure["spans"][0]["length"]
             original_text = form_recognizer_results.content[replace_start:replace_end]
 
             if original_text not in full_text:

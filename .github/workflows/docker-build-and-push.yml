@@ -57,5 +57,6 @@ jobs:
       - name: Build and push Docker image (Dev/Demo)
         if: ${{ github.ref_name == 'dev' || github.ref_name == 'demo' }}
         run: |
-          docker build -t ${{ secrets.ACR_DEV_LOGIN_SERVER }}/webapp:${{ env.TAG }} -f WebApp.Dockerfile .
-          docker push ${{ secrets.ACR_DEV_LOGIN_SERVER }}/webapp:${{ env.TAG }}
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/webapp:latest -f WebApp.Dockerfile .
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/webapp:latest
+          

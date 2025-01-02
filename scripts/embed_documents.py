@@ -36,13 +36,15 @@ if __name__ == "__main__":
             secret_client = SecretClient(keyvault_url, credential)
 
         # Get Embedding key
-        embedding_key_secret_name = index_config.get("embedding_key_secret_name")
+        embedding_key_secret_name = index_config.get(
+            "embedding_key_secret_name")
         if not embedding_key_secret_name:
             raise ValueError(
                 "No embedding key secret name provided in config file. Embeddings will not be generated."
             )
         else:
-            embedding_key_secret = secret_client.get_secret(embedding_key_secret_name)
+            embedding_key_secret = secret_client.get_secret(
+                embedding_key_secret_name)
             embedding_key = embedding_key_secret.value
 
         embedding_endpoint = index_config.get("embedding_endpoint")

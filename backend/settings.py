@@ -236,7 +236,8 @@ class _AzureSearchSettings(BaseSettings, DatasourcePayloadConstructor):
     _type: Literal["azure_search"] = PrivateAttr(default="azure_search")
     top_k: int = Field(default=5, serialization_alias="top_n_documents")
     strictness: int = 3
-    enable_in_domain: bool = Field(default=True, serialization_alias="in_scope")
+    enable_in_domain: bool = Field(
+        default=True, serialization_alias="in_scope")
     service: str = Field(exclude=True)
     endpoint_suffix: str = Field(default="search.windows.net", exclude=True)
     index: str = Field(serialization_alias="index_name")
@@ -308,7 +309,8 @@ class _AzureSearchSettings(BaseSettings, DatasourcePayloadConstructor):
     def _set_filter_string(self, request: Request) -> str:
         if self.permitted_groups_column:
             user_token = request.headers.get("X-MS-TOKEN-AAD-ACCESS-TOKEN", "")
-            logging.debug(f"USER TOKEN is {'present' if user_token else 'not present'}")
+            logging.debug(
+                f"USER TOKEN is {'present' if user_token else 'not present'}")
             if not user_token:
                 raise ValueError(
                     "Document-level access control is enabled, but user access token could not be fetched."

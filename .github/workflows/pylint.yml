@@ -30,6 +30,6 @@ jobs:
           echo "Formatting code with Black..."
           python -m black --verbose .
           echo "Running Flake8..."
-          python -m flake8 --config=.flake8 --verbose . || true
+          python -m flake8 --config=.flake8 --verbose .
           echo "Running Pylint..."
-          python -m pylint --rcfile=.pylintrc --verbose . || true
+          python -m pylint --rcfile=.pylintrc --verbose .

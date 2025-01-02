@@ -29,7 +29,8 @@ if __name__ == "__main__":
         keyvault_url = index_config.get("keyvault_url")
         if not keyvault_url:
             print(
-                "No keyvault url provided in config file. Secret client will not be set up.")
+                "No keyvault url provided in config file. Secret client will not be set up."
+            )
             secret_client = None
         else:
             secret_client = SecretClient(keyvault_url, credential)
@@ -39,7 +40,8 @@ if __name__ == "__main__":
             "embedding_key_secret_name")
         if not embedding_key_secret_name:
             raise ValueError(
-                "No embedding key secret name provided in config file. Embeddings will not be generated.")
+                "No embedding key secret name provided in config file. Embeddings will not be generated."
+            )
         else:
             embedding_key_secret = secret_client.get_secret(
                 embedding_key_secret_name)
@@ -48,21 +50,25 @@ if __name__ == "__main__":
         embedding_endpoint = index_config.get("embedding_endpoint")
         if not embedding_endpoint:
             raise ValueError(
-                "No embedding endpoint provided in config file. Embeddings will not be generated.")
+                "No embedding endpoint provided in config file. Embeddings will not be generated."
+            )
 
         # Embed documents
         print("Generating embeddings...")
-        with open(args.input_data_path) as input_file, open(args.output_file_path, "w") as output_file:
+        with open(args.input_data_path) as input_file, open(
+            args.output_file_path, "w"
+        ) as output_file:
             for line in input_file:
                 document = json.loads(line)
                 # Sleep/Retry in case embedding model is rate limited.
                 for _ in range(RETRY_COUNT):
                     try:
                         embedding = get_embedding(
-                            document["content"], embedding_endpoint,  embedding_key)
+                            document["content"], embedding_endpoint, embedding_key
+                        )
                         document["contentVector"] = embedding
                         break
-                    except:
+                    except Exception:
                         print("Error generating embedding. Retrying...")
                         sleep(30)
 

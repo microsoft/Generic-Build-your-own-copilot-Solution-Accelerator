@@ -31,9 +31,17 @@ def create_search_index(index_name, index_client):
                 SearchableField(name="filepath", type="Edm.String"),
                 SearchableField(name="url", type="Edm.String"),
                 SearchableField(name="metadata", type="Edm.String"),
-                SearchField(name="contentVector", type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
-                            hidden=False, searchable=True, filterable=False, sortable=False, facetable=False,
-                            vector_search_dimensions=1536, vector_search_configuration="default"),
+                SearchField(
+                    name="contentVector",
+                    type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
+                    hidden=False,
+                    searchable=True,
+                    filterable=False,
+                    sortable=False,
+                    facetable=False,
+                    vector_search_dimensions=1536,
+                    vector_search_configuration="default",
+                ),
             ],
             semantic_settings=SemanticSettings(
                 configurations=[
@@ -53,10 +61,10 @@ def create_search_index(index_name, index_client):
                     VectorSearchAlgorithmConfiguration(
                         name="default",
                         kind="hnsw",
-                        hnsw_parameters=HnswParameters(metric="cosine")
+                        hnsw_parameters=HnswParameters(metric="cosine"),
                     )
                 ]
-            )
+            ),
         )
         print(f"Creating {index_name} search index")
         index_client.create_index(index)
@@ -117,7 +125,12 @@ def validate_index(index_name, index_client):
 
 
 def create_and_populate_index(
-    index_name, index_client, search_client, form_recognizer_client, azure_credential, embedding_endpoint
+    index_name,
+    index_client,
+    search_client,
+    form_recognizer_client,
+    azure_credential,
+    embedding_endpoint,
 ):
     # create or update search index with compatible schema
     create_search_index(index_name, index_client)
@@ -132,7 +145,7 @@ def create_and_populate_index(
         njobs=1,
         add_embeddings=True,
         azure_credential=azd_credential,
-        embedding_endpoint=embedding_endpoint
+        embedding_endpoint=embedding_endpoint,
     )
 
     if len(result.chunks) == 0:
@@ -197,17 +210,16 @@ if __name__ == "__main__":
     # Use the current user identity to connect to Azure services unless a key is explicitly set for any of them
     azd_credential = (
         AzureDeveloperCliCredential()
-        if args.tenantid == None
+        if args.tenantid is None
         else AzureDeveloperCliCredential(tenant_id=args.tenantid, process_timeout=60)
     )
-    default_creds = azd_credential if args.searchkey == None else None
+    default_creds = azd_credential if args.searchkey is None else None
     search_creds = (
-        default_creds if args.searchkey == None else AzureKeyCredential(
-            args.searchkey)
+        default_creds if args.searchkey is None else AzureKeyCredential(args.searchkey)
     )
     formrecognizer_creds = (
         default_creds
-        if args.formrecognizerkey == None
+        if args.formrecognizerkey is None
         else AzureKeyCredential(args.formrecognizerkey)
     )
 
@@ -224,6 +236,11 @@ if __name__ == "__main__":
         credential=formrecognizer_creds,
     )
     create_and_populate_index(
-        args.index, index_client, search_client, form_recognizer_client, azd_credential, args.embeddingendpoint
+        args.index,
+        index_client,
+        search_client,
+        form_recognizer_client,
+        azd_credential,
+        args.embeddingendpoint,
     )
     print("Data preparation for index", args.index, "completed")

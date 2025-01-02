@@ -29,4 +29,5 @@ jobs:
       - name: Build and push Docker image
         run: |
           docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/webapp:latest -f WebApp.Dockerfile .
-          docker push ${{ secrets.ACR_LOGIN_SERVER }}/webapp:latest
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/webapp:latest\
+          

@@ -1,16 +1,20 @@
 -r requirements.txt
-azure-ai-documentintelligence==1.0.0b2
+azure-ai-documentintelligence==1.0.0
 Markdown==3.4.4
 requests==2.32.3
-tqdm==4.66.5
+tqdm==4.67.1
 tiktoken
-langchain==0.2.12
+langchain==0.3.13
 bs4==0.0.1
-urllib3==2.2.2
-pytest==7.4.0
-pytest-asyncio==0.23.2
-PyMuPDF==1.24.5
+urllib3==2.3.0
+pytest==8.3.4
+pytest-asyncio==0.25.0
+PyMuPDF==1.25.1
 azure-storage-blob
 chardet
 azure-keyvault-secrets
 coverage
+flake8==7.1.1
+black==24.10.0
+autoflake==2.3.1
+isort==5.13.2

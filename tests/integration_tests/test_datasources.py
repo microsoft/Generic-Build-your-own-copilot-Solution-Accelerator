@@ -86,9 +86,9 @@ def dotenv_rendered_template_path(
         pytest.skip("Elasticsearch embeddings not supported for test.")
 
     if datasource == "Elasticsearch":
-        dotenv_template_params[
-            "useElasticsearchEmbeddings"
-        ] = use_elasticsearch_embeddings
+        dotenv_template_params["useElasticsearchEmbeddings"] = (
+            use_elasticsearch_embeddings
+        )
 
     dotenv_template_params["useAoaiEmbeddings"] = use_aoai_embeddings
 

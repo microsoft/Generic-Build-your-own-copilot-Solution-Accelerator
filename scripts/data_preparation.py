@@ -1,4 +1,5 @@
 """Data Preparation Script for an Azure Cognitive Search Index."""
+
 import argparse
 import dataclasses
 import json
@@ -506,7 +507,8 @@ def create_index(
             )
 
         print(f"Processed {result.total_files} files")
-        print(f"Unsupported formats: {result.num_unsupported_format_files} files")
+        print(
+            f"Unsupported formats: {result.num_unsupported_format_files} files")
         print(f"Files with errors: {result.num_files_with_errors} files")
         print(f"Found {len(result.chunks)} chunks")
 
@@ -530,7 +532,8 @@ def create_index(
 def valid_range(n):
     n = int(n)
     if n < 1 or n > 32:
-        raise argparse.ArgumentTypeError("njobs must be an Integer between 1 and 32.")
+        raise argparse.ArgumentTypeError(
+            "njobs must be an Integer between 1 and 32.")
     return n
 
 
@@ -599,9 +602,9 @@ if __name__ == "__main__":
         os.environ["AZURE_SEARCH_ADMIN_KEY"] = args.search_admin_key
 
     if args.form_rec_resource and args.form_rec_key:
-        os.environ[
-            "FORM_RECOGNIZER_ENDPOINT"
-        ] = f"https://{args.form_rec_resource}.cognitiveservices.azure.com/"
+        os.environ["FORM_RECOGNIZER_ENDPOINT"] = (
+            f"https://{args.form_rec_resource}.cognitiveservices.azure.com/"
+        )
         os.environ["FORM_RECOGNIZER_KEY"] = args.form_rec_key
         if args.njobs == 1:
             form_recognizer_client = DocumentIntelligenceClient(

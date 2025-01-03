@@ -1,7 +1,6 @@
 import os
 import sys
 from subprocess import Popen, TimeoutExpired
-from time import sleep
 
 import pytest
 

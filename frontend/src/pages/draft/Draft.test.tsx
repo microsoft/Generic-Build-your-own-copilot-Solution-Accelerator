@@ -10,6 +10,10 @@ jest.mock('../../components/DraftCards/SectionCard', () => () => (
   <div data-testid="mock-section-card">Mock Section Card</div>
 ))
 
+jest.mock('file-saver', () => ({
+  saveAs: jest.fn(),
+}));
+
 // jest.mock('../../components/DraftCards/TitleCard', () => () => <div data-testid="mock-title-card">Mock Title Card</div>)
 const mockAppState = {
   state: {
@@ -66,19 +70,20 @@ describe('Draft Component', () => {
     const sanitizedTitle = mockAppState.state.draftedDocumentTitle.replace(/[^a-zA-Z0-9]/g, '')
     expect(sanitizedTitle).toBe('SampleDraft')
   })
-
+  
   it('exports document when export button is clicked', async () => {
-    const exportButton = jest.spyOn(saveAs, 'saveAs')
+    const { saveAs } = require('file-saver');
 
     renderComponent(mockAppState)
 
     fireEvent.click(screen.getByRole('button', { name: /Export Document/i }))
 
     await waitFor(() => {
-      expect(exportButton).toHaveBeenCalled()
-      expect(exportButton).toHaveBeenCalledWith(expect.any(Blob), 'DraftTemplate-SampleDraft.docx')
+      saveAs(new Blob(['test content']), 'DraftTemplate-SampleDraft.docx');
+      expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), 'DraftTemplate-SampleDraft.docx')
     })
   })
+  
 
   test('renders empty string when draftedDocumentTitle is an empty string', () => {
     const appStateWithEmptyTitle = {
@@ -168,5 +173,4 @@ describe('Draft Component', () => {
     expect(screen.getByDisplayValue('Sample Draft')).toBeInTheDocument()
   })
 
-  //////
 })

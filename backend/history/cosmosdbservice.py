@@ -51,7 +51,7 @@ class CosmosConversationClient:
         ):
             return False, "CosmosDB client not initialized correctly"
         try:
-            database_info = await self.database_client.read()
+            await self.database_client.read()
         except Exception:
             return (
                 False,
@@ -59,7 +59,7 @@ class CosmosConversationClient:
             )
 
         try:
-            container_info = await self.container_client.read()
+            await self.container_client.read()
         except Exception:
             return False, f"CosmosDB container {self.container_name} not found"
 

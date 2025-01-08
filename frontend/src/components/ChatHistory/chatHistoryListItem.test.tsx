@@ -171,7 +171,6 @@ describe('ChatHistoryListItemCell', () => {
     // Simulate click on a chat item
     fireEvent.click(titleElement)
     await waitFor(() => {
-      screen.debug()
       // Ensure the onSelect handler is called with the correct item
       expect(mockOnSelect).toHaveBeenCalledWith(conversation)
     })

@@ -10,7 +10,7 @@ const mockProps = { className: 'language-javascript' };
 
 const ReactMarkdown: React.FC<{ children: React.ReactNode , components: any }> = ({ children,components }) => {
   return <div data-testid="reactMockDown">
-    {components && components.code({ node: mockNode, ...mockProps })}
+    {/* {components && components.code({ node: mockNode, ...mockProps })} */}
     {children}</div>; // Simply render the children
 };
 

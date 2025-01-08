@@ -90,6 +90,11 @@ interface Props {
   type?: ChatType
 }
 
+
+const renderLink = (props: any) => {
+  return <a {...props} target="_blank" rel="noopener noreferrer" />;
+};
+
 const Chat = ({ type = ChatType.Browse }: Props) => {
   const location = useLocation()
 
@@ -769,11 +774,11 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   }, [AUTH_ENABLED])
 
   useLayoutEffect(() => {
-    chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'smooth' })
+    chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'auto' })
   }, [showLoadingMessage, processMessages])
 
   useEffect(() => {
-    chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'smooth' })
+    chatMessageStreamEnd.current?.scrollIntoView({ behavior: 'auto' })
   }, [messages])
 
   const onShowCitation = (citation: Citation) => {

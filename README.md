@@ -66,13 +66,13 @@ https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-regi
 
 2. Click the following deployment button to create the required resources for this accelerator in your Azure Subscription.
 
-   [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FRoopan-Microsoft%2Fpsl-docgen-main%2Fmain%2Finfrastructure%2Fdeployment.json)
+   [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FGeneric-Build-your-own-copilot-Solution-Accelerator%2Fmain%2Finfrastructure%2Fdeployment.json)
 
 3. You will need to select an Azure Subscription, create/select a Resource group, and Region. If your intention is to deploy this solution accelerator and the corresponding sample data set, the default settings will suffice.
 
 If you are using your own data, the next step is optional.
 
-4. Optional - Follow steps in [Sample data guide](./scripts/SAMPLE_DATA.md) to ingest the sample Promissory Note PDFs into the search index.
+4. Follow steps in [Sample data guide](./scripts/SAMPLE_DATA.md) to ingest the sample Promissory Note PDFs into the search index.
 
 If you want to enable authentication, you will need to add an identity provider.
 

@@ -46,7 +46,7 @@ jobs:
           elif [[ "${{ github.ref }}" == "refs/heads/demo" ]]; then
             echo "TAG=demo" >> $GITHUB_ENV
           else
-            echo "TAG=github.ref_name" >> $GITHUB_ENV
+            echo "TAG=pullrequest-ignore" >> $GITHUB_ENV
           fi
 
       - name: Build and push Docker image optionally

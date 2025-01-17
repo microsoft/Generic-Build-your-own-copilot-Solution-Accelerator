@@ -46,17 +46,16 @@ jobs:
             echo "TAG=dev" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == "refs/heads/demo" ]]; then
             echo "TAG=demo" >> $GITHUB_ENV
+          else
+            echo "TAG=github.ref_name" >> $GITHUB_ENV
           fi
 
-      - name: Build and push Docker image
-        if: ${{ github.ref_name == 'main' }}
+      - name: Build and push Docker image optionally
         run: |
           docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/webapp:${{ env.TAG }} -f WebApp.Dockerfile .
-          docker push ${{ secrets.ACR_LOGIN_SERVER }}/webapp:${{ env.TAG }}
-
-      - name: Build and push Docker image (Dev/Demo)
-        if: ${{ github.ref_name == 'dev' || github.ref_name == 'demo' }}
-        run: |
-          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/webapp:latest -f WebApp.Dockerfile .
-          docker push ${{ secrets.ACR_LOGIN_SERVER }}/webapp:latest
+          if [[ "${{ env.TAG }}" == "latest" || "${{ env.TAG }}" == "dev" || "${{ env.TAG }}" == "demo" ]]; then
+            docker push ${{ secrets.ACR_LOGIN_SERVER }}/webapp:${{ env.TAG }}
+          else
+            echo "Skipping Docker push for tag: ${{ env.TAG }}"
+          fi
           

@@ -2,7 +2,11 @@ name: Build and Push Docker Image
 
 on:
   pull_request:
-    types: [closed]
+    types:
+      - opened
+      - ready_for_review
+      - reopened
+      - synchronize
     branches:
       - main
       - dev

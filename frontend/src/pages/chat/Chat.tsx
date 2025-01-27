@@ -14,14 +14,9 @@ import {
 } from '@fluentui/react'
 import { SquareRegular, ShieldLockRegular, ErrorCircleRegular } from '@fluentui/react-icons'
 
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeRaw from 'rehype-raw'
 import uuid from 'react-uuid'
 import { isEmpty } from 'lodash'
-import DOMPurify from 'dompurify'
 import styles from './Chat.module.css'
-import { XSSAllowTags } from '../../constants/xssAllowTags'
 
 import {
   ChatMessage,
@@ -42,29 +37,19 @@ import {
   Section,
   DraftedDocument
 } from '../../api'
-import { Answer } from '../../components/Answer'
 import { QuestionInput } from '../../components/QuestionInput'
 import { ChatHistoryPanel } from '../../components/ChatHistory/ChatHistoryPanel'
 import { AppStateContext } from '../../state/AppProvider'
-import { useBoolean } from '@fluentui/react-hooks'
+import { useBoolean } from '@fluentui/react-hooks';
+import { CitationPanel } from './Components/CitationPanel'
+import { AuthNotConfigure } from './Components/AuthNotConfigure'
+import { ChatMessageContainer } from './Components/ChatMessageContainer';
+import { parseErrorMessage, cleanJSON } from '../../helpers/helpers';
 
 const enum messageStatus {
   NotRunning = 'Not Running',
   Processing = 'Processing',
   Done = 'Done'
-}
-
-const enum chatTypeResponse {
-  Browse = 'Generating answer...',
-  Generate = 'Generating template...this may take up to 30 seconds.'
-}
-
-const enum contentTemplateSections {
-  NewLine = '\n\n',
-  Intro = 'The proposal will include the following sections:',
-  Closing = 'Does this look good? If so, you can **generate the document** now. You can also ask me to **add an item** or **change the order of the sections**.',
-  JSONParseError = 'I was unable to find content related to your query and could not generate a template. Please try again.',
-  JSONStructureError = 'Unable to render the sections within the template. Please try again.'
 }
 
 // Define stack tokens for spacing
@@ -132,7 +117,8 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
   const [hideErrorDialog, { toggle: toggleErrorDialog }] = useBoolean(true)
   const [errorMsg, setErrorMsg] = useState<ErrorMessage | null>()
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [modalUrl, setModalUrl] = useState('')
+  const [modalUrl, setModalUrl] = useState('');
+  const [finalMessages, setFinalMessages] = useState<ChatMessage[]>([])
 
   const errorDialogContentProps = {
     type: DialogType.close,
@@ -654,6 +640,14 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     return abortController.abort()
   }
 
+  // useEffect(() => {
+  //   //console.log("messages",messages);
+  //   //console.log("finalMessages", finalMessages);
+  //   if (JSON.stringify(finalMessages) !== JSON.stringify(messages)) {
+  //     setFinalMessages(messages)
+  //   }
+  // }, [messages,finalMessages])
+
   const clearChat = async () => {
     setClearingChat(true)
     if (appStateContext?.state.currentChat?.id && appStateContext?.state.isCosmosDBAvailable.cosmosDB) {
@@ -680,76 +674,6 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     setClearingChat(false)
   }
 
-  const cleanJSON = (jsonString: string) => {
-    try {
-      let lines: string[]
-      let cleanString = ''
-      lines = jsonString.split('\n')
-      lines?.forEach((line: string) => {
-        if (!line.includes('json') && !line.includes('```')) {
-          cleanString += line.trim()
-        }
-      })
-      return cleanString
-    } catch (e) {
-      return ''
-    }
-  }
-
-  const tryGetRaiPrettyError = (errorMessage: string) => {
-    try {
-      // Using a regex to extract the JSON part that contains "innererror"
-      const match = errorMessage.match(/'innererror': ({.*})\}\}/)
-      if (match) {
-        // Replacing single quotes with double quotes and converting Python-like booleans to JSON booleans
-        const fixedJson = match[1]
-          .replace(/'/g, '"')
-          .replace(/\bTrue\b/g, 'true')
-          .replace(/\bFalse\b/g, 'false')
-        const innerErrorJson = JSON.parse(fixedJson)
-        let reason = ''
-        // Check if jailbreak content filter is the reason of the error
-        const jailbreak = innerErrorJson.content_filter_result.jailbreak
-        if (jailbreak.filtered === true) {
-          reason = 'Jailbreak'
-        }
-
-        // Returning the prettified error message
-        if (reason !== '') {
-          return (
-            'The prompt was filtered due to triggering Azure OpenAI’s content filtering system.\n' +
-            'Reason: This prompt contains content flagged as ' +
-            reason +
-            '\n\n' +
-            'Please modify your prompt and retry. Learn more: https://go.microsoft.com/fwlink/?linkid=2198766'
-          )
-        }
-      }
-    } catch (e) {
-      console.error('Failed to parse the error:', e)
-    }
-    return errorMessage
-  }
-
-  const parseErrorMessage = (errorMessage: string) => {
-    let errorCodeMessage = errorMessage.substring(0, errorMessage.indexOf('-') + 1)
-    const innerErrorCue = "{\\'error\\': {\\'message\\': "
-    if (errorMessage.includes(innerErrorCue)) {
-      try {
-        let innerErrorString = errorMessage.substring(errorMessage.indexOf(innerErrorCue))
-        if (innerErrorString.endsWith("'}}")) {
-          innerErrorString = innerErrorString.substring(0, innerErrorString.length - 3)
-        }
-        innerErrorString = innerErrorString.replaceAll("\\'", "'")
-        let newErrorMessage = errorCodeMessage + ' ' + innerErrorString
-        errorMessage = newErrorMessage
-      } catch (e) {
-        console.error('Error parsing inner error message: ', e)
-      }
-    }
-
-    return tryGetRaiPrettyError(errorMessage)
-  }
 
   const generateDocument = async () => {
     if (draftDocument !== undefined) {
@@ -875,17 +799,6 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     }
   }
 
-  const parseCitationFromMessage = (message: ChatMessage) => {
-    if (message?.role && message?.role === 'tool') {
-      try {
-        const toolMessage = JSON.parse(message.content) as ToolMessageContent
-        return toolMessage.citations
-      } catch {
-        return []
-      }
-    }
-    return []
-  }
 
   const disabledButton = () => {
     return (
@@ -896,56 +809,11 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
     )
   }
 
-  const generateTemplateSections = (jsonString: string) => {
-    let jsonResponse
-    try {
-      let cleanString = cleanJSON(jsonString)
-      jsonResponse = JSON.parse(cleanString)
-    } catch (e) {
-      return contentTemplateSections.JSONParseError
-    }
-
-    if (!Array.isArray(jsonResponse.template)) {
-      return contentTemplateSections.JSONStructureError
-    }
-
-    let sections = `${contentTemplateSections.Intro}${contentTemplateSections.NewLine}`
-    jsonResponse.template.forEach((row: { section_title: string }) => {
-      sections += `${row.section_title}${contentTemplateSections.NewLine}`
-    })
-    sections += `${contentTemplateSections.Closing}`
-    return sections.trim() // Remove any trailing newline
-  }
 
   return (
     <div className={styles.container} role="main">
       {showAuthMessage ? (
-        <Stack className={styles.chatEmptyState}>
-          <ShieldLockRegular
-            className={styles.chatIcon}
-            style={{ color: 'darkorange', height: '200px', width: '200px' }}
-          />
-          <h1 className={styles.chatEmptyStateTitle}>Authentication Not Configured</h1>
-          <h2 className={styles.chatEmptyStateSubtitle}>
-            This app does not have authentication configured. Please add an identity provider by finding your app in the{' '}
-            <a href="https://portal.azure.com/" target="_blank">
-              Azure Portal
-            </a>
-            and following{' '}
-            <a
-              href="https://learn.microsoft.com/en-us/azure/app-service/scenario-secure-app-authentication-app-service#3-configure-authentication-and-authorization"
-              target="_blank">
-              these instructions
-            </a>
-            .
-          </h2>
-          <h2 className={styles.chatEmptyStateSubtitle} style={{ fontSize: '20px' }}>
-            <strong>Authentication configuration takes a few minutes to apply. </strong>
-          </h2>
-          <h2 className={styles.chatEmptyStateSubtitle} style={{ fontSize: '20px' }}>
-            <strong>If you deployed in the last 10 minutes, please wait and reload the page after 10 minutes.</strong>
-          </h2>
-        </Stack>
+        <AuthNotConfigure />
       ) : (
         <Stack horizontal className={styles.chatRoot}>
           <div className={styles.chatContainer}>
@@ -954,52 +822,14 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                 <h1 className={styles.chatEmptyStateTitle}>{ui?.chat_title}</h1>
               </Stack>
             ) : (
-              <div className={styles.chatMessageStream} style={{ marginBottom: isLoading ? '40px' : '0px' }} role="log">
-                {messages.map((answer, index) => (
-                  <>
-                    {answer.role === 'user' ? (
-                      <div className={styles.chatMessageUser} tabIndex={0}>
-                        <div className={styles.chatMessageUserMessage}>{answer.content}</div>
-                      </div>
-                    ) : answer.role === 'assistant' ? (
-                      <div className={styles.chatMessageGpt}>
-                        <Answer
-                          answer={{
-                            answer:
-                              type === ChatType.Browse ? answer.content : generateTemplateSections(answer.content),
-                            citations: parseCitationFromMessage(messages[index - 1]),
-                            message_id: answer.id,
-                            feedback: answer.feedback
-                          }}
-                          onCitationClicked={c => onShowCitation(c)}
-                        />
-                      </div>
-                    ) : answer.role === ERROR ? (
-                      <div className={styles.chatMessageError}>
-                        <Stack horizontal className={styles.chatMessageErrorContent}>
-                          <ErrorCircleRegular className={styles.errorIcon} style={{ color: 'rgba(182, 52, 67, 1)' }} />
-                          <span>Error</span>
-                        </Stack>
-                        <span className={styles.chatMessageErrorContent}>{answer.content}</span>
-                      </div>
-                    ) : null}
-                  </>
-                ))}
-                {showLoadingMessage && (
-                  <>
-                    <div className={styles.chatMessageGpt}>
-                      <Answer
-                        answer={{
-                          answer: type === ChatType.Browse ? chatTypeResponse.Browse : chatTypeResponse.Generate,
-                          citations: []
-                        }}
-                        onCitationClicked={() => null}
-                      />
-                    </div>
-                  </>
-                )}
-                <div ref={chatMessageStreamEnd} />
-              </div>
+                <ChatMessageContainer
+                messages={messages}
+                  isLoading={isLoading}
+                  type={type}
+                  onShowCitation={onShowCitation}
+                  showLoadingMessage={showLoadingMessage}
+                  ref = {chatMessageStreamEnd}
+                />
             )}
 
             <Stack horizontal className={styles.chatInput}>
@@ -1066,7 +896,7 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
                   iconProps={{ iconName: 'Broom' }}
                   onClick={
                     appStateContext?.state.isCosmosDBAvailable?.status !== CosmosDBStatus.NotConfigured &&
-                    type !== ChatType.Browse
+                      type !== ChatType.Browse
                       ? clearChat
                       : newChat
                   }
@@ -1122,45 +952,11 @@ const Chat = ({ type = ChatType.Browse }: Props) => {
           </div>
           {/* Citation Panel */}
           {messages && messages.length > 0 && isCitationPanelOpen && activeCitation && (
-            <Stack.Item className={styles.citationPanel} tabIndex={0} role="tabpanel" aria-label="Citations Panel">
-              <Stack
-                aria-label="Citations Panel Header Container"
-                horizontal
-                className={styles.citationPanelHeaderContainer}
-                horizontalAlign="space-between"
-                verticalAlign="center">
-                <span aria-label="Citations" className={styles.citationPanelHeader}>
-                  Citations
-                </span>
-                <IconButton
-                  iconProps={{ iconName: 'Cancel' }}
-                  aria-label="Close citations panel"
-                  onClick={() => setIsCitationPanelOpen(false)}
-                />
-              </Stack>
-              <h5
-                className={styles.citationPanelTitle}
-                tabIndex={0}
-                title={
-                  activeCitation.url && !activeCitation.url.includes('blob.core')
-                    ? activeCitation.url
-                    : activeCitation.title ?? ''
-                }
-                onClick={() => onViewSource(activeCitation)}>
-                {activeCitation.title}
-              </h5>
-              <div tabIndex={0}>
-                <ReactMarkdown
-                  className={styles.citationPanelContent}
-                  children={DOMPurify.sanitize(activeCitation.content, { ALLOWED_TAGS: XSSAllowTags })}
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
-                  components={{
-                    a: renderLink, 
-                  }}
-                />
-              </div>
-            </Stack.Item>
+            <CitationPanel
+              IsCitationPanelOpen={setIsCitationPanelOpen}
+              activeCitation={activeCitation}
+              onViewSource={onViewSource}
+            />
           )}
           {messages && messages.length > 0 && isIntentsPanelOpen && (
             <Stack.Item className={styles.citationPanel} tabIndex={0} role="tabpanel" aria-label="Intents Panel">

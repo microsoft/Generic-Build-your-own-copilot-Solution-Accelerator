@@ -1,11 +1,11 @@
-import os
+import dataclasses
 import json
 import logging
-import requests
-import dataclasses
+import os
 from enum import Enum
-
 from typing import List
+
+import requests
 
 DEBUG = os.environ.get("DEBUG", "false")
 if DEBUG.lower() == "true":
@@ -33,7 +33,8 @@ async def format_as_ndjson(r):
         async for event in r:
             yield json.dumps(event, cls=JSONEncoder) + "\n"
     except Exception as error:
-        logging.exception("Exception while generating response stream: %s", error)
+        logging.exception(
+            "Exception while generating response stream: %s", error)
         yield json.dumps({"error": str(error)})
 
 
@@ -55,7 +56,8 @@ def fetchUserGroups(userToken, nextLink=None):
     try:
         r = requests.get(endpoint, headers=headers)
         if r.status_code != 200:
-            logging.error(f"Error fetching user groups: {r.status_code} {r.text}")
+            logging.error(
+                f"Error fetching user groups: {r.status_code} {r.text}")
             return []
 
         r = r.json()
@@ -112,6 +114,7 @@ def format_non_streaming_response(chatCompletion, history_metadata, apim_request
 
     return {}
 
+
 def format_stream_response(chatCompletionChunk, history_metadata, apim_request_id):
     response_obj = {
         "id": chatCompletionChunk.id,
@@ -127,7 +130,8 @@ def format_stream_response(chatCompletionChunk, history_metadata, apim_request_i
         delta = chatCompletionChunk.choices[0].delta
         if delta:
             if hasattr(delta, "context"):
-                messageObj = {"role": "tool", "content": json.dumps(delta.context)}
+                messageObj = {"role": "tool",
+                              "content": json.dumps(delta.context)}
                 response_obj["choices"][0]["messages"].append(messageObj)
                 return response_obj
             if delta.role == "assistant" and hasattr(delta, "context"):
@@ -148,9 +152,9 @@ def format_stream_response(chatCompletionChunk, history_metadata, apim_request_i
 
     return {}
 
-def comma_separated_string_to_list(s: str) -> List[str]:
-    '''
-    Split comma-separated values into a list.
-    '''
-    return s.strip().replace(' ', '').split(',')
 
+def comma_separated_string_to_list(s: str) -> List[str]:
+    """
+    Split comma-separated values into a list.
+    """
+    return s.strip().replace(" ", "").split(",")

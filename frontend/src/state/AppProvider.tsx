@@ -29,6 +29,8 @@ export interface AppState {
   feedbackState: { [answerId: string]: Feedback.Neutral | Feedback.Positive | Feedback.Negative }
   draftedDocument: DraftedDocument | null
   draftedDocumentTitle: string
+  isGenerating: boolean
+  isRequestInitiated : boolean
 }
 
 export type Action =
@@ -55,6 +57,8 @@ export type Action =
   | { type: 'UPDATE_BROWSE_CHAT'; payload: Conversation | null }
   | { type: 'UPDATE_GENERATE_CHAT'; payload: Conversation | null }
   | { type: 'UPDATE_DRAFTED_DOCUMENT_TITLE'; payload: string }
+  | { type: 'GENERATE_ISLODING'; payload: boolean }
+  | { type: 'SET_IS_REQUEST_INITIATED'; payload: boolean }
 
 const initialState: AppState = {
   isChatHistoryOpen: false,
@@ -71,7 +75,9 @@ const initialState: AppState = {
   frontendSettings: null,
   feedbackState: {},
   draftedDocument: null,
-  draftedDocumentTitle: ''
+  draftedDocumentTitle: '',
+  isGenerating: false,
+  isRequestInitiated: false,
 }
 
 export const AppStateContext = createContext<

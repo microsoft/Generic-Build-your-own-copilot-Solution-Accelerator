@@ -373,12 +373,12 @@ export const historyMessageFeedback = async (messageId: string, feedback: string
 
 export const sectionGenerate = async (options: SectionGenerateRequest): Promise<Response> => {
   // set timeout to 10 seconds
-  const abortController = new AbortController()
-  const abortSignal = abortController.signal
+  // const abortController = new AbortController()
+  // const abortSignal = abortController.signal
 
-  const timeout = setTimeout(() => {
-    abortController.abort()
-  }, 10000)
+  // const timeout = setTimeout(() => {
+  //   abortController.abort()
+  // }, 30000)
 
   let body = JSON.stringify({
     sectionTitle: options.sectionTitle,
@@ -390,15 +390,15 @@ export const sectionGenerate = async (options: SectionGenerateRequest): Promise<
     headers: {
       'Content-Type': 'application/json'
     },
-    body: body,
-    signal: abortSignal
+    body: body
+    // signal: abortSignal
   })
     .then(res => {
-      clearTimeout(timeout)
+      // clearTimeout(timeout)
       return res
     })
     .catch(_err => {
-      clearTimeout(timeout)
+      // clearTimeout(timeout)
       console.error('There was an issue fetching your data.')
       return new Response(
         JSON.stringify({ section_content: 'There was an issue fetching your data. Please try again.' })

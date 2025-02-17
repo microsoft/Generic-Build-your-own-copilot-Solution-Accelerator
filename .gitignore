@@ -8,3 +8,4 @@ static
 scripts/config.json
 venv
 myenv
+frontend/coverage

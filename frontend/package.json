@@ -24,7 +24,7 @@
     "file-saver": "^2.0.5",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
-    "plotly.js": "^2.35.3",
+    "plotly.js": "^3.0.0",
     "react": "^18.2.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^9.0.1",

@@ -27,7 +27,7 @@ NOTE: You may find you need to set: MacOS: `export NODE_OPTIONS="--max-old-space
 [More information about Azure OpenAI on your data](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/concepts/use-your-data)
 
 1. Update the `AZURE_OPENAI_*` environment variables as described above. 
-2. To connect to your data, you need to specify an Azure Cognitive Search index to use. You can [create this index yourself](https://learn.microsoft.com/en-us/azure/search/search-get-started-portal) or use the [Azure AI Studio](https://oai.azure.com/portal/chat) to create the index for you.
+2. To connect to your data, you need to specify an Azure Cognitive Search index to use. You can [create this index yourself](https://learn.microsoft.com/en-us/azure/search/search-get-started-portal) or use the [Azure AI Foundry](https://oai.azure.com/portal/chat) to create the index for you.
 
     These variables are required when adding your data with Azure AI Search:
     - `DATASOURCE_TYPE` (should be set to `AzureCognitiveSearch`)

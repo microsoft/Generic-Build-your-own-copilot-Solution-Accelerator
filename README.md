@@ -15,7 +15,7 @@ User story
 
 This solution accelerator is a powerful tool that helps you create your own AI assistant(s). The accelerator can be used by any customer looking for reusable architecture and code snippets to build an AI assistant(s) with their own enterprise data. 
 
-It leverages Azure Open AI Service and Azure AI Search, to identify relevant documents, summarize unstructured information, and generate Word document templates using your own data. 
+It leverages Azure OpenAI Service and Azure AI Search, to identify relevant documents, summarize unstructured information, and generate Word document templates using your own data. 
 
 **Scenario**
 
@@ -44,13 +44,13 @@ One-click deploy
 
 ### Prerequisites
 
-To use this solution accelerator, you will need access to an [Azure subscription](https://azure.microsoft.com/free/) with permission to create resource groups and resources. While not required, a prior understanding of Azure Open AI and Azure AI Search will be helpful.
+To use this solution accelerator, you will need access to an [Azure subscription](https://azure.microsoft.com/free/) with permission to create resource groups and resources. While not required, a prior understanding of Azure OpenAI and Azure AI Search will be helpful.
 
 For additional training and support, please see:
 
-1. [Azure Open AI](https://learn.microsoft.com/en-us/azure/ai-services/openai/) 
+1. [Azure OpenAI](https://learn.microsoft.com/en-us/azure/ai-services/openai/) 
 2. [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/) 
-3. [Azure AI Studio](https://learn.microsoft.com/en-us/azure/ai-studio/) 
+3. [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-studio/) 
 
 ### Solution accelerator architecture
 ![image](/docs/images/architecture.png)
@@ -62,7 +62,7 @@ For additional training and support, please see:
 ### **How to install/deploy**
 
 1. Please check the link [Azure Products by Region](
-https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/?products=all&regions=all) and choose a region where Azure AI Search, Azure OpenAI Service, and Azure AI Studio are available. If you are using the included sample data set, verify Document Intelligence (Form Recognizer) is available.
+https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/?products=all&regions=all) and choose a region where Azure AI Search, Azure OpenAI Service, and Azure AI Foundry are available. If you are using the included sample data set, verify Document Intelligence (Form Recognizer) is available.
 
 2. Click the following deployment button to create the required resources for this accelerator in your Azure Subscription.
 

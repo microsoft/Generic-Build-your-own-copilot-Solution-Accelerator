@@ -15,7 +15,7 @@ User story
 
 This solution accelerator is a powerful tool that helps you create your own AI assistant(s). The accelerator can be used by any customer looking for reusable architecture and code snippets to build an AI assistant(s) with their own enterprise data. 
 
-It leverages Azure Open AI Service and Azure AI Search, to identify relevant documents, summarize unstructured information, and generate Word document templates using your own data. 
+It leverages Azure OpenAI Service and Azure AI Search, to identify relevant documents, summarize unstructured information, and generate Word document templates using your own data. 
 
 **Scenario**
 
@@ -44,11 +44,11 @@ One-click deploy
 
 ### Prerequisites
 
-To use this solution accelerator, you will need access to an [Azure subscription](https://azure.microsoft.com/free/) with permission to create resource groups and resources. While not required, a prior understanding of Azure Open AI and Azure AI Search will be helpful.
+To use this solution accelerator, you will need access to an [Azure subscription](https://azure.microsoft.com/free/) with permission to create resource groups and resources. While not required, a prior understanding of Azure OpenAI and Azure AI Search will be helpful.
 
 For additional training and support, please see:
 
-1. [Azure Open AI](https://learn.microsoft.com/en-us/azure/ai-services/openai/) 
+1. [Azure OpenAI](https://learn.microsoft.com/en-us/azure/ai-services/openai/) 
 2. [Azure AI Search](https://learn.microsoft.com/en-us/azure/search/) 
 3. [Azure AI Studio](https://learn.microsoft.com/en-us/azure/ai-studio/) 
 

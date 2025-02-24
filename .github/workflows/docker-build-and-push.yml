@@ -29,8 +29,8 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Log in to Azure Container Registry (Dev/Demo)
-        if: ${{ github.ref_name == 'dev' || github.ref_name == 'demo' }}
+      - name: Log in to Azure Container Registry (Dev/Demo/Dependabotchanges)
+        if: ${{ github.ref_name == 'dev' || github.ref_name == 'demo'  || github.ref_name == 'dependabotchanges' }}
         uses: azure/docker-login@v2
         with:
           login-server: ${{ secrets.ACR_DEV_LOGIN_SERVER }}
@@ -46,6 +46,8 @@ jobs:
             echo "TAG=dev" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == "refs/heads/demo" ]]; then
             echo "TAG=demo" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == "refs/heads/dependabotchanges" ]]; then
+            echo "TAG=dependabotchanges" >> $GITHUB_ENV
           fi
 
       - name: Build and push Docker image
@@ -55,7 +57,7 @@ jobs:
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/webapp:${{ env.TAG }}
 
       - name: Build and push Docker image (Dev/Demo)
-        if: ${{ github.ref_name == 'dev' || github.ref_name == 'demo' }}
+        if: ${{ github.ref_name == 'dev' || github.ref_name == 'demo'  || github.ref_name == 'dependabotchanges' }}
         run: |
           docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/webapp:latest -f WebApp.Dockerfile .
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/webapp:latest

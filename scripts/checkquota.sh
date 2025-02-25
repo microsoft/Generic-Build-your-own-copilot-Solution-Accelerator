@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # List of Azure regions to check for quota (update as needed)
-REGIONS=("eastus" "northcentralus", "swedencentral", "westus")
+REGIONS=("eastus" "westus" "northcentralus" "uksouth" "swedencentral")
 
 SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}"
 GPT_MIN_CAPACITY="${GPT_MIN_CAPACITY}"
@@ -33,7 +33,6 @@ echo "✅ Azure subscription set successfully."
 # Define models and their minimum required capacities
 declare -A MIN_CAPACITY=(
     ["OpenAI.Standard.gpt-4o"]=$GPT_MIN_CAPACITY
-    ["Microsoft.DocumentDb"]=$COSMOS_DB_MIN_CAPACITY
 )
 
 VALID_REGION=""

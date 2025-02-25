@@ -57,7 +57,7 @@ jobs:
           elif [[ "${{ github.ref }}" == "refs/heads/demo" ]]; then
             echo "tagname=demo" >> $GITHUB_ENV
           else
-            echo "tagnames=pullrequest-ignore" >> $GITHUB_ENV
+            echo "tagname=pullrequest-ignore" >> $GITHUB_ENV
           fi
 
       - name: Build Docker Image and optionally push

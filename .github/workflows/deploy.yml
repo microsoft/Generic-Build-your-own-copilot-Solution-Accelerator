@@ -31,7 +31,6 @@ jobs:
           export AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}
           export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
           export GPT_MIN_CAPACITY="130"
-          export COSMOS_DB_MIN_CAPACITY="80"
 
           chmod +x scripts/checkquota.sh
           if ! scripts/checkquota.sh; then

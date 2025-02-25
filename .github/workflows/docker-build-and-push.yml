@@ -50,14 +50,15 @@ jobs:
       - name: Determine Tag Name Based on Branch
         id: determine_tag
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "tagname=latest" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-            echo "tagname=dev" >> $GITHUB_ENV
-          elif [[ "${{ github.ref }}" == "refs/heads/demo" ]]; then
-            echo "tagname=demo" >> $GITHUB_ENV
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "tagname=latest" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref_name }}" == "dev" ]]; then
+            echo "tagname=dev" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref_name }}" == "demo" ]]; then
+            echo "tagname=demo" >> $GITHUB_OUTPUT
           else
-            echo "tagname=pullrequest-ignore" >> $GITHUB_ENV
+            echo "tagname=default" >> $GITHUB_OUTPUT
+        
           fi
 
       - name: Build Docker Image and optionally push

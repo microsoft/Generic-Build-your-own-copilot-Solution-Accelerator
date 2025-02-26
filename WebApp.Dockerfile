@@ -7,6 +7,7 @@ USER node
 RUN npm ci  
 COPY --chown=node:node ./frontend/ ./frontend  
 WORKDIR /home/node/app/frontend
+RUN npm install --save-dev @types/node @types/jest
 RUN NODE_OPTIONS=--max_old_space_size=8192 npm run build
   
 FROM python:3.11-alpine 

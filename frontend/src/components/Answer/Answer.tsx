@@ -182,7 +182,7 @@ export const Answer = ({ answer, onCitationClicked }: Props) => {
             defaultChecked={negativeFeedbackList.includes(Feedback.OtherUnhelpful)}
             onChange={updateFeedbackList}></Checkbox>
         </Stack>
-        <div onClick={() => setShowReportInappropriateFeedback(true)} style={{ color: '#115EA3', cursor: 'pointer' }}>
+        <div data-testid="InappropriateFeedback" onClick={() => setShowReportInappropriateFeedback(true)} style={{ color: '#115EA3', cursor: 'pointer' }}>
           Report inappropriate content
         </div>
       </>
@@ -192,7 +192,7 @@ export const Answer = ({ answer, onCitationClicked }: Props) => {
   const ReportInappropriateFeedbackContent = () => {
     return (
       <>
-        <div>
+        <div data-testid="ReportInappropriateFeedbackContent">
           The content is <span style={{ color: 'red' }}>*</span>
         </div>
         <Stack tokens={{ childrenGap: 4 }}>
@@ -310,7 +310,7 @@ export const Answer = ({ answer, onCitationClicked }: Props) => {
         </Stack.Item>
         <Stack horizontal className={styles.answerFooter}>
           {!!parsedAnswer.citations.length && (
-            <Stack.Item onKeyDown={e => (e.key === 'Enter' || e.key === ' ' ? toggleIsRefAccordionOpen() : null)}>
+            <Stack.Item data-testid="stack-item" onKeyDown={e => (e.key === 'Enter' || e.key === ' ' ? toggleIsRefAccordionOpen() : null)}>
               <Stack style={{ width: '100%' }}>
                 <Stack horizontal horizontalAlign="start" verticalAlign="center">
                   <Text
@@ -326,6 +326,7 @@ export const Answer = ({ answer, onCitationClicked }: Props) => {
                     </span>
                   </Text>
                   <FontIcon
+                    data-testid="ChevronIcon"
                     className={styles.accordionIcon}
                     onClick={handleChevronClick}
                     iconName={chevronIsExpanded ? 'ChevronDown' : 'ChevronRight'}

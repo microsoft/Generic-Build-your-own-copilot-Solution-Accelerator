@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import styles from './Draft.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
 import TitleCard from '../../components/DraftCards/TitleCard'
@@ -6,7 +6,8 @@ import SectionCard from '../../components/DraftCards/SectionCard'
 import { Document, Packer, Paragraph, TextRun } from 'docx'
 import { saveAs } from 'file-saver'
 import { AppStateContext } from '../../state/AppProvider'
-import { CommandBarButton, Stack } from '@fluentui/react'
+import { CommandBarButton, Stack } from '@fluentui/react';
+import { Section } from '../../api/models'
 
 const Draft = (): JSX.Element => {
   const appStateContext = useContext(AppStateContext)
@@ -16,9 +17,24 @@ const Draft = (): JSX.Element => {
   // get draftedDocument from context
   const draftedDocument = appStateContext?.state.draftedDocument
   const sections = draftedDocument?.sections ?? []
+
+  const [sectionItems , setSectionItems] = useState<Section[]>([])
   const aiWarningLabel = 'AI-generated content may be incorrect'
 
   // redirect to home page if draftedDocument is empty
+
+  useEffect(() => {
+    sections.forEach((item, index) => {
+      setTimeout(() => {
+        setSectionItems((prev) => [...prev, item]); 
+      }, index * 500); 
+    });
+  }, []); 
+
+  useEffect(()=>{
+    console.log("sectionItems", sectionItems)
+  },[sectionItems])
+
   if (!draftedDocument) {
     navigate('/')
   }
@@ -100,7 +116,7 @@ const Draft = (): JSX.Element => {
   return (
     <Stack className={styles.container}>
       <TitleCard />
-      {(sections ?? []).map((_, index) => (
+      {(sectionItems ?? []).map((_, index : any) => (
         <SectionCard key={index} sectionIdx={index} />
       ))}
       <Stack className={styles.buttonContainer}>

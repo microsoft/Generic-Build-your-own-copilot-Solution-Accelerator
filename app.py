@@ -882,18 +882,10 @@ async def generate_title(conversation_messages):
 
 
 async def get_section_content(request_body, request_headers):
-    prompt = f'''Generate content for the sections below: { request_body }.
-    For eacth section, use the SectionTitle and SectionDescription to
-    create a new attributed called 'content' that contains the generated content,
-    Do not include any other commentary or description.
-    Always format the sections for better readability.
-    Leave placeholders for names and amounts etc.
-    Do not use markdown syntax.
-    '''
-    # prompt = f"""{app_settings.azure_openai.generate_section_content_prompt}
-    # Section Title: {request_body['sectionTitle']}
-    # Section Description: {request_body['sectionDescription']}
-    # """
+    prompt = f"""{app_settings.azure_openai.generate_section_content_prompt}
+    Section Title: {request_body['sectionTitle']}
+    Section Description: {request_body['sectionDescription']}
+    """
 
     messages = [{"role": "system", "content": app_settings.azure_openai.system_message}]
     messages.append({"role": "user", "content": prompt})
@@ -903,8 +895,12 @@ async def get_section_content(request_body, request_headers):
 
     try:
         azure_openai_client = init_openai_client()
-        response = await azure_openai_client.chat.completions.create(**model_args)
-        # response = raw_response.parse()
+        raw_response = (
+            await azure_openai_client.chat.completions.with_raw_response.create(
+                **model_args
+            )
+        )
+        response = raw_response.parse()
 
     except Exception as e:
         logging.exception("Exception in send_chat_request")

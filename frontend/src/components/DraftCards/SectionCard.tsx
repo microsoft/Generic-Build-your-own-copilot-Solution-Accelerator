@@ -140,7 +140,6 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
 
 
   useEffect(() => {
-   // if (appStateContext.state.failedSections.some((item) => item.title === sectionTitle) && isLoading) {
     if (appStateContext.state?.failedSections.length >0 && appStateContext.state?.failedSections[0].title === sectionTitle && isLoading && !appStateContext.state.isFailedReqInitiated) {
       console.log("appStateContext.state?.failedSections", appStateContext.state?.failedSections);
       const tempItem = {
@@ -148,12 +147,9 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
         description: sectionDescription,
         content: sectionContent
       }
-      //setTimeout(()=>{
         appStateContext?.dispatch({ type: 'REMOVED_FAILED_SECTION', payload: {section : tempItem} })
         appStateContext?.dispatch({ type: 'UPDATE_SECTION_API_REQ_STATUS', payload:  true })
-        fetchSectionContent(sectionTitle,sectionDescription, 'failed');
-     // },10000)
-      
+        fetchSectionContent(sectionTitle,sectionDescription, 'failed');      
     }
   }, [appStateContext.state.failedSections]);
 
@@ -178,7 +174,6 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
       appStateContext?.dispatch({ type: 'UPDATE_SECTION_API_REQ_STATUS', payload:  false })
       
       setTimeout(()=>{
-       // fetchSectionContent(sectionTitle,sectionDescription)
       },5000)
       
     }else{
@@ -197,8 +192,6 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
   
       setCharCount(content.length)
       setIsLoading(false)
-
-      //appStateContext?.dispatch({ type: 'REMOVED_FAILED_SECTION', payload:  updatedSection })
 
       appStateContext?.dispatch({ type: 'REMOVED_FAILED_SECTION', payload: {section : updatedSection} })
 

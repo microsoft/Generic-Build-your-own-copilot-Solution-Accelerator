@@ -19,6 +19,8 @@ const defaultMockState = {
   draftedDocumentTitle: '',
   isGenerating: false,
   isRequestInitiated: false,
+  failedSections : [],
+  isFailedReqInitiated : false
 };
 
 // Create a custom render function

@@ -36,7 +36,7 @@
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.0",
     "remark-supersub": "^1.0.0",
-    "undici": "^5.0.0"
+    "undici": "^7.4.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

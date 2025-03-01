@@ -138,31 +138,71 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
     setCharCount(sectionContent.length)
   }, [location])
 
+
+  useEffect(() => {
+    if (appStateContext.state?.failedSections.length >0 && appStateContext.state?.failedSections[0].title === sectionTitle && isLoading && !appStateContext.state.isFailedReqInitiated) {
+      console.log("appStateContext.state?.failedSections", appStateContext.state?.failedSections);
+      const tempItem = {
+        title: sectionTitle,
+        description: sectionDescription,
+        content: sectionContent
+      }
+        appStateContext?.dispatch({ type: 'REMOVED_FAILED_SECTION', payload: {section : tempItem} })
+        appStateContext?.dispatch({ type: 'UPDATE_SECTION_API_REQ_STATUS', payload:  true })
+        fetchSectionContent(sectionTitle,sectionDescription, 'failed');      
+    }
+  }, [appStateContext.state.failedSections]);
+
   const handleOpenChange: PopoverProps['onOpenChange'] = (e, data) => setIsPopoverOpen(data.open || false)
 
-  async function fetchSectionContent(sectionTitle: string, sectionDescription: string) {
+  async function fetchSectionContent(sectionTitle: string, sectionDescription: string , isReqFrom = '') {
     setIsLoading(true)
     const sectionGenerateRequest: SectionGenerateRequest = { sectionTitle, sectionDescription }
 
     const response = await sectionGenerate(sectionGenerateRequest)
     const responseBody = await response.json()
 
-    const updatedSection: Section = {
-      title: sectionTitle,
-      description: sectionDescription,
-      content: responseBody.section_content
-    }
-    appStateContext?.dispatch({ type: 'UPDATE_SECTION', payload: { sectionIdx: sectionIdx, section: updatedSection } })
-    let content = updatedSection.content || ''
+    if(responseBody?.error?.includes("429")) {
+      console.log("retriggerd !!!")
+      const failedSectionItems = {
+        title: sectionTitle,
+        description: sectionDescription,
+        content: sectionContent
+      }
+      appStateContext?.dispatch({ type: 'ADD_FAILED_SECTION', payload:  failedSectionItems })
+      if(isReqFrom == 'failed')
+      appStateContext?.dispatch({ type: 'UPDATE_SECTION_API_REQ_STATUS', payload:  false })
+      
+      setTimeout(()=>{
+      },5000)
+      
+    }else{
+      const updatedSection: Section = {
+        title: sectionTitle,
+        description: sectionDescription,
+        content: responseBody.section_content
+      }
+      appStateContext?.dispatch({ type: 'UPDATE_SECTION', payload: { sectionIdx: sectionIdx, section: updatedSection } })
+      let content = updatedSection.content || ''
+  
+      // limit the character count to 2000
+      if (content.length > sectionCharacterLimit) {
+        content = content.slice(0, sectionCharacterLimit)
+      }
+  
+      setCharCount(content.length)
+      setIsLoading(false)
 
-    // limit the character count to 2000
-    if (content.length > sectionCharacterLimit) {
-      content = content.slice(0, sectionCharacterLimit)
+      appStateContext?.dispatch({ type: 'REMOVED_FAILED_SECTION', payload: {section : updatedSection} })
+
+      if(isReqFrom == 'failed')
+        appStateContext?.dispatch({ type: 'UPDATE_SECTION_API_REQ_STATUS', payload:  false })
     }
 
-    setCharCount(content.length)
-    setIsLoading(false)
+    
   }
+
+
 
   useEffect(() => {
     if (sectionContent === '' && !isLoading && !isManuallyCleared) {

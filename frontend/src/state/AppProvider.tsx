@@ -30,7 +30,9 @@ export interface AppState {
   draftedDocument: DraftedDocument | null
   draftedDocumentTitle: string
   isGenerating: boolean
-  isRequestInitiated : boolean
+  isRequestInitiated : boolean,
+  failedSections : Section[],
+  isFailedReqInitiated : boolean,
 }
 
 export type Action =
@@ -59,6 +61,10 @@ export type Action =
   | { type: 'GENERATE_ISLODING'; payload: boolean }
   | { type: 'SET_IS_REQUEST_INITIATED'; payload: boolean }
 
+  | { type: 'ADD_FAILED_SECTION'; payload: Section }
+  | { type: 'REMOVED_FAILED_SECTION'; payload: {section : Section} }
+  | { type: 'UPDATE_SECTION_API_REQ_STATUS'; payload: boolean }
+
 const initialState: AppState = {
   isChatHistoryOpen: false,
   chatHistoryLoadingState: ChatHistoryLoadingState.Loading,
@@ -77,6 +83,8 @@ const initialState: AppState = {
   draftedDocumentTitle: '',
   isGenerating: false,
   isRequestInitiated: false,
+  failedSections : [],
+  isFailedReqInitiated : false
 }
 
 export const AppStateContext = createContext<

@@ -1,4 +1,4 @@
-name: Code Quality Workflow
+name: PyLint
 
 on: [push]
 

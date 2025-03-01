@@ -230,6 +230,7 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
                 onClick={() => {
                   setIsPopoverOpen(false)
                 }}
+                data-testid="close-popover-btn"
               />
             </Stack>
 
@@ -240,6 +241,7 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
               defaultValue={sectionDescription}
               className={classes.popoverTextarea}
               textarea={{ className: classes.popoverTextarea }}
+              data-testid="popover-textarea-element"
             />
 
             <Stack horizontal style={{ justifyContent: 'space-between' }}>
@@ -258,6 +260,7 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
                   setIsPopoverOpen(false)
                   fetchSectionContent(sectionTitle, updatedSectionDescription)
                 }}
+                data-testid="generate-btn-in-popover"
                 className={classes.popoverGenerateButton}>
                 Generate
               </Button>
@@ -267,7 +270,7 @@ const SectionCard = ({ sectionIdx }: SectionCardProps) => {
       </Stack>
 
       <Stack verticalAlign="center" horizontalAlign="center" className={classes.sectionContentContainer}>
-        {(isLoading && <Spinner />) || (
+        {(isLoading && <Spinner id='section-card-spinner' />) || (
           <>
             <Textarea
               appearance="outline"

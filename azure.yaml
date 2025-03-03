@@ -1,45 +1,22 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+environment:
+  name: BYC-Generic-Accelerator
+  location: eastus
 
-name: sample-app-aoai-chatgpt
-metadata:
-  template: sample-app-aoai-chatgpt@0.0.1-beta
-services:
-  backend:
-    project: .
-    language: py
-    host: appservice
-    hooks:
-      prepackage:
-        windows:
-          shell: pwsh
-          run:  cd ./frontend;npm install;npm run build
-          interactive: true
-          continueOnError: false
-        posix:
-          shell: sh
-          run:  cd ./frontend;npm install;npm run build
-          interactive: true
-          continueOnError: false
-hooks:
-    preprovision:
-      windows:
-        shell: pwsh
-        run: ./scripts/auth_init.ps1
-        interactive: true
-        continueOnError: false
-      posix:
-        shell: sh
-        run: ./scripts/auth_init.sh
-        interactive: true
-        continueOnError: false
-    postprovision:
-      windows:
-        shell: pwsh
-        run: ./scripts/auth_update.ps1;
-        interactive: true
-        continueOnError: false
-      posix:
-        shell: sh
-        run: ./scripts/auth_update.sh;
-        interactive: true
-        continueOnError: false
+parameters:
+  solutionPrefix:
+    type: string
+    default: bs-azdtest  
+  otherLocation:
+    type: string
+    default: eastus2
+  baseUrl:
+    type: string
+    default: 'https://github.com/blessing-sanusi/BYC-Generic-Accelerator'
+
+deployment:
+  mode: Incremental
+  template: ./infra/main.bicep  # Path to the main.bicep file inside the 'deployment' folder
+  parameters:
+    solutionPrefix: ${parameters.solutionPrefix}
+    otherLocation: ${parameters.otherLocation}
+    baseUrl: ${parameters.baseUrl}

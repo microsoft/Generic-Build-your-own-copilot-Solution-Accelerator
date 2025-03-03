@@ -32,8 +32,8 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Log in to Azure Container Registry (Dev/Demo)
-        if: ${{ github.ref_name == 'dev' || github.ref_name == 'demo' }}
+      - name: Log in to Azure Container Registry (Dev/Demo/Dependabotchanges)
+        if: ${{ github.ref_name == 'dev' || github.ref_name == 'demo'  || github.ref_name == 'dependabotchanges' }}
         uses: azure/docker-login@v2
         with:
           login-server: ${{ secrets.ACR_DEV_LOGIN_SERVER }}
@@ -57,6 +57,8 @@ jobs:
             echo "tagname=dev" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref_name }}" == "demo" ]]; then
             echo "tagname=demo" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref_name }}" == "dependabotchanges" ]]; then
+            echo "tagname=dependabotchanges" >> $GITHUB_OUTPUT
           else
             echo "tagname=default" >> $GITHUB_OUTPUT
         
@@ -67,7 +69,7 @@ jobs:
         with:
           context: .
           file: WebApp.Dockerfile
-          push: ${{ github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'demo' }}
+          push: ${{ github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'demo' || github.ref_name == 'dependabotchanges' }}
           tags: |
             ${{ steps.registry.outputs.registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}
             ${{ steps.registry.outputs.registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}

@@ -266,6 +266,7 @@ export const Answer = ({ answer, onCitationClicked }: Props) => {
         <Stack.Item>
           <Stack horizontal grow>
             <Stack.Item grow>
+            <div className={styles.answerText}>
               <ReactMarkdown
                 remarkPlugins={[remarkGfm, supersub]}
                 children={
@@ -273,9 +274,9 @@ export const Answer = ({ answer, onCitationClicked }: Props) => {
                     ? DOMPurify.sanitize(parsedAnswer.markdownFormatText, { ALLOWED_TAGS: XSSAllowTags })
                     : parsedAnswer.markdownFormatText
                 }
-                className={styles.answerText}
                 components={components}
               />
+              </div>
             </Stack.Item>
             <Stack.Item className={styles.answerHeader}>
               {FEEDBACK_ENABLED && answer.message_id !== undefined && (

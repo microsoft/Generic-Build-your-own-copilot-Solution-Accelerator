@@ -48,9 +48,8 @@ export const CitationPanel: React.FC<CitationPanelProps> = ({ activeCitation, Is
                 onClick={() => onViewSource(activeCitation)}>
                 {activeCitation.title}
             </h5>
-            <div tabIndex={0}>
-                <ReactMarkdown
-                    className={styles.citationPanelContent}
+            <div tabIndex={0} className={styles.citationPanelContent}>
+                <ReactMarkdown                   
                     children={DOMPurify.sanitize(activeCitation.content, { ALLOWED_TAGS: XSSAllowTags })}
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}

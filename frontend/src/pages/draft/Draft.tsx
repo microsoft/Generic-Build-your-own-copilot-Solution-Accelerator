@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import styles from './Draft.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
 import TitleCard from '../../components/DraftCards/TitleCard'
@@ -7,11 +7,46 @@ import { Document, Packer, Paragraph, TextRun } from 'docx'
 import { saveAs } from 'file-saver'
 import { AppStateContext } from '../../state/AppProvider'
 import { CommandBarButton, Stack } from '@fluentui/react'
+import { sectionGenerate, SectionGenerateRequest } from '../../api'
+import { Spinner, SpinnerSize } from '@fluentui/react'
+
+
+const spinnerStyles = {
+  root: {
+    width: '100%', // Make spinner container take full width
+    display: 'flex',
+    justifyContent: 'center', // Center the spinner horizontally
+    alignItems: 'center', // Center the spinner vertically if needed
+  },
+  circle: {
+    height: '45px', // Increase spinner circle size
+    width: '45px',  // Increase spinner circle size
+  },
+  label: {
+    fontSize: '18px', // Increase label font size
+    marginTop: '10px', // Add spacing between spinner and label
+  },
+};
+
+
+// Define the type for the section
+interface Section {
+  title: string;
+  description: string;
+}
+
+// Define the type for the request object
+interface RequestObject {
+  sectionTitle: string;
+  sectionDescription: string;
+}
 
 const Draft = (): JSX.Element => {
   const appStateContext = useContext(AppStateContext)
   const location = useLocation()
   const navigate = useNavigate()
+
+  const [draftLoading, setDraftLoading] = useState(true);
 
   // get draftedDocument from context
   const draftedDocument = appStateContext?.state.draftedDocument
@@ -22,6 +57,46 @@ const Draft = (): JSX.Element => {
   if (!draftedDocument) {
     navigate('/')
   }
+
+
+  // Fetch function with type annotations
+  async function fetchAllSectionContent(req: RequestObject[]): Promise<void> {
+    try {
+      setDraftLoading(true);
+       const response = await sectionGenerate(req);
+       const responseBody = await response.json();
+        // Map the data
+        const sections = req.map(reqSection => {
+          const matchedResponse = responseBody.section_content.find(
+            (resSection:any) => resSection.sectionTitle === reqSection.sectionTitle
+          );
+          return {
+            title: reqSection.sectionTitle,
+            content: matchedResponse ? matchedResponse.content : "",
+            description: reqSection.sectionDescription
+          };
+        });
+        appStateContext?.dispatch({ type: 'UPDATE_SECTIONS', payload: sections })
+        setDraftLoading(false)
+
+    } catch (error) {
+      console.error("Error fetching section content:", error);
+    }
+  }
+  // Function to generate the API request array
+  const generateAPIRequest = (sections: Section[]): RequestObject[] => {
+    return sections.map((section) => ({
+      sectionTitle: section.title,
+      sectionDescription: section.description,
+    }));
+  };
+
+  useEffect(() => {
+    if (sections.length > 0) {
+      const requestArray = generateAPIRequest(sections);
+      fetchAllSectionContent(requestArray)
+    }
+  }, [])
 
   const exportToWord = () => {
     const doc = new Document({
@@ -98,37 +173,42 @@ const Draft = (): JSX.Element => {
   }
 
   return (
-    <Stack className={styles.container}>
-      <TitleCard />
-      {(sections ?? []).map((_, index) => (
-        <SectionCard key={index} sectionIdx={index} />
-      ))}
-      <Stack className={styles.buttonContainer}>
-        <CommandBarButton
-          role="button"
-          styles={{
-            icon: {
-              color: '#FFFFFF'
-            },
-            iconDisabled: {
-              color: '#BDBDBD !important'
-            },
-            root: {
-              color: '#FFFFFF',
-              background: '#1367CF'
-            },
-            rootDisabled: {
-              background: '#F0F0F0'
-            }
-          }}
-          className={styles.exportDocumentIcon}
-          iconProps={{ iconName: 'WordDocument' }}
-          onClick={exportToWord}
-          aria-label="export document"
-          text="Export Document"
-        />
-      </Stack>
-    </Stack>
+    <>
+      {draftLoading ?
+        <Spinner styles={spinnerStyles} size={SpinnerSize.large} label="Loading....!" /> :
+        <Stack className={styles.container}>
+          <TitleCard />
+          {(sections ?? []).map((_, index) => (
+            <SectionCard key={index} sectionIdx={index} />
+          ))}
+          <Stack className={styles.buttonContainer}>
+            <CommandBarButton
+              role="button"
+              styles={{
+                icon: {
+                  color: '#FFFFFF'
+                },
+                iconDisabled: {
+                  color: '#BDBDBD !important'
+                },
+                root: {
+                  color: '#FFFFFF',
+                  background: '#1367CF'
+                },
+                rootDisabled: {
+                  background: '#F0F0F0'
+                }
+              }}
+              className={styles.exportDocumentIcon}
+              iconProps={{ iconName: 'WordDocument' }}
+              onClick={exportToWord}
+              aria-label="export document"
+              text="Export Document"
+            />
+          </Stack>
+        </Stack>
+      }
+    </>
   )
 }
 

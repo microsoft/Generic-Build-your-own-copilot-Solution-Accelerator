@@ -9,3 +9,4 @@ scripts/config.json
 venv
 myenv
 frontend/coverage
+scriptsenv/

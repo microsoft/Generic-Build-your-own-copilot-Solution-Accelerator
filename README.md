@@ -55,6 +55,15 @@ For additional training and support, please see:
 ### Solution accelerator architecture
 ![image](/docs/images/architecture.png)
 
+<h2><img src="./docs/Images/ReadMe/quickDeploy.png" width="64">
+<br/>
+QUICK DEPLOY
+</h2>
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Generic-Build-your-own-copilot-Solution-Accelerator)
+[![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Generic-Build-your-own-copilot-Solution-Accelerator)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FGeneric-Build-your-own-copilot-Solution-Accelerator%2Fmain%2Finfra%2Fmain.json)     
+
 
  > Note: Some features contained in this repository are in private preview. Certain features might not be supported or might have constrained capabilities. For more information, see [Supplemental Terms of Use for Microsoft Azure Previews](https://azure.microsoft.com/en-us/support/legal/preview-supplemental-terms).
 
@@ -66,7 +75,7 @@ https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-regi
 
 2. Click the following deployment button to create the required resources for this accelerator in your Azure Subscription.
 
-   [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FGeneric-Build-your-own-copilot-Solution-Accelerator%2Fmain%2Finfrastructure%2Fdeployment.json)
+   [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FGeneric-Build-your-own-copilot-Solution-Accelerator%2Fmain%2Finfra%2Fmain.json)
 
 3. You will need to select an Azure Subscription, create/select a Resource group, and Region. If your intention is to deploy this solution accelerator and the corresponding sample data set, the default settings will suffice.
 
@@ -86,6 +95,69 @@ To add further access controls, update the logic in `getUserInfoList` in `fronte
 #### Recommended practices
 1. **For enhanced relevance and accuracy**, we recommend implementing [Azure hybrid search](https://learn.microsoft.com/en-us/azure/search/hybrid-search-overview) over full-text search. Azure hybrid search provides superior relevance, accuracy, support for complex queries, improved user experience, scalability, performance, advanced features, and integration with AI services. These advantages make it the ideal choice for modern applications that require robust and intelligent search capabilities.
 2. **Importance of prompt engineering**. Prompt engineering is a critical aspect of working with AI models, especially when leveraging advanced capabilities such as those provided by Azure AI services. Proper prompt engineering ensures that the AI models generate accurate, relevant, and contextually appropriate responses. It involves carefully crafting and refining prompts to guide the model's behavior and output effectively. Neglecting prompt engineering can result in suboptimal performance, irrelevant outputs, and increased frustration for users. Therefore, it is essential to invest time and effort in prompt engineering to fully harness the potential of AI models
+
+### **Options**
+Pick from the options below to see step-by-step instructions for: GitHub Codespaces, VS Code Dev Containers, Local Environments, and Bicep deployments.
+
+<details>
+  <summary><b>Deploy in GitHub Codespaces</b></summary>
+
+ ### GitHub Codpespaces
+
+You can run this solution accelerator virtually by using GitHub Codespaces. The button will open a web-based VS Code instance in your browser:
+
+1. Open the solution accelerator (this may take several minutes):
+
+    [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Generic-Build-your-own-copilot-Solution-Accelerator)
+2. Accept the default values on the create Codespaces page
+3. Open a terminal window if it is not already open
+4. Continue with the [deploying steps](#deploying)
+
+</details>
+
+<details>
+  <summary><b>Deploy in VS Code</b></summary>
+
+ ### VS Code Dev Containers
+
+A related option is VS Code Dev Containers, which will open the project in your local VS Code using the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers):
+
+1. Start Docker Desktop (install it if not already installed)
+2. Open the project:
+
+    [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Generic-Build-your-own-copilot-Solution-Accelerator)
+
+
+3. In the VS Code window that opens, once the project files show up (this may take several minutes), open a terminal window.
+4. Continue with the [deploying steps](#deploying)
+
+</details>
+
+<details>
+  <summary><b>Deploy in your local environment</b></summary>
+
+ ### Local environment
+
+If you're not using one of the above options for opening the project, then you'll need to:
+
+1. Make sure the following tools are installed:
+
+    * [Azure Developer CLI (azd)](https://aka.ms/install-azd)
+    * [Python 3.9+](https://www.python.org/downloads/)
+    * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+    * [Git](https://git-scm.com/downloads)
+
+2. Download the project code:
+
+    ```shell
+    azd init -t microsoft/Generic-Build-your-own-copilot-Solution-Accelerator/
+    ```
+
+3. Open the project folder in your terminal or editor.
+
+4. Continue with the [deploying steps](#deploying).
+
+</details>
 
 ### Local deployment
 Review the local deployment [README](./docs/README_LOCAL.md).

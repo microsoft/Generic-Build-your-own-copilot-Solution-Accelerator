@@ -1,3 +1,47 @@
+// ========== main.bicep ========== //
+targetScope = 'resourceGroup'
+
+@minLength(3)
+@maxLength(10)
+@description('A unique prefix for all resources in this deployment. This should be 3-10 characters long:')
+param environmentName string
+
+// @minLength(1)
+// @description('Location for the Content Understanding service deployment:')
+// @allowed(['West US'
+// 'Sweden Central' 
+// 'Australia East'
+// ])
+
+@metadata({
+  azd: {
+    type: 'location'
+  }
+})
+// param contentUnderstandingLocation string
+
+// @minLength(1)
+// @description('Secondary location for databases creation(example:eastus2):')
+// param secondaryLocation string
+
+// @minLength(1)
+// @description('GPT model deployment type:')
+// @allowed([
+//   'Standard'
+//   'GlobalStandard'
+// ])
+// param deploymentType string = 'GlobalStandard'
+
+// @minLength(1)
+// @description('Name of the GPT model to deploy:')
+// @allowed([
+//   'gpt-4o-mini'
+//   'gpt-4o'
+//   'gpt-4'
+// ])
+// param gptModelName string = 'gpt-4o-mini'
+
+
 @description('Name of App Service plan')
 param HostingPlanName string = guid(resourceGroup().id)
 

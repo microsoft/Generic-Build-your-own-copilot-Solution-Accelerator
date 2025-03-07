@@ -47,8 +47,12 @@ jobs:
       - name: Get registry
         id: registry
         run: |
-          echo "ext_registry=${{ secrets.ACR_LOGIN_SERVER }}" >> $GITHUB_OUTPUT
-          echo "int_registry=${{ secrets.ACR_DEV_LOGIN_SERVER }}" >> $GITHUB_OUTPUT
+          if [[ "${{ github.ref_name }}" == "main-image-migration" ]]; then
+            echo "ext_registry=${{ secrets.ACR_LOGIN_SERVER }}" >> $GITHUB_OUTPUT
+            echo "int_registry=${{ secrets.ACR_DEV_LOGIN_SERVER }}" >> $GITHUB_OUTPUT
+          else
+            echo "int_registry=${{ secrets.ACR_DEV_LOGIN_SERVER }}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Determine Tag Name Based on Branch
         id: determine_tag
@@ -63,20 +67,20 @@ jobs:
             echo "tagname=dependabotchanges" >> $GITHUB_OUTPUT
           else
             echo "tagname=default" >> $GITHUB_OUTPUT
-        
           fi
 
-      - name: Build Docker Image and optionally push - Dev/Demo/Dependabotchanges
+      - name: Build Docker Image and optionally push - Internal Registry
         uses: docker/build-push-action@v6
         with:
           context: .
           file: WebApp.Dockerfile
-          push: ${{github.ref_name == 'dev' || github.ref_name == 'demo' || github.ref_name == 'dependabotchanges' }}
+          push: ${{ github.ref_name == 'main-image-migration' || github.ref_name == 'dev' || github.ref_name == 'demo' || github.ref_name == 'dependabotchanges' }}
           tags: |
             ${{ steps.registry.outputs.int_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}
             ${{ steps.registry.outputs.int_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}
 
-      - name: Build Docker Image and optionally push - Main
+      - name: Build Docker Image and optionally push - External Registry
+        if: ${{ github.ref_name == 'main-image-migration' }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -85,6 +89,4 @@ jobs:
           tags: |
             ${{ steps.registry.outputs.ext_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}
             ${{ steps.registry.outputs.ext_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}
-            ${{ steps.registry.outputs.int_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}
-            ${{ steps.registry.outputs.int_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}
 

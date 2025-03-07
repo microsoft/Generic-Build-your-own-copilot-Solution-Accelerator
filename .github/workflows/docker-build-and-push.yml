@@ -2,7 +2,7 @@ name: Build Docker and Optional Push
 
 on:
   push:
-    branches: [main, dev, demo, main-image-migration]
+    branches: [main, dev, demo]
   pull_request:
     branches: [main, dev, demo]
     types:
@@ -25,7 +25,7 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Log in to Azure Container Registry - External Registry
-        if: ${{ github.ref_name == 'main-image-migration' }}
+        if: ${{ github.ref_name == 'main' }}
         uses: azure/docker-login@v2
         with:
           login-server: ${{ secrets.ACR_LOGIN_SERVER }}
@@ -33,7 +33,7 @@ jobs:
           password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Log in to Azure Container Registry (Main/Dev/Demo/Dependabotchanges) - Internal Registry
-        if: ${{ github.ref_name == 'main-image-migration' ||github.ref_name == 'dev' || github.ref_name == 'demo'  || github.ref_name == 'dependabotchanges' }}
+        if: ${{ github.ref_name == 'main' ||github.ref_name == 'dev' || github.ref_name == 'demo'  || github.ref_name == 'dependabotchanges' }}
         uses: azure/docker-login@v2
         with:
           login-server: ${{ secrets.ACR_DEV_LOGIN_SERVER }}
@@ -47,7 +47,7 @@ jobs:
       - name: Get registry
         id: registry
         run: |
-          if [[ "${{ github.ref_name }}" == "main-image-migration" ]]; then
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
             echo "ext_registry=${{ secrets.ACR_LOGIN_SERVER }}" >> $GITHUB_OUTPUT
             echo "int_registry=${{ secrets.ACR_DEV_LOGIN_SERVER }}" >> $GITHUB_OUTPUT
           else
@@ -57,7 +57,7 @@ jobs:
       - name: Determine Tag Name Based on Branch
         id: determine_tag
         run: |
-          if [[ "${{ github.ref_name }}" == "main-image-migration" ]]; then
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
             echo "tagname=latest" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref_name }}" == "dev" ]]; then
             echo "tagname=dev" >> $GITHUB_OUTPUT
@@ -74,18 +74,18 @@ jobs:
         with:
           context: .
           file: WebApp.Dockerfile
-          push: ${{ github.ref_name == 'main-image-migration' || github.ref_name == 'dev' || github.ref_name == 'demo' || github.ref_name == 'dependabotchanges' }}
+          push: ${{ github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'demo' || github.ref_name == 'dependabotchanges' }}
           tags: |
             ${{ steps.registry.outputs.int_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}
             ${{ steps.registry.outputs.int_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}
 
       - name: Build Docker Image and optionally push - External Registry
-        if: ${{ github.ref_name == 'main-image-migration' }}
+        if: ${{ github.ref_name == 'main' }}
         uses: docker/build-push-action@v6
         with:
           context: .
           file: WebApp.Dockerfile
-          push: ${{github.ref_name == 'main-image-migration' }}
+          push: ${{github.ref_name == 'main' }}
           tags: |
             ${{ steps.registry.outputs.ext_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}
             ${{ steps.registry.outputs.ext_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}

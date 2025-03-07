@@ -5,14 +5,25 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "896617532796464630"
+      "templateHash": "7005910716688710298"
     }
   },
   "parameters": {
+    "environmentName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 10,
+      "metadata": {
+        "description": "A unique prefix for all resources in this deployment. This should be 3-10 characters long:"
+      }
+    },
     "HostingPlanName": {
       "type": "string",
       "defaultValue": "[guid(resourceGroup().id)]",
       "metadata": {
+        "azd": {
+          "type": "location"
+        },
         "description": "Name of App Service plan"
       }
     },
@@ -263,7 +274,7 @@
     }
   },
   "variables": {
-    "WebAppImageName": "DOCKER|acrbyocga.azurecr.io/webapp:latest",
+    "WebAppImageName": "DOCKER|byocgacontainerreg.azurecr.io/webapp:latest",
     "cosmosdb_database_name": "db_conversation_history",
     "cosmosdb_container_name": "conversations",
     "roleDefinitionId": "00000000-0000-0000-0000-000000000002",

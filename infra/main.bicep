@@ -166,7 +166,7 @@ param AzureOpenAIStopSequence string = '\n'
 @description('Whether or not to stream responses from Azure OpenAI? True or False.')
 param AzureOpenAIStream bool = true
 
-var WebAppImageName = 'DOCKER|acrbyocga.azurecr.io/webapp:latest'
+var WebAppImageName = 'DOCKER|byocgacontainerreg.azurecr.io/webapp:latest'
 var cosmosdb_database_name = 'db_conversation_history'
 var cosmosdb_container_name = 'conversations'
 var roleDefinitionId = '00000000-0000-0000-0000-000000000002'

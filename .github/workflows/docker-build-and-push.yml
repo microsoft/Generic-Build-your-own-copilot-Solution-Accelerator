@@ -2,7 +2,7 @@ name: Build Docker and Optional Push
 
 on:
   push:
-    branches: [main, dev, demo]
+    branches: [main, dev, demo, main-image-migration]
   pull_request:
     branches: [main, dev, demo]
     types:
@@ -24,16 +24,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Log in to Azure Container Registry
-        if: ${{ github.ref_name == 'main' }}
+      - name: Log in to Azure Container Registry - External Registry
+        if: ${{ github.ref_name == 'main-image-migration' }}
         uses: azure/docker-login@v2
         with:
           login-server: ${{ secrets.ACR_LOGIN_SERVER }}
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Log in to Azure Container Registry (Dev/Demo/Dependabotchanges)
-        if: ${{ github.ref_name == 'dev' || github.ref_name == 'demo'  || github.ref_name == 'dependabotchanges' }}
+      - name: Log in to Azure Container Registry (Main/Dev/Demo/Dependabotchanges) - Internal Registry
+        if: ${{ github.ref_name == 'main-image-migration' ||github.ref_name == 'dev' || github.ref_name == 'demo'  || github.ref_name == 'dependabotchanges' }}
         uses: azure/docker-login@v2
         with:
           login-server: ${{ secrets.ACR_DEV_LOGIN_SERVER }}
@@ -44,14 +44,14 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-      - name: Get registry
-        id: registry
-        run: echo "registry=${{ github.ref_name == 'main' && secrets.ACR_LOGIN_SERVER || secrets.ACR_DEV_LOGIN_SERVER }}" >> $GITHUB_OUTPUT
+      # - name: Get registry
+      #   id: registry
+      #   run: echo "registry=${{ github.ref_name == 'main' && secrets.ACR_LOGIN_SERVER || secrets.ACR_DEV_LOGIN_SERVER }}" >> $GITHUB_OUTPUT
 
       - name: Determine Tag Name Based on Branch
         id: determine_tag
         run: |
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
+          if [[ "${{ github.ref_name }}" == "main-image-migration" ]]; then
             echo "tagname=latest" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref_name }}" == "dev" ]]; then
             echo "tagname=dev" >> $GITHUB_OUTPUT
@@ -64,12 +64,25 @@ jobs:
         
           fi
 
-      - name: Build Docker Image and optionally push
+      - name: Build Docker Image and optionally push - Dev/Demo/Dependabotchanges
         uses: docker/build-push-action@v6
         with:
           context: .
           file: WebApp.Dockerfile
-          push: ${{ github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'demo' || github.ref_name == 'dependabotchanges' }}
+          push: ${{github.ref_name == 'dev' || github.ref_name == 'demo' || github.ref_name == 'dependabotchanges' }}
           tags: |
             ${{ steps.registry.outputs.registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}
             ${{ steps.registry.outputs.registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}
+
+      - name: Build Docker Image and optionally push - Main
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: WebApp.Dockerfile
+          push: ${{github.ref_name == 'main-image-migration' }}
+          tags: |
+            ${{ secrets.ACR_LOGIN_SERVER }}/webapp:${{ steps.determine_tag.outputs.tagname }}
+            ${{ secrets.ACR_LOGIN_SERVER }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}
+            ${{ secrets.ACR_DEV_LOGIN_SERVER }}/webapp:${{ steps.determine_tag.outputs.tagname }}
+            ${{ secrets.ACR_DEV_LOGIN_SERVER }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}
+

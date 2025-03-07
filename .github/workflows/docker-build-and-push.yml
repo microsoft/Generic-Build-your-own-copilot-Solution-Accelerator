@@ -44,9 +44,11 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-      # - name: Get registry
-      #   id: registry
-      #   run: echo "registry=${{ github.ref_name == 'main' && secrets.ACR_LOGIN_SERVER || secrets.ACR_DEV_LOGIN_SERVER }}" >> $GITHUB_OUTPUT
+      - name: Get registry
+        id: registry
+        run: |
+          echo "ext_registry=${{ secrets.ACR_LOGIN_SERVER }}" >> $GITHUB_OUTPUT
+          echo "int_registry=${{ secrets.ACR_DEV_LOGIN_SERVER }}" >> $GITHUB_OUTPUT
 
       - name: Determine Tag Name Based on Branch
         id: determine_tag
@@ -71,8 +73,8 @@ jobs:
           file: WebApp.Dockerfile
           push: ${{github.ref_name == 'dev' || github.ref_name == 'demo' || github.ref_name == 'dependabotchanges' }}
           tags: |
-            ${{ steps.registry.outputs.registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}
-            ${{ steps.registry.outputs.registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}
+            ${{ steps.registry.outputs.int_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}
+            ${{ steps.registry.outputs.int_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}
 
       - name: Build Docker Image and optionally push - Main
         uses: docker/build-push-action@v6
@@ -81,8 +83,8 @@ jobs:
           file: WebApp.Dockerfile
           push: ${{github.ref_name == 'main-image-migration' }}
           tags: |
-            ${{ secrets.ACR_LOGIN_SERVER }}/webapp:${{ steps.determine_tag.outputs.tagname }}
-            ${{ secrets.ACR_LOGIN_SERVER }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}
-            ${{ secrets.ACR_DEV_LOGIN_SERVER }}/webapp:${{ steps.determine_tag.outputs.tagname }}
-            ${{ secrets.ACR_DEV_LOGIN_SERVER }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}
+            ${{ steps.registry.outputs.ext_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}
+            ${{ steps.registry.outputs.ext_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}
+            ${{ steps.registry.outputs.int_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}
+            ${{ steps.registry.outputs.int_registry }}/webapp:${{ steps.determine_tag.outputs.tagname }}_${{ steps.date.outputs.date }}_${{ github.run_number }}
 

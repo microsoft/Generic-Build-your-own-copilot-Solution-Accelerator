@@ -88,7 +88,6 @@ param HostingPlanSku string = 'B3'
 var ApplicationInsightsName = 'appins-${solutionPrefix}'
 var WorkspaceName = 'worksp-${solutionPrefix}'
 
-
 // ========== Managed Identity ========== //
 module managedIdentityModule 'deploy_managed_identity.bicep' = {
   name: 'deploy_managed_identity'

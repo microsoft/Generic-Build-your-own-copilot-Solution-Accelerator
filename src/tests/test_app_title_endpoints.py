@@ -315,7 +315,9 @@ class TestChatTitleGeneration:
 
         assert resp.status_code == 200
         mock_title_svc.generate_title.assert_called_once_with(
-            "I need a social media post about paint products"
+            "I need a social media post about paint products",
+            user_id="user-1",
+            conversation_id="conv-chat-1",
         )
 
     @pytest.mark.asyncio

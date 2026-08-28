@@ -19,7 +19,8 @@ import base64
 import json
 import logging
 import re
-from typing import AsyncIterator, Optional, cast
+from contextvars import ContextVar
+from typing import Any, AsyncIterator, Mapping, Optional, cast
 
 from agent_framework import (
     Agent,
@@ -38,13 +39,33 @@ except ImportError:
     FOUNDRY_AVAILABLE = False
     AIProjectClient = None
 
+from llm_token_telemetry import (
+    TokenUsage,
+    TokenUsageEmitter,
+    extract_usage,
+    extract_usage_from_dict,
+    extract_usage_from_stream_chunk,
+)
 from models import CreativeBrief
 from settings import app_settings
+from telemetry import token_emitter
 
 logger = logging.getLogger(__name__)
 
 # Token endpoint for Azure Cognitive Services (used for Azure OpenAI)
 TOKEN_ENDPOINT = "https://cognitiveservices.azure.com/.default"
+
+# Per-request user_id propagated to _RequestTokenTracker instances created
+# anywhere inside the request (including deep workflow helpers like
+# ``_generate_foundry_image``). Set at the entry points of the public
+# orchestrator methods; read by ``_new_token_accumulator``.
+_current_user_id: ContextVar[str] = ContextVar("_current_user_id", default="")
+
+# Per-request conversation_id propagated the same way as ``_current_user_id``
+# so token-usage telemetry emitted from deep helpers (image generation,
+# regenerate flows, etc.) can be correlated by conversation in Application
+# Insights / KQL even when the helper isn't directly given a conversation_id.
+_current_conversation_id: ContextVar[str] = ContextVar("_current_conversation_id", default="")
 
 # Event type constants for type-safe dispatch (avoids string typos)
 EVENT_STATUS: WorkflowEventType = "status"
@@ -482,6 +503,157 @@ After validation, hand back to triage_agent with results.
 """
 
 
+class _RequestTokenTracker:
+    """Per-request multi-agent token accumulator.
+
+    Aggregates ``TokenUsage`` per agent and per model deployment over the
+    lifetime of a single orchestrator request, then emits the standardized
+    ``LLM_Token_Usage_Summary`` / ``LLM_Agent_Token_Usage`` /
+    ``LLM_Model_Token_Usage`` custom events via the shared
+    :class:`TokenUsageEmitter` on :meth:`flush`. Identical event names and
+    dimension keys to the cross-accelerator helper in
+    :mod:`llm_token_telemetry`. Telemetry failures are logged but never
+    raised.
+    """
+
+    __slots__ = (
+        "_emitter",
+        "_user_id",
+        "_conversation_id",
+        "_agent_model_map",
+        "_default_model",
+        "by_agent",
+        "by_model",
+        "total",
+    )
+
+    def __init__(
+        self,
+        emitter: TokenUsageEmitter,
+        *,
+        user_id: str = "",
+        conversation_id: str = "",
+        agent_model_map: Optional[Mapping[str, str]] = None,
+        default_model: str = "",
+    ) -> None:
+        self._emitter = emitter
+        self._user_id = user_id or ""
+        self._conversation_id = conversation_id or ""
+        self._agent_model_map: dict[str, str] = dict(agent_model_map or {})
+        self._default_model = default_model or ""
+        self.by_agent: dict[str, tuple[TokenUsage, str]] = {}
+        self.by_model: dict[str, TokenUsage] = {}
+        self.total: TokenUsage = TokenUsage()
+
+    def _resolve_model(self, agent_name: str) -> str:
+        return self._agent_model_map.get(agent_name) or self._default_model
+
+    def _add(self, agent_name: str, usage: TokenUsage) -> None:
+        if not usage.has_any:
+            return
+        agent = agent_name or "unknown_agent"
+        model = self._resolve_model(agent)
+        prev_usage, prev_model = self.by_agent.get(agent, (TokenUsage(), model))
+        if prev_model and model and prev_model != model:
+            resolved_model = "multiple"
+        else:
+            resolved_model = prev_model or model
+        self.by_agent[agent] = (prev_usage + usage, resolved_model)
+        if model:
+            self.by_model[model] = self.by_model.get(model, TokenUsage()) + usage
+        self.total = self.total + usage
+
+    def record(self, agent_name: str, usage: TokenUsage) -> None:
+        """Record a pre-extracted :class:`TokenUsage` for the named agent."""
+        self._add(agent_name, usage)
+
+    def record_response(self, *, agent_name: str, response: Any) -> bool:
+        """Extract usage from an ``AgentResponse`` and record it. Returns True on success."""
+        usage = extract_usage(response)
+        if usage:
+            self._add(agent_name, usage)
+            return True
+        return False
+
+    def record_event(self, event: Any) -> bool:
+        """Extract usage from a workflow ``run_stream`` event and record it.
+
+        Reads ``event.executor_id`` for per-agent attribution and uses
+        ``extract_usage_from_stream_chunk`` (which tries the top-level shape
+        then ``metadata.usage``) to cover both ``AgentRunUpdateEvent`` and
+        ``AgentRunEvent`` data shapes.
+        """
+        if event is None:
+            return False
+        executor_id = getattr(event, "executor_id", None)
+        data = getattr(event, "data", None)
+        if data is None or not executor_id:
+            return False
+        usage = extract_usage_from_stream_chunk(data)
+        if usage:
+            self._add(executor_id, usage)
+            return True
+        return False
+
+    def record_image_api_response(
+        self, *, agent_name: str, response_json: Optional[dict], model: str = ""
+    ) -> bool:
+        """Record token usage from an image-generation REST response (OpenAI shape)."""
+        if not isinstance(response_json, dict):
+            return False
+        usage = extract_usage_from_dict(response_json.get("usage"))
+        if not usage:
+            return False
+        if model:
+            self._agent_model_map[agent_name] = model
+        self._add(agent_name, usage)
+        return True
+
+    def has_data(self) -> bool:
+        return self.total.has_any
+
+    def flush(self, *, source: str = "") -> None:
+        """Emit aggregated LLM_*_Token_Usage events. Safe to call once per request."""
+        if not self.has_data():
+            return
+        dims = {
+            "user_id": self._user_id,
+            "conversation_id": self._conversation_id,
+            "source": source,
+        }
+        for agent_name, (usage, model) in self.by_agent.items():
+            self._emitter.emit_agent(
+                agent_name=agent_name,
+                model_deployment_name=model or self._default_model,
+                usage=usage,
+                **dims,
+            )
+        for model_name, usage in self.by_model.items():
+            self._emitter.emit_model(
+                model_deployment_name=model_name,
+                usage=usage,
+                **dims,
+            )
+        primary_model = next(iter(self.by_model), self._default_model)
+        self._emitter.emit_summary(
+            usage=self.total,
+            agent_count=len(self.by_agent),
+            model_count=len(self.by_model) or 1,
+            primary_model=primary_model,
+            **dims,
+        )
+        logger.debug(
+            "[TOKEN USAGE] source=%s total=%d (in=%d, out=%d) "
+            "agents=%s models=%s",
+            source,
+            self.total.total_tokens,
+            self.total.input_tokens,
+            self.total.output_tokens,
+            {k: v[0].total_tokens for k, v in self.by_agent.items()},
+            {k: v.total_tokens for k, v in self.by_model.items()},
+        )
+
+
 class ContentGenerationOrchestrator:
     """
     Orchestrates the multi-agent content generation workflow using
@@ -509,6 +681,11 @@ class ContentGenerationOrchestrator:
         self._initialized = False
         self._use_foundry = app_settings.ai_foundry.use_foundry
         self._credential = None
+        # agent_name -> deployment name, populated in initialize().
+        # Used to attach a model dimension to LLM_*_Token_Usage events.
+        self._agent_model_map: dict[str, str] = {}
+        self._default_model: str = ""
+        self._image_model: str = ""
 
     def _get_chat_client(self):
         """Get or create the chat client (Azure OpenAI or Foundry)."""
@@ -693,13 +870,59 @@ class ContentGenerationOrchestrator:
         )
 
         self._initialized = True
+
+        # Build the agent_name -> model deployment map used for token-usage
+        # telemetry. All chat agents share the same chat client deployment.
+        chat_model = (
+            app_settings.ai_foundry.model_deployment
+            if self._use_foundry
+            else app_settings.azure_openai.gpt_model
+        ) or app_settings.azure_openai.gpt_model or ""
+        image_model = (
+            app_settings.ai_foundry.image_deployment
+            if self._use_foundry
+            else app_settings.azure_openai.image_model
+        ) or app_settings.azure_openai.image_model or ""
+        self._default_model = chat_model
+        self._image_model = image_model
+        self._agent_model_map = {
+            f"triage{name_sep}agent": chat_model,
+            f"planning{name_sep}agent": chat_model,
+            f"research{name_sep}agent": chat_model,
+            f"text{name_sep}content{name_sep}agent": chat_model,
+            f"image{name_sep}content{name_sep}agent": chat_model,
+            f"compliance{name_sep}agent": chat_model,
+            f"rai{name_sep}agent": chat_model,
+        }
+
         logger.info(f"Content Generation Orchestrator initialized successfully ({mode_str} mode)")
+
+    def _new_token_accumulator(
+        self, conversation_id: str = "", user_id: str = ""
+    ) -> _RequestTokenTracker:
+        """Create a :class:`_RequestTokenTracker` pre-populated with this
+        orchestrator's agent->model map and default chat model. Telemetry
+        is best-effort.
+
+        If ``user_id`` / ``conversation_id`` are not provided, falls back to
+        the per-request values stored in the ``_current_user_id`` /
+        ``_current_conversation_id`` ContextVars so trackers created deep
+        inside the workflow still carry the caller's correlation ids.
+        """
+        return _RequestTokenTracker(
+            token_emitter,
+            conversation_id=conversation_id or _current_conversation_id.get(""),
+            user_id=user_id or _current_user_id.get(""),
+            agent_model_map=self._agent_model_map,
+            default_model=self._default_model,
+        )
 
     async def process_message(
         self,
         message: str,
         conversation_id: str,
-        context: Optional[dict] = None
+        context: Optional[dict] = None,
+        user_id: str = ""
     ) -> AsyncIterator[dict]:
         """
         Process a user message through the orchestrated workflow.
@@ -742,11 +965,25 @@ class ContentGenerationOrchestrator:
         if context:
             full_input = f"Context:\n{json.dumps(context, indent=2)}\n\nUser Message:\n{message}"
 
+        _ctx_token = _current_user_id.set(user_id or "")
+        _ctx_conv = _current_conversation_id.set(conversation_id or "")
+        # Defined outside the try so the except/finally branches can safely
+        # reference ``token_acc`` even if creation fails. Each flush call is
+        # guarded by ``if token_acc is not None`` to avoid NoneType errors.
+        token_acc: Optional[_RequestTokenTracker] = None
         try:
+            token_acc = self._new_token_accumulator(conversation_id, user_id)
+
             # Collect events from the workflow stream
             events = []
             async for event in self._workflow.run_stream(full_input):
                 events.append(event)
+
+                # Best-effort token-usage capture; never break the user flow.
+                try:
+                    token_acc.record_event(event)
+                except Exception as _tu_err:
+                    logger.debug("token_usage record_event failed: %s", _tu_err)
 
                 # Handle different event types from the workflow
                 if event.type == EVENT_STATUS:
@@ -806,20 +1043,36 @@ class ContentGenerationOrchestrator:
                                 "metadata": {"conversation_id": conversation_id}
                             }
 
+            # Emit aggregated LLM_*_Token_Usage events for the request.
+            if token_acc is not None:
+                try:
+                    token_acc.flush(source="process_message")
+                except Exception as _tu_err:
+                    logger.debug("token_usage flush failed: %s", _tu_err)
+
         except Exception as e:
             logger.exception(f"Error processing message: {e}")
+            if token_acc is not None:
+                try:
+                    token_acc.flush(source="process_message:error")
+                except Exception:
+                    pass
             yield {
                 "type": "error",
                 "content": f"An error occurred: {str(e)}",
                 "is_final": True,
                 "metadata": {"conversation_id": conversation_id}
             }
+        finally:
+            _current_user_id.reset(_ctx_token)
+            _current_conversation_id.reset(_ctx_conv)
 
     async def send_user_response(
         self,
         request_id: str,
         user_response: str,
-        conversation_id: str
+        conversation_id: str,
+        user_id: str = ""
     ) -> AsyncIterator[dict]:
         """
         Send a user response to a pending workflow request.
@@ -850,9 +1103,19 @@ class ContentGenerationOrchestrator:
             }
             return  # Exit immediately - do not continue workflow
 
+        _ctx_token = _current_user_id.set(user_id or "")
+        _ctx_conv = _current_conversation_id.set(conversation_id or "")
+        # See process_message for the rationale of the None-init pattern.
+        token_acc: Optional[_RequestTokenTracker] = None
         try:
+            token_acc = self._new_token_accumulator(conversation_id, user_id)
             responses = {request_id: user_response}
             async for event in self._workflow.send_responses_streaming(responses):
+                try:
+                    token_acc.record_event(event)
+                except Exception as _tu_err:
+                    logger.debug("token_usage record_event failed: %s", _tu_err)
+
                 if event.type == EVENT_STATUS:
                     status_name = event.state.name if event.state else str(event.data)
                     yield {
@@ -902,18 +1165,40 @@ class ContentGenerationOrchestrator:
                                 "metadata": {"conversation_id": conversation_id}
                             }
 
+            if token_acc is not None:
+                try:
+                    token_acc.flush(source="send_user_response")
+                except Exception as _tu_err:
+                    logger.debug("token_usage flush failed: %s", _tu_err)
+
         except Exception as e:
             logger.exception(f"Error sending user response: {e}")
+            if token_acc is not None:
+                try:
+                    token_acc.flush(source="send_user_response:error")
+                except Exception:
+                    pass
             yield {
                 "type": "error",
                 "content": f"An error occurred: {str(e)}",
                 "is_final": True,
                 "metadata": {"conversation_id": conversation_id}
             }
+        finally:
+            try:
+                _current_user_id.reset(_ctx_token)
+            except (LookupError, ValueError, NameError):
+                pass
+            try:
+                _current_conversation_id.reset(_ctx_conv)
+            except (LookupError, ValueError, NameError):
+                pass
 
     async def parse_brief(
         self,
-        brief_text: str
+        brief_text: str,
+        user_id: str = "",
+        conversation_id: str = ""
     ) -> tuple[CreativeBrief, str | None, bool]:
         """
         Parse a free-text creative brief into structured format.
@@ -921,6 +1206,9 @@ class ContentGenerationOrchestrator:
 
         Args:
             brief_text: Free-text creative brief from user
+            user_id: Optional caller's user id, propagated to token usage telemetry
+            conversation_id: Optional conversation id, propagated to token usage
+                telemetry for correlation in Application Insights.
 
         Returns:
             tuple: (CreativeBrief, clarifying_questions_or_none, is_blocked)
@@ -931,6 +1219,19 @@ class ContentGenerationOrchestrator:
         if not self._initialized:
             self.initialize()
 
+        _ctx_token = _current_user_id.set(user_id or "")
+        _ctx_conv = _current_conversation_id.set(conversation_id or "")
+        try:
+            return await self._parse_brief_impl(brief_text, user_id)
+        finally:
+            _current_user_id.reset(_ctx_token)
+            _current_conversation_id.reset(_ctx_conv)
+
+    async def _parse_brief_impl(
+        self,
+        brief_text: str,
+        user_id: str = ""
+    ) -> tuple[CreativeBrief, str | None, bool]:
         # PROACTIVE CONTENT SAFETY CHECK - Block harmful content at input layer
         is_harmful, matched_pattern = _check_input_for_harmful_content(brief_text)
         if is_harmful:
@@ -950,8 +1251,13 @@ class ContentGenerationOrchestrator:
             return empty_brief, RAI_HARMFUL_CONTENT_RESPONSE, True
 
         # SECONDARY RAI CHECK - Use LLM-based classifier for comprehensive safety/scope validation
+        token_acc = self._new_token_accumulator(user_id=user_id)
         try:
             rai_response = await self._rai_agent.run(brief_text)
+            try:
+                token_acc.record_response(agent_name="rai_agent", response=rai_response)
+            except Exception as _tu_err:
+                logger.debug("token_usage record (rai_agent) failed: %s", _tu_err)
             rai_result = str(rai_response).strip().upper()
             logger.info(f"RAI agent response for parse_brief: {rai_result}")
 
@@ -968,6 +1274,10 @@ class ContentGenerationOrchestrator:
                     visual_guidelines="",
                     cta=""
                 )
+                try:
+                    token_acc.flush(source="parse_brief:rai_blocked")
+                except Exception:
+                    pass
                 return empty_brief, RAI_HARMFUL_CONTENT_RESPONSE, True
         except Exception as rai_error:
             # Log the error but continue - don't block legitimate requests due to RAI agent failures
@@ -1021,6 +1331,14 @@ Analyze this creative brief request and determine if all critical information is
 
         # Use the agent's run method
         response = await planning_agent.run(analysis_prompt)
+        try:
+            token_acc.record_response(agent_name="planning_agent", response=response)
+        except Exception as _tu_err:
+            logger.debug("token_usage record (planning_agent) failed: %s", _tu_err)
+        try:
+            token_acc.flush(source="parse_brief")
+        except Exception:
+            pass
 
         # Parse the analysis response
         try:
@@ -1130,7 +1448,9 @@ Analyze this creative brief request and determine if all critical information is
         self,
         request_text: str,
         current_products: list = None,
-        available_products: list = None
+        available_products: list = None,
+        user_id: str = "",
+        conversation_id: str = ""
     ) -> dict:
         """
         Select or modify product selection via natural language.
@@ -1181,7 +1501,18 @@ Important:
 """
 
         try:
+            token_acc = self._new_token_accumulator(
+                conversation_id=conversation_id, user_id=user_id
+            )
             response = await research_agent.run(select_prompt)
+            try:
+                token_acc.record_response(agent_name="research_agent", response=response)
+            except Exception as _tu_err:
+                logger.debug("token_usage record (research_agent) failed: %s", _tu_err)
+            try:
+                token_acc.flush(source="select_products")
+            except Exception:
+                pass
             response_text = str(response)
 
             # Extract JSON from response
@@ -1305,6 +1636,19 @@ Important:
 
                 response_data = response.json()
 
+                # Capture token usage from image API response (gpt-image-1 returns
+                # a 'usage' field with input/output/total token counts).
+                try:
+                    img_acc = self._new_token_accumulator()
+                    img_acc.record_image_api_response(
+                        agent_name="image_content_agent",
+                        response_json=response_data,
+                        model=image_deployment or self._image_model,
+                    )
+                    img_acc.flush(source="foundry_image_generation")
+                except Exception as _tu_err:
+                    logger.debug("token_usage capture (foundry image) failed: %s", _tu_err)
+
                 # Extract image data from response
                 data = response_data.get("data", [])
                 if not data:
@@ -1395,7 +1739,9 @@ Important:
         self,
         brief: CreativeBrief,
         products: list = None,
-        generate_images: bool = True
+        generate_images: bool = True,
+        user_id: str = "",
+        conversation_id: str = ""
     ) -> dict:
         """
         Generate complete content package from a confirmed creative brief.
@@ -1404,6 +1750,10 @@ Important:
             brief: Confirmed creative brief
             products: List of products to feature
             generate_images: Whether to generate images
+            user_id: Optional caller's user id, propagated to token usage telemetry
+            conversation_id: Optional conversation id, propagated to token usage
+                telemetry (including from deep helpers like ``_generate_foundry_image``)
+                so image-generation events can be correlated by conversation in KQL.
 
         Returns:
             dict: Generated content with compliance results
@@ -1411,6 +1761,21 @@ Important:
         if not self._initialized:
             self.initialize()
 
+        _ctx_token = _current_user_id.set(user_id or "")
+        _ctx_conv = _current_conversation_id.set(conversation_id or "")
+        try:
+            return await self._generate_content_impl(brief, products, generate_images, user_id)
+        finally:
+            _current_user_id.reset(_ctx_token)
+            _current_conversation_id.reset(_ctx_conv)
+
+    async def _generate_content_impl(
+        self,
+        brief: CreativeBrief,
+        products: list = None,
+        generate_images: bool = True,
+        user_id: str = ""
+    ) -> dict:
         results = {
             "text_content": None,
             "image_prompt": None,
@@ -1434,9 +1799,16 @@ CTA: {brief.cta}
 Products to feature: {json.dumps(products or [])}
 """
 
+        # Created outside the try so the post-try flush is safe even if an
+        # exception fires before the first assignment inside the try block.
+        token_acc = self._new_token_accumulator(user_id=user_id)
         try:
             # Generate text content
             text_response = await self._agents["text_content"].run(text_request)
+            try:
+                token_acc.record_response(agent_name="text_content_agent", response=text_response)
+            except Exception as _tu_err:
+                logger.debug("token_usage record (text_content_agent) failed: %s", _tu_err)
             results["text_content"] = str(text_response)
 
             # Generate image prompt if requested
@@ -1516,6 +1888,10 @@ Use the detailed visual descriptions above to ensure accurate color reproduction
                 else:
                     # Direct mode: use image agent to create prompt, then generate via image generation model
                     image_response = await self._agents["image_content"].run(image_request)
+                    try:
+                        token_acc.record_response(agent_name="image_content_agent", response=image_response)
+                    except Exception as _tu_err:
+                        logger.debug("token_usage record (image_content_agent) failed: %s", _tu_err)
                     results["image_prompt"] = str(image_response)
 
                     # Extract clean prompt from the response and generate actual image
@@ -1586,6 +1962,10 @@ IMAGE PROMPT:
 Check against brand guidelines and flag any issues.
 """
             compliance_response = await self._agents["compliance"].run(compliance_request)
+            try:
+                token_acc.record_response(agent_name="compliance_agent", response=compliance_response)
+            except Exception as _tu_err:
+                logger.debug("token_usage record (compliance_agent) failed: %s", _tu_err)
             results["compliance"] = str(compliance_response)
 
             # Try to parse compliance violations
@@ -1620,6 +2000,12 @@ Check against brand guidelines and flag any issues.
             logger.exception(f"Error generating content: {e}")
             results["error"] = str(e)
 
+        # Emit aggregated token usage events for the generate_content request.
+        try:
+            token_acc.flush(source="generate_content")
+        except Exception as _tu_err:
+            logger.debug("token_usage flush (generate_content) failed: %s", _tu_err)
+
         # Log results summary before returning
         logger.info(f"Orchestrator returning results with keys: {list(results.keys())}")
         has_image = bool(results.get("image_base64"))
@@ -1633,7 +2019,9 @@ Check against brand guidelines and flag any issues.
         modification_request: str,
         brief: CreativeBrief,
         products: list = None,
-        previous_image_prompt: str = None
+        previous_image_prompt: str = None,
+        user_id: str = "",
+        conversation_id: str = ""
     ) -> dict:
         """
         Regenerate just the image based on a user modification request.
@@ -1646,6 +2034,9 @@ Check against brand guidelines and flag any issues.
             brief: The confirmed creative brief
             products: List of products to feature
             previous_image_prompt: The previous image prompt (if available)
+            user_id: Optional caller's user id, propagated to token usage telemetry
+            conversation_id: Optional conversation id, propagated to token usage
+                telemetry for correlation in Application Insights.
 
         Returns:
             dict: Regenerated image with updated prompt
@@ -1653,6 +2044,23 @@ Check against brand guidelines and flag any issues.
         if not self._initialized:
             self.initialize()
 
+        _ctx_token = _current_user_id.set(user_id or "")
+        _ctx_conv = _current_conversation_id.set(conversation_id or "")
+        try:
+            return await self._regenerate_image_impl(
+                modification_request, brief, products, previous_image_prompt
+            )
+        finally:
+            _current_user_id.reset(_ctx_token)
+            _current_conversation_id.reset(_ctx_conv)
+
+    async def _regenerate_image_impl(
+        self,
+        modification_request: str,
+        brief: CreativeBrief,
+        products: list = None,
+        previous_image_prompt: str = None
+    ) -> dict:
         logger.info(f"Regenerating image with modification: {modification_request[:100]}...")
 
         # PROACTIVE CONTENT SAFETY CHECK
@@ -1765,6 +2173,12 @@ Return JSON with:
             else:
                 # Direct mode: use image agent to interpret the modification
                 image_response = await self._agents["image_content"].run(modification_prompt)
+                try:
+                    regen_acc = self._new_token_accumulator()
+                    regen_acc.record_response(agent_name="image_content_agent", response=image_response)
+                    regen_acc.flush(source="regenerate_image")
+                except Exception as _tu_err:
+                    logger.debug("token_usage capture (regenerate_image) failed: %s", _tu_err)
                 prompt_text = str(image_response)
 
                 # Extract the prompt from JSON response

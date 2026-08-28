@@ -171,7 +171,7 @@ async def handle_chat():
 
     # Extract request fields
     conversation_id = data.get("conversation_id") or str(uuid.uuid4())
-    user_id = data.get("user_id", "anonymous")
+    user_id = data.get("user_id") or "anonymous"
     message = data.get("message", "")
     action = data.get("action")
     payload = data.get("payload", {})
@@ -337,7 +337,7 @@ async def _handle_parse_brief(
 
         if not has_existing_title:
             title_service = get_title_service()
-            generated_title = await title_service.generate_title(message)
+            generated_title = await title_service.generate_title(message, user_id=user_id, conversation_id=conversation_id)
 
         await cosmos_service.add_message_to_conversation(
             conversation_id=conversation_id,
@@ -353,7 +353,7 @@ async def _handle_parse_brief(
         logger.exception(f"Failed to save message to CosmosDB: {e}")
 
     # Parse the brief
-    brief, questions, blocked = await orchestrator.parse_brief(message)
+    brief, questions, blocked = await orchestrator.parse_brief(message, user_id=user_id, conversation_id=conversation_id)
 
     if blocked:
         track_event_if_configured("Error_RAI_Check_Failed", {"conversation_id": conversation_id, "user_id": user_id, "status": "Brief parse blocked by RAI"})
@@ -537,7 +537,7 @@ async def _handle_refine_brief(
         logger.exception(f"Failed to save refinement message: {e}")
 
     # Use orchestrator to refine the brief
-    brief, questions, blocked = await orchestrator.parse_brief(message)
+    brief, questions, blocked = await orchestrator.parse_brief(message, user_id=user_id, conversation_id=conversation_id)
 
     if blocked:
         track_event_if_configured("Error_RAI_Check_Failed", {"conversation_id": conversation_id, "user_id": user_id, "status": "Brief refinement blocked by RAI"})
@@ -687,7 +687,9 @@ async def _handle_search_products(
     result = await orchestrator.select_products(
         request_text=message,
         current_products=current_products,
-        available_products=available_products
+        available_products=available_products,
+        user_id=user_id,
+        conversation_id=conversation_id
     )
 
     # Save assistant response
@@ -943,7 +945,9 @@ async def _run_regeneration_task(
             modification_request=modification_request,
             brief=brief,
             products=products_data,
-            previous_image_prompt=previous_image_prompt
+            previous_image_prompt=previous_image_prompt,
+            user_id=user_id,
+            conversation_id=conversation_id
         )
 
         # Check for RAI block
@@ -1132,7 +1136,7 @@ async def _handle_general_chat(
 
         if not has_existing_title:
             title_service = get_title_service()
-            generated_title = await title_service.generate_title(message)
+            generated_title = await title_service.generate_title(message, user_id=user_id, conversation_id=conversation_id)
 
         await cosmos_service.add_message_to_conversation(
             conversation_id=conversation_id,
@@ -1151,7 +1155,8 @@ async def _handle_general_chat(
     response_content = ""
     async for response in orchestrator.process_message(
         message=message,
-        conversation_id=conversation_id
+        conversation_id=conversation_id,
+        user_id=user_id
     ):
         if response.get("content"):
             response_content += response.get("content", "")
@@ -1197,7 +1202,9 @@ async def _run_generation_task(task_id: str, brief: CreativeBrief, products_data
         response = await orchestrator.generate_content(
             brief=brief,
             products=products_data,
-            generate_images=generate_images
+            generate_images=generate_images,
+            user_id=user_id,
+            conversation_id=conversation_id
         )
 
         logger.info(f"Generation task {task_id} completed. Response keys: {list(response.keys()) if response else 'None'}")
@@ -1303,7 +1310,7 @@ async def start_generation():
     products_data = data.get("products", [])
     generate_images = data.get("generate_images", True)
     conversation_id = data.get("conversation_id") or str(uuid.uuid4())
-    user_id = data.get("user_id", "anonymous")
+    user_id = data.get("user_id") or "anonymous"
 
     try:
         brief = CreativeBrief(**brief_data)

@@ -14,6 +14,8 @@ from agent_framework.openai import OpenAIChatCompletionClient
 from azure.identity import DefaultAzureCredential
 
 from settings import app_settings
+from telemetry import token_emitter
+from llm_token_telemetry import TokenUsageScope
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +84,13 @@ class TitleService:
         words = message.strip().split()[:4]
         return " ".join(words) if words else "New Conversation"
 
-    async def generate_title(self, first_user_message: str) -> str:
+    async def generate_title(
+        self,
+        first_user_message: str,
+        *,
+        user_id: str = "",
+        conversation_id: str = "",
+    ) -> str:
         """
         Generate a concise conversation title from the first user message.
 
@@ -109,7 +117,20 @@ class TitleService:
         )
 
         try:
-            response = await self._agent.run(prompt)
+            deployment = (
+                (app_settings.ai_foundry.model_deployment or app_settings.azure_openai.gpt_model)
+                if app_settings.ai_foundry.use_foundry
+                else app_settings.azure_openai.gpt_model
+            ) or ""
+            with TokenUsageScope(
+                token_emitter,
+                agent_name="title_agent",
+                model_deployment_name=deployment,
+                user_id=user_id,
+                conversation_id=conversation_id,
+            ) as scope:
+                response = await self._agent.run(prompt)
+                scope.add(response)
 
             # Clean up the response
             title = str(response).strip().splitlines()[0].strip()

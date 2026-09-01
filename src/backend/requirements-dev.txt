@@ -10,9 +10,9 @@ pytest-mock>=3.15.1
 
 # Code Quality
 black>=26.5.1
-isort>=8.0.1
+isort>=9.0.1
 flake8>=7.3.0
-mypy>=2.3.0
+mypy>=2.3.1
 
 # Type Stubs
 types-aiofiles>=25.1.0.20260518

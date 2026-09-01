@@ -1,13 +1,13 @@
 # Content Generation Solution Accelerator - Python Dependencies
 
 # Web Framework
-quart>=0.21.0
+quart>=0.23.1
 quart-cors>=0.8.0
 hypercorn>=0.18.0
 
 # Microsoft Agent Framework
 agent-framework-azure-ai==1.0.0rc6
-agent-framework-core==1.12.1
+agent-framework-core==1.16.0
 
 # OpenTelemetry (required by agent-framework)
 opentelemetry-semantic-conventions-ai==0.5.1
@@ -15,13 +15,13 @@ opentelemetry-semantic-conventions-ai==0.5.1
 # Azure SDKs
 azure-identity>=1.25.3
 azure-cosmos>=4.16.3
-azure-storage-blob>=12.30.0
+azure-storage-blob>=12.30.1
 azure-search-documents>=12.0.0
 azure-ai-contentsafety>=1.0.0
-azure-ai-projects==2.4.0  # Azure AI Foundry SDK (optional, for USE_FOUNDRY=true)
+azure-ai-projects==2.5.0  # Azure AI Foundry SDK (optional, for USE_FOUNDRY=true)
 
 # OpenAI
-openai>=2.50.0
+openai>=3.6.0
 
 # HTTP Client (for Foundry direct API calls)
 httpx>=0.28.1
@@ -32,9 +32,9 @@ azure-monitor-events-extension>=0.1.0
 opentelemetry-instrumentation-asgi>=0.65b0
 
 # Data Validation
-pydantic>=2.13.4
-pydantic-settings>=2.14.2
+pydantic>=2.13.5
+pydantic-settings>=2.15.0
 
 # Utilities
-python-dotenv>=1.2.2
+python-dotenv>=1.2.3
 aiohttp>=3.14.3
